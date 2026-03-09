@@ -1,0 +1,29 @@
+<div style="min-height: 100vh;background-color: #0b3d2e;display: flex;justify-content: center;align-items: center;">
+    <div class="card shadow" style="width: 100%;max-width: 420px;border-radius: 12px;">
+        <div class="card-body p-4 p-md-5">
+
+            <h3 class="text-center mb-4">Sportiva Booking</h3>
+
+            <form [formGroup]="loginForm" (ngSubmit)="login()">
+
+                <div class="mb-3">
+                    <label class="form-label">Correo electrónico</label>
+                    <input type="email" class="form-control" placeholder="correo@ejemplo.com" formControlName="email">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" placeholder="********" formControlName="password">
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success px-4">
+                        Iniciar sesión
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
