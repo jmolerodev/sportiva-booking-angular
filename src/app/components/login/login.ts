@@ -51,4 +51,11 @@ export class Login {
 
   }
 
+  /**
+   * Metodo mediante el cual navegaremos a la pestaña de About (¿Quiénes Somos?)
+   */
+  navigateToAbout(){
+    this.router.navigate(['/about']);
+  }
+
 }
