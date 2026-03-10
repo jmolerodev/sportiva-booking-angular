@@ -1,19 +1,23 @@
-<div style="min-height: 100vh;background-color: #0b3d2e;display: flex;justify-content: center;align-items: center;">
-    <div class="card shadow" style="width: 100%;max-width: 420px;border-radius: 12px;">
+<div style="min-height: 100vh; background-color: #0b3d2e;"
+    class="d-flex justify-content-center align-items-center position-relative">
+
+    <div class="card shadow" style="width: 100%; max-width: 420px; border-radius: 12px;">
         <div class="card-body p-4 p-md-5">
 
-            <h3 class="text-center mb-4">Sportiva Booking</h3>
+            <img src="logo-app.png" class="d-block mx-auto mb-3" style="width: 150px; height: 150px;" />
 
             <form [formGroup]="loginForm" (ngSubmit)="login()">
 
                 <div class="mb-3">
-                    <label class="form-label">Correo electrónico</label>
-                    <input type="email" class="form-control" placeholder="correo@ejemplo.com" formControlName="email">
+                    <label class="form-label text-success" style="font-weight: bold;">Correo electrónico</label>
+                    <input type="email" class="form-control" placeholder="Introduce tu correo electrónico"
+                        formControlName="email">
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label">Contraseña</label>
-                    <input type="password" class="form-control" placeholder="********" formControlName="password">
+                    <label class="form-label text-success" style="font-weight: bold;">Contraseña</label>
+                    <input type="password" class="form-control" placeholder="Introduce tu contraseña"
+                        formControlName="password">
                 </div>
 
                 <div class="text-center">
@@ -26,4 +30,8 @@
 
         </div>
     </div>
+
+    <i class="bi bi-patch-question text-white position-absolute bottom-0 end-0 m-4"
+        style="font-size: 4rem; cursor: pointer;"></i>
+
 </div>
