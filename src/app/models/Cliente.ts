@@ -19,7 +19,7 @@ export class Cliente extends Person {
         this.is_active = is_active;
     }
 
-    /* Getters y Setters de la Clase Cliente */
+    /*Getters y Setters de la Clase Cliente*/
 
     getDni() {
         return this.dni;

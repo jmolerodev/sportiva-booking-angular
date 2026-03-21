@@ -1,0 +1,4 @@
+export enum Especialidad {
+    ENTRENADOR = "ENTRENADOR",
+    FISIOTERAPEUTA = "FISIOTERAPEUTA"
+}

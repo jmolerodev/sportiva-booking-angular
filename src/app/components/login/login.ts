@@ -58,4 +58,11 @@ export class Login {
     this.router.navigate(['/about']);
   }
 
+  /**
+   * Metodo mediante el cual navegaremos a la pestaña de Sign Up (Registro)
+   */
+  navigateToSignUp(){
+    this.router.navigate(['/signup']);
+  }
+
 }
