@@ -4,37 +4,65 @@
     <div class="card shadow" style="width: 100%; max-width: 520px; border-radius: 12px;">
         <div class="card-body p-4 p-md-5" style="user-select: none;">
 
-           <img src="logo-app.png" class="d-block mx-auto mb-3" style="width: 150px; height: 150px;" />
+            <img src="logo-app.png" class="d-block mx-auto mb-3" style="width: 150px; height: 150px;" />
 
             <form [formGroup]="loginForm" (ngSubmit)="login()">
 
                 <div class="mb-3">
                     <label class="form-label text-success" style="font-weight: bold;">Correo electrónico</label>
                     <input type="email" class="form-control" placeholder="Introduce tu correo electrónico"
-                        formControlName="email">
+                        formControlName="email" [ngClass]="{'is-invalid': loginForm.get('email')?.invalid && loginForm.get('email')?.touched,
+                            'is-valid': loginForm.get('email')?.valid && loginForm.get('email')?.touched
+                        }">
+                    @if (loginForm.get('email')?.touched && loginForm.get('email')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">El correo electrónico
+                        es obligatorio.</small>
+                    }
+                    @if (loginForm.get('email')?.touched && loginForm.get('email')?.hasError('invalidEmail')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">Introduce un correo
+                        electrónico válido.</small>
+                    }
                 </div>
 
                 <div class="mb-4">
                     <label class="form-label text-success" style="font-weight: bold;">Contraseña</label>
-                    <input type="password" class="form-control" placeholder="Introduce tu contraseña"
-                        formControlName="password">
+                    <div class="input-group">
+                        <input [type]="showPassword ? 'text' : 'password'" class="form-control"
+                            placeholder="Introduce tu contraseña" formControlName="password" [ngClass]="{'is-invalid': loginForm.get('password')?.invalid && loginForm.get('password')?.touched,
+                            'is-valid': loginForm.get('password')?.valid && loginForm.get('password')?.touched}">
+                        <span class="input-group-text" style="cursor: pointer;" (click)="togglePassword()">
+                            <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'" style="font-weight: bold; color: #057b2a;"></i>
+                        </span>
+                    </div>
+                    @if (loginForm.get('password')?.touched && loginForm.get('password')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">La contraseña es
+                        obligatoria.</small>
+                    }
+                    @if(loginForm.get('password')?.touched && loginForm.get('password')?.hasError('invalidPassword')){
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">La contraseña no
+                        cumple con el formato correcto</small>
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">(9 caracteres, una
+                        mayúscula, una minúscula y un número)</small>
+                    }
                 </div>
 
                 <div class="text-center">
-                    <button type="submit" class="btn btn-success px-4">
+                    <button type="submit" class="btn btn-success px-4" [disabled]="loginForm.invalid">
                         Iniciar sesión
                     </button>
                 </div>
 
                 <div class="text-center mt-3">
                     <span class="fw-bold" style="font-size: 0.9rem;">¿Aún no tienes una cuenta?</span>
-                    <span class="text-success fw-bold ms-1" style="font-size: 0.9rem; cursor: pointer;" (click)="navigateToSignUp()">Regístrate ahora mismo</span>
+                    <span class="text-success fw-bold ms-1" style="font-size: 0.9rem; cursor: pointer;"
+                        (click)="navigateToSignUp()">Regístrate ahora mismo</span>
                 </div>
             </form>
 
         </div>
     </div>
 
-    <i class="bi bi-patch-question text-white position-absolute bottom-0 end-0 m-4 icono-ayuda" style="font-size: 4rem; cursor: pointer; user-select: none;" (click)="navigateToAbout()"></i>
+    <i class="bi bi-patch-question text-white position-absolute bottom-0 end-0 m-4 icono-ayuda"
+        style="font-size: 4rem; cursor: pointer; user-select: none;" (click)="navigateToAbout()"></i>
 
 </div>

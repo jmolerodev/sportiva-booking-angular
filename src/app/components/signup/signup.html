@@ -1,1 +1,260 @@
-<p>signup works!</p>
+<div style="min-height: 100vh; background-color: #057b2a;"
+    class="d-flex justify-content-center align-items-center position-relative py-5">
+
+    <div class="card shadow" style="width: 100%; max-width: 560px; border-radius: 12px;">
+        <div class="card-body p-4 p-md-5" style="user-select: none;">
+
+            <img src="logo-app.png" class="d-block mx-auto mb-3" style="width: 150px; height: 150px;" />
+
+            <form [formGroup]="signUpForm" (ngSubmit)="signUp()">
+
+                <div class="mb-4">
+                    <label class="form-label text-success w-100 text-center" style="font-weight: bold;">
+                        ¿Cómo quieres registrarte?
+                    </label>
+                    <div class="d-flex justify-content-center gap-3">
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" id="rolCliente" formControlName="rol"
+                                [value]="Rol.CLIENTE">
+                            <label class="form-check-label fw-bold" for="rolCliente">
+                                <i class="bi bi-person me-1" style="color: #057b2a;"></i> Cliente
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" id="rolProfesional" formControlName="rol"
+                                [value]="Rol.PROFESIONAL">
+                            <label class="form-check-label fw-bold" for="rolProfesional">
+                                <i class="bi bi-briefcase me-1" style="color: #057b2a;"></i> Profesional
+                            </label>
+                        </div>
+
+                    </div>
+                    @if (signUpForm.get('rol')?.touched && signUpForm.get('rol')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        Debes seleccionar un tipo de cuenta.
+                    </small>
+                    }
+                </div>
+
+
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Nombre</label>
+                    <input type="text" class="form-control" placeholder="Introduce tu nombre" formControlName="nombre"
+                        [ngClass]="{
+                            'is-invalid': signUpForm.get('nombre')?.invalid && signUpForm.get('nombre')?.touched,
+                            'is-valid':   signUpForm.get('nombre')?.valid   && signUpForm.get('nombre')?.touched
+                        }">
+                    @if (signUpForm.get('nombre')?.touched && signUpForm.get('nombre')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        El nombre es obligatorio.
+                    </small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Apellidos</label>
+                    <input type="text" class="form-control" placeholder="Introduce tus apellidos"
+                        formControlName="apellidos" [ngClass]="{
+                            'is-invalid': signUpForm.get('apellidos')?.invalid && signUpForm.get('apellidos')?.touched,
+                            'is-valid':   signUpForm.get('apellidos')?.valid   && signUpForm.get('apellidos')?.touched
+                        }">
+                    @if (signUpForm.get('apellidos')?.touched && signUpForm.get('apellidos')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        Los apellidos son obligatorios.
+                    </small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Correo electrónico</label>
+                    <input type="email" class="form-control" placeholder="Introduce tu correo electrónico"
+                        formControlName="email" [ngClass]="{
+                            'is-invalid': signUpForm.get('email')?.invalid && signUpForm.get('email')?.touched,
+                            'is-valid':   signUpForm.get('email')?.valid   && signUpForm.get('email')?.touched
+                        }">
+                    @if (signUpForm.get('email')?.touched && signUpForm.get('email')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        El correo electrónico es obligatorio.
+                    </small>
+                    }
+                    @if (signUpForm.get('email')?.touched && signUpForm.get('email')?.hasError('invalidEmail')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        Introduce un correo electrónico válido.
+                    </small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Contraseña</label>
+                    <div class="input-group">
+                        <input [type]="showPassword ? 'text' : 'password'" class="form-control"
+                            placeholder="Introduce tu contraseña" formControlName="password" [ngClass]="{
+                                'is-invalid': signUpForm.get('password')?.invalid && signUpForm.get('password')?.touched,
+                                'is-valid':   signUpForm.get('password')?.valid   && signUpForm.get('password')?.touched
+                            }">
+                        <span class="input-group-text" style="cursor: pointer;" (click)="togglePassword()">
+                            <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                                style="font-weight: bold; color: #057b2a;"></i>
+                        </span>
+                    </div>
+                    @if (signUpForm.get('password')?.touched && signUpForm.get('password')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        La contraseña es obligatoria.
+                    </small>
+                    }
+                    @if (signUpForm.get('password')?.touched && signUpForm.get('password')?.hasError('invalidPassword'))
+                    {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        La contraseña no cumple con el formato correcto
+                    </small>
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        (9 caracteres, una mayúscula, una minúscula y un número)
+                    </small>
+                    }
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-success" style="font-weight: bold;">Confirmar contraseña</label>
+                    <div class="input-group">
+                        <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control"
+                            placeholder="Repite tu contraseña" formControlName="confirmPassword" [ngClass]="{
+                                'is-invalid': signUpForm.get('confirmPassword')?.invalid && signUpForm.get('confirmPassword')?.touched,
+                                'is-valid':   signUpForm.get('confirmPassword')?.valid   && signUpForm.get('confirmPassword')?.touched
+                                            && !signUpForm.get('confirmPassword')?.hasError('passwordMismatch')
+                            }">
+                        <span class="input-group-text" style="cursor: pointer;" (click)="toggleConfirmPassword()">
+                            <i [class]="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                                style="font-weight: bold; color: #057b2a;"></i>
+                        </span>
+                    </div>
+                    @if (signUpForm.get('confirmPassword')?.touched &&
+                    signUpForm.get('confirmPassword')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        Debes confirmar la contraseña.
+                    </small>
+                    }
+                    @if (signUpForm.get('confirmPassword')?.touched &&
+                    signUpForm.get('confirmPassword')?.hasError('passwordMismatch')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        Las contraseñas no coinciden.
+                    </small>
+                    }
+                </div>
+
+
+
+                @if (rolSeleccionado === Rol.CLIENTE) {
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">DNI</label>
+                    <input type="text" class="form-control" placeholder="Introduce tu DNI" formControlName="dni"
+                        [ngClass]="{
+                                'is-invalid': signUpForm.get('dni')?.invalid && signUpForm.get('dni')?.touched,
+                                'is-valid':   signUpForm.get('dni')?.valid   && signUpForm.get('dni')?.touched
+                            }">
+                    @if (signUpForm.get('dni')?.touched && signUpForm.get('dni')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        El DNI es obligatorio.
+                    </small>
+                    }
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-success" style="font-weight: bold;">Dirección</label>
+                    <input type="text" class="form-control" placeholder="Introduce tu dirección"
+                        formControlName="direccion" [ngClass]="{
+                                'is-invalid': signUpForm.get('direccion')?.invalid && signUpForm.get('direccion')?.touched,
+                                'is-valid':   signUpForm.get('direccion')?.valid   && signUpForm.get('direccion')?.touched
+                            }">
+                    @if (signUpForm.get('direccion')?.touched && signUpForm.get('direccion')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        La dirección es obligatoria.
+                    </small>
+                    }
+                </div>
+
+                }
+
+
+                @if (rolSeleccionado === Rol.PROFESIONAL) {
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Descripción profesional</label>
+                    <textarea class="form-control" rows="3" placeholder="Cuéntanos brevemente tu perfil profesional"
+                        formControlName="descripcion" [ngClass]="{
+                                'is-invalid': signUpForm.get('descripcion')?.invalid && signUpForm.get('descripcion')?.touched,
+                                'is-valid':   signUpForm.get('descripcion')?.valid   && signUpForm.get('descripcion')?.touched
+                            }">
+                        </textarea>
+                    @if (signUpForm.get('descripcion')?.touched && signUpForm.get('descripcion')?.hasError('required'))
+                    {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        La descripción es obligatoria.
+                    </small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Años de experiencia</label>
+                    <input type="number" class="form-control" placeholder="Introduce tus años de experiencia"
+                        formControlName="annos_experiencia" min="0" [ngClass]="{
+                                'is-invalid': signUpForm.get('annos_experiencia')?.invalid && signUpForm.get('annos_experiencia')?.touched,
+                                'is-valid':   signUpForm.get('annos_experiencia')?.valid   && signUpForm.get('annos_experiencia')?.touched
+                            }">
+                    @if (signUpForm.get('annos_experiencia')?.touched &&
+                    signUpForm.get('annos_experiencia')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        Los años de experiencia son obligatorios.
+                    </small>
+                    }
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-success" style="font-weight: bold;">Especialidad</label>
+                    <select class="form-select" formControlName="especialidad" [ngClass]="{
+                                'is-invalid': signUpForm.get('especialidad')?.invalid && signUpForm.get('especialidad')?.touched,
+                                'is-valid':   signUpForm.get('especialidad')?.valid   && signUpForm.get('especialidad')?.touched
+                            }">
+                        <option value="" disabled selected>Selecciona tu especialidad</option>
+                        @for (esp of especialidades; track esp) {
+                        <option [value]="esp">{{ esp }}</option>
+                        }
+                    </select>
+                    @if (signUpForm.get('especialidad')?.touched &&
+                    signUpForm.get('especialidad')?.hasError('required')) {
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                        La especialidad es obligatoria.
+                    </small>
+                    }
+                </div>
+
+                }
+
+
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success px-4" [disabled]="signUpForm.invalid || isLoading">
+                        @if (isLoading) {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Registrando...
+                        } @else {
+                        Crear cuenta
+                        }
+                    </button>
+                </div>
+
+                <div class="text-center mt-3">
+                    <span class="fw-bold" style="font-size: 0.9rem;">¿Ya tienes una cuenta?</span>
+                    <span class="text-success fw-bold ms-1" style="font-size: 0.9rem; cursor: pointer;"
+                        (click)="navigateToLogin()">Inicia sesión aquí</span>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>

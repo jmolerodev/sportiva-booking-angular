@@ -35,7 +35,7 @@ export function customPasswordValidator(): ValidatorFn {
         }
 
         /*Expresión regular: al menos 9 caracteres, 1 mayúscula, 1 minúscula y 1 número*/
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{9,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])[A-Za-z\d\W]{9,}$/;
         return passwordRegex.test(password) ? null : { 'invalidPassword': true };
 
     }

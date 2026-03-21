@@ -3,6 +3,7 @@ export const environment = {
   firebaseConfig: {
     apiKey: "AIzaSyAf3q8q6ulCvhomjWiriXZDtLY6naVw0Cs",
     authDomain: "sportivabooking.firebaseapp.com",
+    databaseURL: "https://sportivabooking-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "sportivabooking",
     storageBucket: "sportivabooking.firebasestorage.app",
     messagingSenderId: "969230804739",
