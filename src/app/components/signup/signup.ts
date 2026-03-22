@@ -5,9 +5,13 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ClienteService } from '../../services/cliente-service';
 import { ProfesionalService } from '../../services/profesional-service';
-import { customEmailValidator, customPasswordValidator } from '../../validators/auth.validator';
+import { AdminService } from '../../services/admin-service';
+import { customEmailValidator, customPasswordValidator, passwordsMatchValidator } from '../../validators/auth.validator';
 import { Rol } from '../../enums/Rol';
 import { Especialidad } from '../../enums/Especialidad';
+import { ICliente } from '../../interfaces/Cliente-Interface';
+import { IProfesional } from '../../interfaces/Profesional-Interface';
+import { IAdministrador } from '../../interfaces/Administrador-Interface';
 
 @Component({
   selector: 'app-signup',
@@ -38,57 +42,50 @@ export class SignUp implements OnInit {
   readonly especialidades = Object.values(Especialidad);
 
   /*Constructor del componente*/
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private clienteService: ClienteService,
-    private profesionalService: ProfesionalService,
-    private router: Router
-  ) {
+  constructor(private fb: FormBuilder, private authService: AuthService, private clienteService: ClienteService, private profesionalService: ProfesionalService,
+  private adminService: AdminService, private router: Router) {
 
-    /*Inicializamos el formulario con los campos comunes a todos los usuarios*/
+    /*Aplicamos passwordsMatchValidator al FormGroup completo para validación en tiempo real*/
     this.signUpForm = this.fb.group({
-      rol:              ['', Validators.required],
-      nombre:           ['', Validators.required],
-      apellidos:        ['', Validators.required],
-      email:            ['', [Validators.required, customEmailValidator()]],
-      password:         ['', [Validators.required, customPasswordValidator()]],
-      confirmPassword:  ['', Validators.required],
+      rol: ['', Validators.required],
+      nombre: ['', Validators.required],
+      apellidos: ['', Validators.required],
+      email: ['', [Validators.required, customEmailValidator()]],
+      password: ['', [Validators.required, customPasswordValidator()]],
+      confirmPassword: ['', Validators.required],
 
       /*Campos exclusivos del Cliente — serán requeridos solo cuando el rol sea CLIENTE*/
-      dni:              [''],
-      direccion:        [''],
+      dni: [''],
+      direccion: [''],
 
       /*Campos exclusivos del Profesional — serán requeridos solo cuando el rol sea PROFESIONAL*/
-      descripcion:      [''],
-      annos_experiencia:[''],
-      especialidad:     [''],
+      descripcion: [''],
+      annos_experiencia: [''],
+      especialidad: [''],
+    },
+    { 
+      validators: passwordsMatchValidator()
     });
 
   }
 
   ngOnInit(): void {
-    /*Escuchamos el cambio de rol para actualizar los validadores dinámicamente*/
     this.signUpForm.get('rol')?.valueChanges.subscribe((rolSeleccionado: Rol) => {
       this.actualizarValidadoresPorRol(rolSeleccionado);
     });
   }
 
-   
   /**
    * Método privado que actualiza los validadores de los campos específicos
-   * según el rol seleccionado por el usuario en el formulario
-   * @param rol Rol seleccionado (CLIENTE o PROFESIONAL)
+   * según el rol seleccionado por el usuario en el formulario.
+   * @param rol Rol seleccionado (CLIENTE, PROFESIONAL o ADMINISTRADOR)
    */
   private actualizarValidadoresPorRol(rol: Rol): void {
 
-    /*Campos del Cliente*/
     const camposCliente = ['dni', 'direccion'];
-
-    /*Campos del Profesional*/
     const camposProfesional = ['descripcion', 'annos_experiencia', 'especialidad'];
 
-    if (rol === Rol.CLIENTE) {
+    if (rol == Rol.CLIENTE) {
       camposCliente.forEach(campo => {
         this.signUpForm.get(campo)?.setValidators(Validators.required);
         this.signUpForm.get(campo)?.updateValueAndValidity();
@@ -98,12 +95,20 @@ export class SignUp implements OnInit {
         this.signUpForm.get(campo)?.setValue('');
         this.signUpForm.get(campo)?.updateValueAndValidity();
       });
-    } else if (rol === Rol.PROFESIONAL) {
+
+    } else if (rol == Rol.PROFESIONAL) {
       camposProfesional.forEach(campo => {
         this.signUpForm.get(campo)?.setValidators(Validators.required);
         this.signUpForm.get(campo)?.updateValueAndValidity();
       });
       camposCliente.forEach(campo => {
+        this.signUpForm.get(campo)?.clearValidators();
+        this.signUpForm.get(campo)?.setValue('');
+        this.signUpForm.get(campo)?.updateValueAndValidity();
+      });
+
+    } else if (rol == Rol.ADMINISTRADOR) {
+      [...camposCliente, ...camposProfesional].forEach(campo => {
         this.signUpForm.get(campo)?.clearValidators();
         this.signUpForm.get(campo)?.setValue('');
         this.signUpForm.get(campo)?.updateValueAndValidity();
@@ -113,75 +118,55 @@ export class SignUp implements OnInit {
   }
 
   /**
-   * Método privado que comprueba si las contraseñas introducidas coinciden
-   * @returns true si coinciden, false en caso contrario
-   */
-  private passwordsCoinciden(): boolean {
-    return this.signUpForm.get('password')?.value === this.signUpForm.get('confirmPassword')?.value;
-  }
-
-  
-  /**
    * Método principal que gestiona el registro de un nuevo usuario en el sistema.
-   * Registra al usuario en Firebase Auth y a continuación guarda sus datos
-   * en Firebase Realtime Database bajo la colección 'Persons'.
+   * Registra al usuario en Firebase Auth y guarda el resto de datos en RTDB.
+   * El email y la password NO se almacenan en RTDB ya que son gestionados por Firebase Auth.
    */
   signUp(): void {
 
     if (this.signUpForm.invalid) return;
 
-    if (!this.passwordsCoinciden()) {
-      this.signUpForm.get('confirmPassword')?.setErrors({ passwordMismatch: true });
-      return;
-    }
-
     this.isLoading = true;
 
     const { rol, nombre, apellidos, email, password, dni, direccion,
-            descripcion, annos_experiencia, especialidad } = this.signUpForm.value;
+      descripcion, annos_experiencia, especialidad } = this.signUpForm.value;
 
-    /*Registramos al usuario en Firebase Authentication*/
     this.authService.register(email, password).subscribe({
       next: (userCredential) => {
 
         const uid = userCredential.user.uid;
 
-        if (rol === Rol.CLIENTE) {
+        if (rol == Rol.CLIENTE) {
 
-          /*Construimos el objeto Cliente que se guardará en la BBDD*/
-          const nuevoCliente = {
-            id:          uid,
-            email,
-            password:    '',           // No almacenamos la contraseña en texto plano
+          /*Construimos el objeto Cliente tipado con ICliente*/
+          const nuevoCliente: ICliente = {
             nombre,
             apellidos,
-            foto:        '',           // La foto se añadirá desde Mi Perfil
-            rol:         Rol.CLIENTE,
+            foto: '',
+            rol: Rol.CLIENTE,
             dni,
             direccion,
-            fecha_alta:  new Date().toISOString(),
-            is_active:   true,
+            fecha_alta: new Date().getTime(),
+            is_active: true,
           };
 
           this.clienteService.saveCliente(uid, nuevoCliente).then(() => {
             console.log('Cliente registrado correctamente:', nuevoCliente);
             this.isLoading = false;
+            this.router.navigate(['/home']);
           }).catch((error) => {
             console.error('Error al guardar el cliente en la BBDD:', error);
             this.isLoading = false;
           });
 
-        } else if (rol === Rol.PROFESIONAL) {
+        } else if (rol == Rol.PROFESIONAL) {
 
-          /*Construimos el objeto Profesional que se guardará en la BBDD*/
-          const nuevoProfesional = {
-            id:                uid,
-            email,
-            password:          '',     // No almacenamos la contraseña en texto plano
+          /*Construimos el objeto Profesional tipado con IProfesional*/
+          const nuevoProfesional: IProfesional = {
             nombre,
             apellidos,
-            foto:              '',     // La foto se añadirá desde Mi Perfil
-            rol:               Rol.PROFESIONAL,
+            foto: '',
+            rol: Rol.PROFESIONAL,
             descripcion,
             annos_experiencia: Number(annos_experiencia),
             especialidad,
@@ -190,8 +175,28 @@ export class SignUp implements OnInit {
           this.profesionalService.saveProfesional(uid, nuevoProfesional).then(() => {
             console.log('Profesional registrado correctamente:', nuevoProfesional);
             this.isLoading = false;
+            this.router.navigate(['/home']);
           }).catch((error) => {
             console.error('Error al guardar el profesional en la BBDD:', error);
+            this.isLoading = false;
+          });
+
+        } else if (rol == Rol.ADMINISTRADOR) {
+
+          /*Construimos el objeto Administrador tipado con IAdministrador*/
+          const nuevoAdministrador: IAdministrador = {
+            nombre,
+            apellidos,
+            foto: '',
+            rol: Rol.ADMINISTRADOR,
+          };
+
+          this.adminService.saveAdministrador(uid, nuevoAdministrador).then(() => {
+            console.log('Administrador registrado correctamente:', nuevoAdministrador);
+            this.isLoading = false;
+            this.router.navigate(['/home']);
+          }).catch((error) => {
+            console.error('Error al guardar el administrador en la BBDD:', error);
             this.isLoading = false;
           });
 

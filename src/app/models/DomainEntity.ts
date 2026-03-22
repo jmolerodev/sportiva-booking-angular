@@ -8,13 +8,5 @@ export abstract class DomainEntity {
         this.id = id;
     }
 
-    /*Getters y Setters de la Clase*/
-    getId() {
-        return this.id;
-    }
-
-    setId(id: string) {
-        this.id = id;
-    }
-
+    
 }

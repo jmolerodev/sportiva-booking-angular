@@ -18,30 +18,4 @@ export class Profesional extends Person {
             this.especialidad = especialidad;
         }
 
-    /*Getters y Setters de la Clase Profesional*/
-
-    getDescripcion() {
-        return this.descripcion;
-    }
-
-    setDescripcion(descripcion: string) {
-        this.descripcion = descripcion;
-    }
-
-    getAnnosExperiencia() {
-        return this.annos_experiencia;
-    }
-
-    setAnnosExperiencia(annos_experiencia: number) {
-        this.annos_experiencia = annos_experiencia;
-    }
-
-    getEspecialidad() {
-        return this.especialidad;
-    }
-
-    setEspecialidad(especialidad: Especialidad) {
-        this.especialidad = especialidad;
-    }
-
 }

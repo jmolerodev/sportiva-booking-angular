@@ -18,39 +18,4 @@ export abstract class Person extends UserAccount {
         this.rol = rol;
     }
 
-    /* Getters y Setters de la Clase */
-
-    getNombre() {
-        return this.nombre;
-    }
-
-    setNombre(nombre: string) {
-        this.nombre = nombre;
-    }
-
-    getApellidos() {
-        return this.apellidos;
-    }
-
-    setApellidos(apellidos: string) {
-        this.apellidos = apellidos;
-    }
-
-    getFoto() {
-        return this.foto;
-    }
-
-    setFoto(foto: string) {
-        this.foto = foto;
-    }
-
-    getRol() {
-        return this.rol;
-    }
-
-    setRol(rol: Rol) {
-        this.rol = rol;
-    }
-
-
 }

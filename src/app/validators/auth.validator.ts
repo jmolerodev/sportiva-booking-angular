@@ -13,7 +13,6 @@ export function customEmailValidator(): ValidatorFn {
             return null;
         }
 
-
         const simpleEmailRegex = /^[^@]+@[^@]+\.[a-zA-Z]{2,}$/;
 
         /* Si cumple la regex → null (válido). Si no → objeto de error que Angular interpreta como fallo */
@@ -41,3 +40,40 @@ export function customPasswordValidator(): ValidatorFn {
     }
 }
 
+
+/**
+ * Validator de grupo que comprueba en tiempo real si los campos
+ * 'password' y 'confirmPassword' del formulario coinciden.
+ * Se aplica al FormGroup completo, no a un campo individual.
+ * Si no coinciden, inyecta el error 'passwordMismatch' directamente
+ * en el campo confirmPassword para que el template pueda pintarlo.
+ */
+export function passwordsMatchValidator(): ValidatorFn {
+    return (group: AbstractControl): ValidationErrors | null => {
+
+        const password        = group.get('password')?.value;
+        const confirmPassword = group.get('confirmPassword')?.value;
+
+        /*Si confirmPassword está vacío no molestamos al usuario todavía*/
+        if (!confirmPassword) {
+            return null;
+        }
+
+        if (password !== confirmPassword) {
+            /*Inyectamos el error en el campo confirmPassword para que el template lo detecte*/
+            group.get('confirmPassword')?.setErrors({ passwordMismatch: true });
+            return { passwordMismatch: true };
+        }
+
+        /*Si coinciden limpiamos el error de passwordMismatch (manteniendo otros errores si los hubiera)*/
+        const errors = group.get('confirmPassword')?.errors;
+        if (errors) {
+            delete errors['passwordMismatch'];
+            const tieneOtrosErrores = Object.keys(errors).length > 0;
+            group.get('confirmPassword')?.setErrors(tieneOtrosErrores ? errors : null);
+        }
+
+        return null;
+
+    };
+}

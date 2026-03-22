@@ -8,14 +8,14 @@ import { Cliente } from '../models/Cliente';
 })
 export class ClienteService {
   
-  /*Nombre la Colección Principal donde almacenamos a todos los clientes*/
-  private COLLECTION_NAME = 'Persons'; // Puedes cambiarlo a 'Clientes' si quieres español consistente
+  /*Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol*/
+  private COLLECTION_NAME = 'Persons'; 
 
   /*Constructor del Servicio*/
   constructor(private database: Database) {}
 
   /**
-   * Obtener los datos de un cliente a través de su UID
+   * Método mediante el cual obtenemos los datos de un cliente a través de su UID
    * @param uid Identificador único del cliente
    * @returns Observable con los datos del cliente (o null si no existe)
    */

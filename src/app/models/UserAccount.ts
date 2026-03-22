@@ -13,21 +13,4 @@ export class UserAccount extends DomainEntity {
         this.password = password;
     }
 
-    /*Getters y Setters de la Clase*/
-    getEmail() {
-        return this.email;
-    }
-
-    setEmail(email: string) {
-        this.email = email;
-    }
-
-    getPassword() {
-        return this.password;
-    }
-
-    setPassword(password: string) {
-        this.password = password;
-    }
-
 }
