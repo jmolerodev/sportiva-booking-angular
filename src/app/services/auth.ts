@@ -1,14 +1,18 @@
-import { Injectable } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
-import { from, map, Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Auth, authState, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
+import { from, map, Observable, of, switchMap } from 'rxjs';
+import { Rol } from '../enums/Rol';
+import { child, Database, objectVal } from '@angular/fire/database';
+import { ref } from 'firebase/database';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
 
-  /*Constructor del Servicio*/
-  constructor(private auth: Auth) { }
+  private auth = inject(Auth);
+  private database = inject(Database);
+  private authState$ = authState(this.auth);
 
   /**
    * Método mediante el cual realizaremos el inicio de sesión del usuario
@@ -40,6 +44,31 @@ export class AuthService {
    */
   logout(): Observable<void> {
     return from(signOut(this.auth));
+  }
+
+  /**
+   * Método que nos devuelve en tiempo real el usuario autenticado o bien null si no hay sesión
+   * @returns Observable con el usuario autenticado o bien null
+   */
+  getCurrentUser(): Observable<User | null> {
+    return this.authState$;
+  }
+
+  /**
+   * Método que obtiene el rol del usuario autenticado leyendo su nodo en RTDB.
+   * Emite null si no hay sesión activa.
+   * @returns Observable con el Rol del usuario o null
+   */
+  getRol(): Observable<Rol | null> {
+    return this.authState$.pipe(
+      switchMap(user => {
+        if (!user) return of(null);
+        const personRef = child(ref(this.database), `/Persons/${user.uid}`);
+        return objectVal<{ rol: Rol }>(personRef).pipe(
+          map(person => person?.rol ?? null)
+        );
+      })
+    );
   }
 
 }
