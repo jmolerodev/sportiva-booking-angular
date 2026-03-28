@@ -1,1 +1,25 @@
-/* You can add global styles to this file, and also import other style files */
+/* src/styles.css */
+
+/* ÉXITO: Fondo verde y texto negro */
+.success-snackbar .mdc-snackbar__surface {
+  background-color: #16b61e !important;
+}
+
+.success-snackbar .mdc-snackbar__label,
+.success-snackbar .mat-mdc-snack-bar-action {
+  color: #000000 !important;
+  font-weight: 600 !important;
+  text-align: center;
+}
+
+/* ERROR: Fondo rojo y texto negro */
+.error-snackbar .mdc-snackbar__surface {
+  background-color: #f21313 !important;
+}
+
+.error-snackbar .mdc-snackbar__label,
+.error-snackbar .mat-mdc-snack-bar-action {
+  color: #000000 !important;
+  font-weight: 600 !important;
+  text-align: center;
+}

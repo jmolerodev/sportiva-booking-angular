@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { customEmailValidator, customPasswordValidator } from '../../validators/auth.validator';
+import { SnackbarService } from '../../services/snackbar';
 
 @Component({
   selector: 'app-login',
@@ -24,7 +25,8 @@ export class Login {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private snackbar : SnackbarService
   ) {
 
     this.loginForm = this.fb.group({
@@ -45,10 +47,12 @@ export class Login {
 
     this.authService.login(email, password).subscribe({
       next: (user) => {
+        this.snackbar.showSuccess("Bienvenido a Sportiva Booking");
         console.log('Login correcto:', user);
         this.router.navigate(['/home']);
       },
       error: (e) => {
+        this.snackbar.showError("Lo sentimos, pero las credenciales son incorrectas");
         console.error('Error, login incorrecto', e);
       }
     });
