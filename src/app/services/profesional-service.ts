@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { child, Database, objectVal, ref, remove, set, update } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 import { Profesional } from '../models/Profesional';
@@ -11,10 +11,7 @@ export class ProfesionalService {
   /*Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol*/
   private COLLECTION_NAME = 'Persons';
 
-  /*Constructor del Servicio*/
-  constructor (private database : Database){
-
-  }
+  private database = inject(Database);
 
 
   /**

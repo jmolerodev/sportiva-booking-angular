@@ -1,0 +1,114 @@
+<div style="min-height: 100vh; background-color: #057b2a;"
+    class="d-flex justify-content-center align-items-center position-relative py-5">
+
+    <div class="card shadow" style="width: 100%; max-width: 520px; border-radius: 12px;">
+        <div class="card-body p-4 p-md-5" style="user-select: none;">
+
+            <img src="logo-app.png" class="d-block mx-auto mb-3" style="width: 150px; height: 150px;" />
+
+            <form [formGroup]="centroForm" (ngSubmit)="saveSportCentre()">
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Nombre del centro</label>
+                    <input type="text" class="form-control" placeholder="Introduce el nombre del centro"
+                        formControlName="nombre"
+                        [ngClass]="{
+                            'is-invalid': centroForm.get('nombre')?.invalid && centroForm.get('nombre')?.touched,
+                            'is-valid':   centroForm.get('nombre')?.valid   && centroForm.get('nombre')?.touched
+                        }">
+                    @if (centroForm.get('nombre')?.touched && centroForm.get('nombre')?.hasError('required')) {
+                        <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                            El nombre del centro es obligatorio.
+                        </small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Dirección</label>
+                    <input type="text" class="form-control" placeholder="Introduce la dirección del centro"
+                        formControlName="direccion"
+                        [ngClass]="{
+                            'is-invalid': centroForm.get('direccion')?.invalid && centroForm.get('direccion')?.touched,
+                            'is-valid':   centroForm.get('direccion')?.valid   && centroForm.get('direccion')?.touched
+                        }">
+                    @if (centroForm.get('direccion')?.touched && centroForm.get('direccion')?.hasError('required')) {
+                        <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                            La dirección es obligatoria.
+                        </small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Teléfono</label>
+                    <input type="tel" class="form-control" placeholder="Introduce el teléfono del centro"
+                        formControlName="telefono"
+                        [ngClass]="{
+                            'is-invalid': centroForm.get('telefono')?.invalid && centroForm.get('telefono')?.touched,
+                            'is-valid':   centroForm.get('telefono')?.valid   && centroForm.get('telefono')?.touched
+                        }">
+                    @if (centroForm.get('telefono')?.touched && centroForm.get('telefono')?.hasError('required')) {
+                        <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                            El teléfono es obligatorio.
+                        </small>
+                    }
+                </div>
+
+                <!-- ─── Foto (opcional) ────────────────────────────── -->
+
+                <div class="mb-4">
+                    <label class="form-label text-success" style="font-weight: bold;">
+                        Foto <span class="text-muted fw-normal">(opcional)</span>
+                    </label>
+
+                    @if (!previewImagen) {
+                        <div class="d-flex justify-content-center">
+                            <label class="btn btn-outline-success fw-bold" style="cursor: pointer;">
+                                <i class="bi bi-image me-2"></i>Seleccionar imagen
+                                <input type="file" accept="image/*" class="d-none"
+                                    (change)="onImagenSeleccionada($event)">
+                            </label>
+                        </div>
+                    }
+
+                    @if (previewImagen) {
+                        <div class="text-center">
+                            <img [src]="previewImagen" class="img-fluid rounded mb-2"
+                                style="max-height: 200px; object-fit: cover; border-radius: 8px;">
+                            <div>
+                                <button type="button" class="btn btn-outline-danger btn-sm fw-bold"
+                                    (click)="eliminarImagen()">
+                                    <i class="bi bi-trash me-1"></i>Eliminar imagen
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+                <!-- ─── Botón de guardar ───────────────────────────── -->
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success px-4"
+                        [disabled]="centroForm.invalid || isLoading">
+                        @if (isLoading) {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Guardando...
+                        } @else {
+                            {{ modoEdicion ? 'Guardar cambios' : 'Crear centro deportivo' }}
+                        }
+                    </button>
+                </div>
+
+                <div class="text-center mt-3">
+                    <span class="text-success fw-bold" style="font-size: 0.9rem; cursor: pointer;"
+                        (click)="navigateToHome()">
+                        <i class="bi bi-arrow-left me-1"></i>Volver al inicio
+                    </span>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { Rol } from '../../enums/Rol';
+import { SnackbarService } from '../../services/snackbar';
 
 @Component({
   selector: 'app-header',
@@ -25,7 +26,8 @@ export class Header implements OnInit, OnDestroy {
   /*Constructor del componente*/
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private snackbar : SnackbarService
   ) {}
 
   ngOnInit(): void {
@@ -83,6 +85,7 @@ export class Header implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout().subscribe({
       next: () => {
+        this.snackbar.showSuccess("Sesión Cerrada Con Éxito. Vuelve Pronto...");
         this.router.navigate(['/login']);
       },
       error: (e) => {

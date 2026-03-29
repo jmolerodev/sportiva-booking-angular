@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { child, Database, objectVal, ref, remove, set, update } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 import { Cliente } from '../models/Cliente';
@@ -11,8 +11,7 @@ export class ClienteService {
   /*Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol*/
   private COLLECTION_NAME = 'Persons'; 
 
-  /*Constructor del Servicio*/
-  constructor(private database: Database) {}
+  private database = inject(Database);
 
   /**
    * Método mediante el cual obtenemos los datos de un cliente a través de su UID

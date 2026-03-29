@@ -12,6 +12,7 @@ import { Especialidad } from '../../enums/Especialidad';
 import { ICliente } from '../../interfaces/Cliente-Interface';
 import { IProfesional } from '../../interfaces/Profesional-Interface';
 import { IAdministrador } from '../../interfaces/Administrador-Interface';
+import { SnackbarService } from '../../services/snackbar';
 
 @Component({
   selector: 'app-signup',
@@ -43,7 +44,7 @@ export class SignUp implements OnInit {
 
   /*Constructor del componente*/
   constructor(private fb: FormBuilder, private authService: AuthService, private clienteService: ClienteService, private profesionalService: ProfesionalService,
-  private adminService: AdminService, private router: Router) {
+  private adminService: AdminService, private router: Router, private snackbar: SnackbarService) {
 
     /*Aplicamos passwordsMatchValidator al FormGroup completo para validación en tiempo real*/
     this.signUpForm = this.fb.group({
@@ -151,6 +152,7 @@ export class SignUp implements OnInit {
           };
 
           this.clienteService.saveCliente(uid, nuevoCliente).then(() => {
+            this.snackbar.showSuccess("Cuenta de Cliente creada con éxito");
             console.log('Cliente registrado correctamente:', nuevoCliente);
             this.isLoading = false;
             this.router.navigate(['/home']);
@@ -173,6 +175,7 @@ export class SignUp implements OnInit {
           };
 
           this.profesionalService.saveProfesional(uid, nuevoProfesional).then(() => {
+            this.snackbar.showSuccess("Cuenta de Profesional creada con éxito");
             console.log('Profesional registrado correctamente:', nuevoProfesional);
             this.isLoading = false;
             this.router.navigate(['/home']);
@@ -192,6 +195,7 @@ export class SignUp implements OnInit {
           };
 
           this.adminService.saveAdministrador(uid, nuevoAdministrador).then(() => {
+            this.snackbar.showSuccess("Cuenta de Administrador creada con éxito");
             console.log('Administrador registrado correctamente:', nuevoAdministrador);
             this.isLoading = false;
             this.router.navigate(['/home']);
