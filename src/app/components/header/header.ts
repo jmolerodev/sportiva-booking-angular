@@ -86,7 +86,6 @@ export class Header implements OnInit, OnDestroy {
     this.authService.logout().subscribe({
       next: () => {
         this.snackbar.showSuccess("Sesión Cerrada Con Éxito. Vuelve Pronto...");
-        this.router.navigate(['/login']);
       },
       error: (e) => {
         console.error('Error al cerrar sesión:', e);

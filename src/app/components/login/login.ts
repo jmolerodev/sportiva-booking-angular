@@ -5,10 +5,10 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { customEmailValidator, customPasswordValidator } from '../../validators/auth.validator';
 import { SnackbarService } from '../../services/snackbar';
+import { setPersistence, browserLocalPersistence, browserSessionPersistence } from '@angular/fire/auth';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
@@ -31,7 +31,8 @@ export class Login {
 
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, customEmailValidator()]],
-      password: ['', [Validators.required, customPasswordValidator()]]
+      password: ['', [Validators.required, customPasswordValidator()]],
+      remember: [false]
     });
 
   }
@@ -41,20 +42,27 @@ export class Login {
    */
   login(): void {
 
-    if (this.loginForm.invalid) return;
+    if (this.loginForm.invalid) {
+      return;
+    }
 
-    const { email, password } = this.loginForm.value;
+    const { email, password, remember } = this.loginForm.value;
 
-    this.authService.login(email, password).subscribe({
-      next: (user) => {
-        this.snackbar.showSuccess("Bienvenido a Sportiva Booking");
-        console.log('Login correcto:', user);
-        this.router.navigate(['/home']);
-      },
-      error: (e) => {
-        this.snackbar.showError("Lo sentimos, pero las credenciales son incorrectas");
-        console.error('Error, login incorrecto', e);
-      }
+    const persistence = remember ? browserLocalPersistence : browserSessionPersistence;
+
+    /*Configuramos persistencia antes del login*/
+    setPersistence(this.authService.auth, persistence).then(() => {
+
+      this.authService.login(email, password).subscribe({
+        next: (user) => {
+          this.snackbar.showSuccess("Bienvenido a Sportiva Booking");
+          this.router.navigate(['/home']);
+        },
+        error: (e) => {
+          this.snackbar.showError("Lo sentimos, pero las credenciales son incorrectas");
+        }
+      });
+
     });
 
   }

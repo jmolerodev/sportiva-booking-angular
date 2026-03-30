@@ -4,13 +4,14 @@ import { from, map, Observable, of, switchMap } from 'rxjs';
 import { Rol } from '../enums/Rol';
 import { child, Database, objectVal } from '@angular/fire/database';
 import { ref } from 'firebase/database';
+import { onAuthStateChanged } from 'firebase/auth';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
 
-  private auth = inject(Auth);
+  public auth = inject(Auth); 
   private database = inject(Database);
   private authState$ = authState(this.auth);
 
@@ -52,6 +53,20 @@ export class AuthService {
    */
   getCurrentUser(): Observable<User | null> {
     return this.authState$;
+  }
+
+  /**
+   * Devuelve un observable con la información del usuario autenticado
+   * @returns Observable<User | null>
+   */
+  getUserAuthenticated(): Observable<User | null> {
+    return new Observable((observer) => {
+      onAuthStateChanged(
+        this.auth,
+        (user) => observer.next(user),
+        (error) => observer.error(error)
+      );
+    });
   }
 
   /**

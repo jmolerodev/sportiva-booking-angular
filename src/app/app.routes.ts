@@ -12,6 +12,6 @@ export const routes: Routes = [
     { path: 'about', component: About },
     { path: 'signup', component: SignUp },
     { path: 'add-sport-centre', component: AddSportCentre },
-    { path: '', redirectTo: 'login', pathMatch: 'full' },
+    { path: '', redirectTo: 'home', pathMatch: 'full' },
     { path: '**', component: NotFound }
 ];
