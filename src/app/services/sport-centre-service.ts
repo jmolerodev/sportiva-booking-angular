@@ -1,6 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { child, Database, listVal, objectVal, ref, remove, set, update } from '@angular/fire/database';
-import { map, Observable } from 'rxjs';
+import { Storage, ref as refStorage, deleteObject } from '@angular/fire/storage';
+import { map, Observable, from, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { Sport_Centre } from '../models/Sport_Centre';
 
 @Injectable({
@@ -12,8 +14,8 @@ export class SportCentreService {
   private COLLECTION_NAME = 'Sports-Centre';
 
   private database = inject(Database);
+  private storage = inject(Storage);
 
-  
   private allSportCentres$ = listVal<Sport_Centre>(ref(this.database, `/${this.COLLECTION_NAME}`));
 
   /**
@@ -27,10 +29,10 @@ export class SportCentreService {
   }
 
   /**
- * Método para obtener el centro deportivo de un administrador a través de su UID
- * @param adminUid UID del administrador
- * @returns Observable con el centro deportivo del administrador o null si no tiene
- */
+   * Método para obtener el centro deportivo de un administrador a través de su UID
+   * @param adminUid UID del administrador
+   * @returns Observable con el centro deportivo del administrador o null si no tiene
+   */
   getSportCentreByAdminUid(adminUid: string): Observable<Sport_Centre | null> {
     return this.allSportCentres$.pipe(
       map(centros => centros?.find(c => c.adminUid == adminUid) ?? null)
@@ -57,13 +59,30 @@ export class SportCentreService {
   }
 
   /**
-   * Método para eliminar completamente un centro deportivo de nuestra base de datos
-   * @param uid Identificador del Centro Deportivo que vamos a eliminar
-   * @returns Promesa que se resuelve una vez se ha completado la operación
+   * Método para eliminar completamente un centro deportivo (RTDB + Storage)
+   * @param uid Identificador del centro deportivo (clave del nodo)
+   * @param fotoUrl URL de la foto almacenada en Storage para su eliminación física
+   * @returns Observable que se completa tras eliminar ambos recursos
    */
-  deleteSportCentre(uid: string): Promise<void> {
+  deleteSportCentreComplete(uid: string, fotoUrl: string | null): Observable<void> {
     const centreRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return remove(centreRef);
+    const deleteDb$ = from(remove(centreRef));
+
+    /*Si el centro tiene foto en Storage, procedemos a su eliminación antes de borrar el nodo*/
+    if (fotoUrl && fotoUrl.trim() !== '' && fotoUrl.startsWith('http')) {
+      const storageRef = refStorage(this.storage, fotoUrl);
+      return from(deleteObject(storageRef)).pipe(
+        catchError(error => {
+          /*Si la foto no existe o da error, permitimos que el flujo continúe para borrar los datos*/
+          console.warn('Error al eliminar foto de Storage, procediendo con DB:', error);
+          return of(null);
+        }),
+        switchMap(() => deleteDb$)
+      );
+    }
+
+    /*Si no hay foto, eliminamos directamente el nodo de la base de datos*/
+    return deleteDb$;
   }
 
   /**

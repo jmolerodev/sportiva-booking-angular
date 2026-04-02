@@ -10,7 +10,6 @@ export class SnackbarService {
 
   /**
    * Método mediante el cual mostraremos una notificación de éxito 
-   * en la parte inferior de la pantalla.
    * @param message Mensaje descriptivo del éxito
    */
   showSuccess(message: string): void {
@@ -24,7 +23,6 @@ export class SnackbarService {
 
   /**
    * Método mediante el cual mostraremos una notificación de error 
-   * persistente para advertir al usuario.
    * @param message Mensaje de error a mostrar
    */
   showError(message: string): void {
@@ -36,4 +34,23 @@ export class SnackbarService {
     });
   }
 
+  /**
+   * Método para mostrar una confirmación antes de realizar una acción crítica.
+   * @param message Mensaje de advertencia
+   * @param actionText Texto del botón de acción (ej: 'ELIMINAR')
+   * @param callback Función que se ejecutará si el usuario confirma
+   */
+  showConfirm(message: string, actionText: string, callback: () => void): void {
+    const snackRef = this.snackBar.open(message, actionText, {
+      duration: 5000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+      panelClass: ['warning-snackbar'], // Podrías darle un estilo naranja/rojo en CSS
+    });
+
+    /* Si el usuario pulsa el botón de acción (ej: ELIMINAR), ejecutamos el callback */
+    snackRef.onAction().subscribe(() => {
+      callback();
+    });
+  }
 }

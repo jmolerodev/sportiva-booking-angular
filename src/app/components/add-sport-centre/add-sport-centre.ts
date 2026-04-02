@@ -2,14 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage'; // 👈 añadido
+import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 import { AuthService } from '../../services/auth';
 import { SportCentreService } from '../../services/sport-centre-service';
 import { ISportCentre } from '../../interfaces/Sport-Centre-Interface';
 
 @Component({
   selector: 'app-add-sport-centre',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './add-sport-centre.html',
   styleUrl: './add-sport-centre.css',
@@ -17,13 +16,16 @@ import { ISportCentre } from '../../interfaces/Sport-Centre-Interface';
 export class AddSportCentre implements OnInit {
 
   /*Formulario reactivo para crear o editar un centro deportivo*/
-  centroForm: FormGroup;
+  public centroForm: FormGroup;
 
   /*Variable booleana que nos indica si el formulario se está procesando*/
-  isLoading: boolean = false;
+  public isLoading: boolean = false;
+
+  /*Variable booleana que nos indica si los datos iniciales se están cargando*/
+  public isInitialLoading: boolean = false;
 
   /*Variable booleana que indica si estamos en modo edición o creación*/
-  modoEdicion: boolean = false;
+  public modoEdicion: boolean = false;
 
   /*UID del administrador autenticado*/
   private adminUid: string | null = null;
@@ -32,9 +34,14 @@ export class AddSportCentre implements OnInit {
   private imagenSeleccionada: File | null = null;
 
   /*Preview de la imagen seleccionada para mostrarla antes de guardar*/
-  previewImagen: string | null = null;
+  public previewImagen: string | null = null;
 
-  /*Constructor del componente*/
+  /*URL original de la imagen ya guardada en Storage (para poder eliminarla si se reemplaza)*/
+  private urlImagenOriginal: string | null = null;
+
+  /**
+   * Constructor del componente: inicialización de dependencias
+   */
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -43,19 +50,25 @@ export class AddSportCentre implements OnInit {
     private router: Router,
     private route: ActivatedRoute
   ) {
-
     this.centroForm = this.fb.group({
       nombre:    ['', Validators.required],
       direccion: ['', Validators.required],
       telefono:  ['', Validators.required],
     });
-
   }
 
+  /**
+   * Ciclo de vida inicial: capturamos parámetros y sincronizamos la imagen
+   */
   ngOnInit(): void {
 
     /*Comprobamos si venimos en modo edición mediante el queryParam*/
     this.modoEdicion = this.route.snapshot.queryParams['editar'] === 'true';
+
+    /*Recuperamos la fotoReciente de la URL para evitar el lag de Firebase en la previsualización*/
+    const fotoReciente = this.route.snapshot.queryParams['fotoReciente'];
+
+    if (this.modoEdicion) this.isInitialLoading = true;
 
     /*Obtenemos el UID del administrador autenticado*/
     this.authService.getCurrentUser().subscribe(user => {
@@ -71,20 +84,32 @@ export class AddSportCentre implements OnInit {
                 direccion: centro.direccion,
                 telefono:  centro.telefono,
               });
-              /*Si tiene foto la mostramos como preview*/
-              if (centro.foto) {
-                this.previewImagen = centro.foto;
+
+              /*Usamos la foto del queryParam si existe; si no, la de Firebase*/
+              const fotoDefinitiva = (fotoReciente !== undefined && fotoReciente !== null)
+                ? fotoReciente
+                : centro.foto;
+
+              /*Si tiene foto la mostramos como preview y guardamos la URL original*/
+              if (fotoDefinitiva) {
+                this.previewImagen      = fotoDefinitiva;
+                this.urlImagenOriginal  = fotoDefinitiva;
               }
+
+              this.isInitialLoading = false;
             }
           },
-          error: (e) => {
-            console.error('Error al cargar los datos del centro para edición:', e);
-          }
+          error: () => this.isInitialLoading = false
         });
+      } else {
+        this.isInitialLoading = false;
       }
     });
 
   }
+
+  onFotoCargada(): void { if (this.modoEdicion) this.isInitialLoading = false; }
+  onFotoError(): void   { this.previewImagen = null; this.isInitialLoading = false; }
 
   /**
    * Método que gestiona la selección de una imagen desde el dispositivo del usuario.
@@ -93,15 +118,13 @@ export class AddSportCentre implements OnInit {
    */
   onImagenSeleccionada(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
+    if (!input.files?.length) return;
 
     this.imagenSeleccionada = input.files[0];
 
     /*Generamos la preview de la imagen seleccionada*/
     const reader = new FileReader();
-    reader.onload = () => {
-      this.previewImagen = reader.result as string;
-    };
+    reader.onload = () => this.previewImagen = reader.result as string;
     reader.readAsDataURL(this.imagenSeleccionada);
   }
 
@@ -109,20 +132,6 @@ export class AddSportCentre implements OnInit {
    * Método que elimina la imagen seleccionada y limpia la preview
    */
   eliminarImagen(): void {
-
-    /*Si hay una imagen ya subida (URL), la eliminamos también de Storage*/
-    if (this.previewImagen && this.previewImagen.startsWith('http')) {
-      const storageRef = ref(this.storage, this.previewImagen);
-
-      deleteObject(storageRef).then(() => {
-        console.log('Imagen eliminada de Storage');
-      }).catch((error) => {
-        if (error.code !== 'storage/object-not-found') {
-          console.error('Error al eliminar la imagen de Storage:', error);
-        }
-      });
-    }
-
     this.imagenSeleccionada = null;
     this.previewImagen = null;
   }
@@ -142,41 +151,44 @@ export class AddSportCentre implements OnInit {
 
     if (this.imagenSeleccionada) {
 
-      /*Subimos la imagen a Firebase Storage bajo la ruta Sports-Center/adminUid*/
-      const storageRef = ref(this.storage, `Sports-Center/${this.adminUid}`);
+      /*Si había una imagen anterior la eliminamos de Storage antes de subir la nueva*/
+      if (this.urlImagenOriginal) {
+        deleteObject(ref(this.storage, this.urlImagenOriginal)).catch(() => { });
+      }
 
-      uploadBytes(storageRef, this.imagenSeleccionada).then(snapshot => {
-        getDownloadURL(snapshot.ref).then(url => {
-          this.guardarCentro(nombre, direccion, telefono, url);
-        }).catch(e => {
-          console.error('Error al obtener la URL de la imagen:', e);
-          this.isLoading = false;
-        });
-      }).catch(e => {
-        console.error('Error al subir la imagen a Storage:', e);
-        this.isLoading = false;
-      });
+      /*Subimos la imagen a Firebase Storage bajo la ruta Sport-Centre/nombre-archivo*/
+      const storageRef = ref(this.storage, `Sport-Centre/${this.imagenSeleccionada.name}`);
+      uploadBytes(storageRef, this.imagenSeleccionada)
+        .then(snapshot => getDownloadURL(snapshot.ref))
+        .then(url => this.guardarDatosFinales(nombre, direccion, telefono, url))
+        .catch(() => this.isLoading = false);
+
+    } else if (!this.previewImagen) {
+
+      /*Sin preview significa que el usuario eliminó la imagen — la borramos de Storage*/
+      if (this.urlImagenOriginal) {
+        deleteObject(ref(this.storage, this.urlImagenOriginal)).catch(() => { });
+      }
+      this.guardarDatosFinales(nombre, direccion, telefono, '');
 
     } else {
 
-      /*Sin imagen nueva — mantenemos la preview existente o guardamos vacío*/
-      const foto = this.previewImagen && !this.previewImagen.startsWith('data:') 
-        ? this.previewImagen 
-        : '';
-      this.guardarCentro(nombre, direccion, telefono, foto);
+      /*Sin imagen nueva — mantenemos la URL original existente*/
+      this.guardarDatosFinales(nombre, direccion, telefono, this.urlImagenOriginal || '');
 
     }
 
   }
 
   /**
-   * Método privado que construye el objeto ISportCentre y lo guarda en RTDB
+   * Método privado que construye el objeto ISportCentre, lo guarda en RTDB
+   * y redirige al Home pasando la URL actualizada para mantener la reactividad
    * @param nombre Nombre del centro deportivo
    * @param direccion Dirección del centro deportivo
    * @param telefono Teléfono del centro deportivo
    * @param foto URL de la foto del centro deportivo
    */
-  private guardarCentro(nombre: string, direccion: string, telefono: string, foto: string): void {
+  private guardarDatosFinales(nombre: string, direccion: string, telefono: string, foto: string): void {
 
     const centro: ISportCentre = {
       nombre,
@@ -188,20 +200,23 @@ export class AddSportCentre implements OnInit {
 
     this.sportCentreService.saveSportCentre(this.adminUid!, centro).then(() => {
       console.log(this.modoEdicion ? 'Centro actualizado correctamente:' : 'Centro creado correctamente:', centro);
-      this.isLoading = false;
-      this.router.navigate(['/home']);
-    }).catch(e => {
-      console.error('Error al guardar el centro deportivo:', e);
-      this.isLoading = false;
-    });
+      this.router.navigate(['/home'], {
+        queryParams: { fotoReciente: foto }
+      }).then(() => {
+        this.isLoading = false;
+      });
+    }).catch(() => this.isLoading = false);
 
   }
 
   /**
+   * Método mediante el cual cancelamos la edición y volvemos al home
+   */
+  cancelarEdicion(): void { this.router.navigate(['/home']); }
+
+  /**
    * Método mediante el cual navegaremos de vuelta al home
    */
-  navigateToHome(): void {
-    this.router.navigate(['/home']);
-  }
+  navigateToHome(): void { this.router.navigate(['/home']); }
 
 }

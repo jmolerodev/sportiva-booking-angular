@@ -1,70 +1,74 @@
-@if (loading) {
-
 <div style="min-height: 100vh; background-color: #057b2a;"
-    class="d-flex flex-column justify-content-center align-items-center py-5 text-white">
+    class="d-flex flex-column justify-content-center align-items-center py-5 position-relative">
 
-    <div class="spinner-border mb-3" role="status"></div>
-
-    <h5 class="fw-bold">
-        Cargando centros deportivos...
-    </h5>
-
-</div>
-
-} @else {
-
-<div style="min-height: 100vh; background-color: #057b2a;"
-    class="d-flex flex-column justify-content-center align-items-center py-5">
+    @if (loading) {
+    <div class="card shadow" style="width: 100%; max-width: 520px; border-radius: 12px;">
+        <div class="card-body p-4 p-md-5 text-center">
+            <img src="logo-app.png" class="d-block mx-auto mb-3" style="width: 150px; height: 150px;" />
+            <div class="spinner-border text-success mb-3" role="status"></div>
+            <h5 class="text-success fw-bold">Cargando centros deportivos...</h5>
+        </div>
+    </div>
+    } @else {
 
     <h1 class="text-white fw-bold mb-4" style="font-size: 2rem; user-select: none;">
         Tus Centros Deportivos Disponibles
     </h1>
 
-
-
     @if (esAdministrador) {
+        @if (!centroAdmin) {
+        <div class="card shadow text-center p-4 mb-4" style="border-radius: 12px; max-width: 480px; width: 100%;">
+            <i class="bi bi-building-add" style="font-size: 3rem; color: #057b2a;"></i>
+            <h5 class="fw-bold mt-3" style="color: #057b2a;">Aún no tienes un centro deportivo</h5>
+            <p class="text-muted mt-1">Crea tu centro para que los clientes puedan encontrarte.</p>
+            <button class="btn btn-success mt-2 fw-bold" (click)="navigateToAddSportCentre()">
+                <i class="bi bi-plus-circle me-2"></i>Añadir centro deportivo
+            </button>
+        </div>
+        }
 
+        @if (centroAdmin) {
+        <div class="card shadow mb-4 mx-auto" style="border-radius: 12px; max-width: 560px; width: 100%;">
 
-    @if (!centroAdmin) {
-    <div class="card shadow text-center p-4 mb-4" style="border-radius: 12px; max-width: 480px; width: 100%;">
-        <i class="bi bi-building-add" style="font-size: 3rem; color: #057b2a;"></i>
-        <h5 class="fw-bold mt-3" style="color: #057b2a;">Aún no tienes un centro deportivo</h5>
-        <p class="text-muted mt-1">Crea tu centro para que los clientes puedan encontrarte.</p>
-        <button class="btn btn-success mt-2 fw-bold" (click)="navigateToAddSportCentre()">
-            <i class="bi bi-plus-circle me-2"></i>Añadir centro deportivo
-        </button>
-    </div>
-    }
+            <!-- Spinner mientras la imagen del centro está cargando -->
+            @if (imagenCargando) {
+            <div class="d-flex justify-content-center align-items-center bg-light"
+                style="border-radius: 12px 12px 0 0; min-height: 220px;">
+                <div class="text-center">
+                    <div class="spinner-border text-success mb-2" role="status"></div>
+                    <p class="text-success fw-bold small mb-0">Cargando imagen...</p>
+                </div>
+            </div>
+            }
 
+            <!-- Imagen oculta mientras carga, visible al terminar -->
+            <div class="img-wrapper" [style.display]="imagenCargando ? 'none' : 'block'">
+                <img [src]="getFoto(centroAdmin.foto)" class="img-fit"
+                    [alt]="centroAdmin.nombre"
+                    (load)="imagenCargando = false"
+                    (error)="centroAdmin.foto = imagenPorDefecto; imagenCargando = false">
+            </div>
 
-    @if (centroAdmin) {
-    <div class="card shadow mb-4 mx-auto" style="border-radius: 12px; max-width: 560px; width: 100%;">
-        <img [src]="getFoto(centroAdmin.foto)" class="card-img-top"
-            style="height: 220px; object-fit: cover; border-radius: 12px 12px 0 0;" [alt]="centroAdmin.nombre"
-            (error)="centroAdmin.foto = imagenPorDefecto">
-        <div class="card-body p-4" style="user-select: none;">
-            <h5 class="card-title fw-bold text-success">{{ centroAdmin.nombre }}</h5>
-            <p class="card-text text-muted mb-1">
-                <i class="bi bi-geo-alt me-1 text-success"></i>{{ centroAdmin.direccion }}
-            </p>
-            <p class="card-text text-muted">
-                <i class="bi bi-telephone me-1 text-success"></i>{{ centroAdmin.telefono }}
-            </p>
-            <div class="d-flex gap-2 mt-3">
-                <button class="btn btn-success fw-bold w-50" (click)="navigateToEditSportCentre()">
-                    <i class="bi bi-pencil me-2"></i>Editar
-                </button>
-                <button class="btn btn-danger fw-bold w-50" (click)="deleteSportCentre()">
-                    <i class="bi bi-trash me-2"></i>Eliminar
-                </button>
+            <div class="card-body p-4" style="user-select: none;">
+                <h5 class="card-title fw-bold text-success">{{ centroAdmin.nombre }}</h5>
+                <p class="card-text text-muted mb-1">
+                    <i class="bi bi-geo-alt me-1 text-success"></i>{{ centroAdmin.direccion }}
+                </p>
+                <p class="card-text text-muted">
+                    <i class="bi bi-telephone me-1 text-success"></i>{{ centroAdmin.telefono }}
+                </p>
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-success fw-bold w-50" (click)="navigateToEditSportCentre()">
+                        <i class="bi bi-pencil me-2"></i>Editar
+                    </button>
+                    <button class="btn btn-danger fw-bold w-50" (click)="deleteSportCentre()">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+        }
     }
-
-    }
-
-
 
     @if (centros.length == 0 && !esAdministrador) {
     <div class="card shadow text-center p-5" style="border-radius: 12px; max-width: 480px; width: 100%;">
@@ -74,12 +78,8 @@
     </div>
     }
 
-
-
     @if (centros.length > 0 && !esAdministrador) {
-
     <div id="carouselCentros" class="carousel slide" style="max-width: 560px; width: 100%;" data-bs-ride="carousel">
-
         <div class="carousel-indicators">
             @for (centro of centros; track centro; let i = $index) {
             <button type="button" data-bs-target="#carouselCentros" [attr.data-bs-slide-to]="i" [class.active]="i == 0"
@@ -88,13 +88,16 @@
             }
         </div>
 
-        <div class="carousel-inner">
+        <div class="carousel-inner" style="border-radius: 12px;">
             @for (centro of centros; track centro; let i = $index) {
             <div class="carousel-item" [class.active]="i == 0">
-                <div class="card shadow mx-auto" style="border-radius: 12px; width: 100%;">
-                    <img [src]="getFoto(centro.foto)" class="card-img-top"
-                        style="height: 220px; object-fit: cover; border-radius: 12px 12px 0 0;" [alt]="centro.nombre"
-                        (error)="centro.foto = imagenPorDefecto">
+                <div class="card shadow mx-auto border-0" style="width: 100%;">
+                    <div class="img-wrapper">
+                        <img [src]="getFoto(centro.foto)" class="img-fit"
+                            [alt]="centro.nombre"
+                            (error)="centro.foto = imagenPorDefecto">
+                    </div>
+
                     <div class="card-body p-4" style="user-select: none;">
                         <h5 class="card-title fw-bold text-success">{{ centro.nombre }}</h5>
                         <p class="card-text text-muted mb-1">
@@ -115,11 +118,7 @@
         <button class="carousel-control-next" type="button" data-bs-target="#carouselCentros" data-bs-slide="next">
             <span class="carousel-control-next-icon"></span>
         </button>
-
     </div>
-
     }
-
+    }
 </div>
-
-}

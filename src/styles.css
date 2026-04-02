@@ -1,5 +1,3 @@
-/* src/styles.css */
-
 /* ÉXITO: Fondo verde y texto negro */
 .success-snackbar .mdc-snackbar__surface {
   background-color: #16b61e !important;
@@ -19,6 +17,18 @@
 
 .error-snackbar .mdc-snackbar__label,
 .error-snackbar .mat-mdc-snack-bar-action {
+  color: #000000 !important;
+  font-weight: 600 !important;
+  text-align: center;
+}
+
+
+.warning-snackbar .mdc-snackbar__surface {
+  background-color: #db8411 !important;
+}
+
+.warning-snackbar .mdc-snackbar__label,
+.warning-snackbar .mat-mdc-snack-bar-action {
   color: #000000 !important;
   font-weight: 600 !important;
   text-align: center;
