@@ -31,6 +31,11 @@ export class Home implements OnInit, OnDestroy {
   /*Imagen por defecto en caso de que el centro no tenga foto*/
   readonly imagenPorDefecto = 'centro-default.png';
 
+  
+  loading: boolean = true;
+  loadingCentros: boolean = true;
+  loadingUsuario: boolean = true;
+
   /*Suscripciones para limpiarlas al destruir el componente*/
   private subscription: Subscription = new Subscription();
 
@@ -48,9 +53,13 @@ export class Home implements OnInit, OnDestroy {
       this.sportCentreService.getAllSportCentres().subscribe({
         next: (centros) => {
           this.centros = centros ?? [];
+          this.loadingCentros = false;
+          this.checkLoading();
         },
         error: (e) => {
           console.error('Error al obtener los centros deportivos:', e);
+          this.loadingCentros = false;
+          this.checkLoading();
         }
       })
     );
@@ -59,7 +68,11 @@ export class Home implements OnInit, OnDestroy {
     this.subscription.add(
       this.authService.getCurrentUser().pipe(
         switchMap(user => {
-          if (!user) return of({ rol: null, uid: null });
+          if (!user) {
+            this.loadingUsuario = false;
+            this.checkLoading();
+            return of({ rol: null, uid: null });
+          }
           this.adminUid = user.uid;
           return this.authService.getRol().pipe(
             switchMap(rol => of({ rol, uid: user.uid }))
@@ -67,22 +80,37 @@ export class Home implements OnInit, OnDestroy {
         })
       ).subscribe(({ rol, uid }) => {
         this.esAdministrador = rol == Rol.ADMINISTRADOR;
+
         if (this.esAdministrador && uid) {
           /*Buscamos el centro deportivo del administrador autenticado*/
           this.subscription.add(
             this.sportCentreService.getSportCentreByAdminUid(uid).subscribe({
               next: (centro) => {
                 this.centroAdmin = centro;
+                this.loadingUsuario = false;
+                this.checkLoading();
               },
               error: (e) => {
                 console.error('Error al obtener el centro del administrador:', e);
+                this.loadingUsuario = false;
+                this.checkLoading();
               }
             })
           );
+        } else {
+          this.loadingUsuario = false;
+          this.checkLoading();
         }
       })
     );
 
+  }
+
+  
+  private checkLoading(): void {
+    if (!this.loadingCentros && !this.loadingUsuario) {
+      this.loading = false;
+    }
   }
 
   ngOnDestroy(): void {

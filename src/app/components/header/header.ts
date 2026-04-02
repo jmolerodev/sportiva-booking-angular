@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, combineLatest } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { Rol } from '../../enums/Rol';
 import { SnackbarService } from '../../services/snackbar';
@@ -20,6 +20,9 @@ export class Header implements OnInit, OnDestroy {
   /*Variable booleana que indica si hay sesión iniciada*/
   haySession: boolean = false;
 
+
+  isReady: boolean = false;
+
   /*Suscripción principal para limpiarla al destruir el componente y evitar memory leaks*/
   private subscription: Subscription = new Subscription();
 
@@ -27,22 +30,20 @@ export class Header implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private snackbar : SnackbarService
-  ) {}
+    private snackbar: SnackbarService
+  ) { }
 
   ngOnInit(): void {
 
-    /*Escuchamos el estado de la sesión en tiempo real*/
     this.subscription.add(
-      this.authService.getCurrentUser().subscribe(user => {
+      combineLatest([
+        this.authService.getCurrentUser(),
+        this.authService.getRol()
+      ]).subscribe(([user, rol]) => {
         this.haySession = !!user;
-      })
-    );
-
-    /*Escuchamos el rol del usuario en tiempo real*/
-    this.subscription.add(
-      this.authService.getRol().subscribe(rol => {
         this.rol = rol;
+        /*Marcamos listo SOLO cuando todo está resuelto*/
+        this.isReady = true;
       })
     );
 
@@ -64,31 +65,23 @@ export class Header implements OnInit, OnDestroy {
     return this.rol == Rol.ADMINISTRADOR;
   }
 
- 
-  /**
-   * Método mediante el cual navegaremos al Login
-   */
   navigateToLogin(): void {
     this.router.navigate(['/login']);
   }
 
-  /**
-   * Método mediante el cual navegaremos al Registro
-   */
   navigateToSignUp(): void {
     this.router.navigate(['/signup']);
   }
 
-  /**
-   * Método mediante el cual cerraremos la sesión del usuario
-   */
   logout(): void {
+
+
     this.authService.logout().subscribe({
       next: () => {
         this.snackbar.showSuccess("Sesión Cerrada Con Éxito. Vuelve Pronto...");
       },
       error: (e) => {
-        console.error('Error al cerrar sesión:', e);
+
       }
     });
   }

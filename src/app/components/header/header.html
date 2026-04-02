@@ -1,83 +1,63 @@
 <header class="d-flex flex-wrap justify-content-between align-items-center py-3 border-bottom">
 
     <span class="d-flex align-items-center ms-3">
-        <span class="fw-bold text-success fs-3" style="cursor: pointer; user-select: none;">Sportiva Booking</span>
+        <span class="fw-bold text-success fs-3" style="cursor: pointer; user-select: none;">
+            Sportiva Booking
+        </span>
     </span>
+
+    @if (isReady) {
 
     <ul class="d-flex align-items-center list-unstyled mb-0 gap-3 me-3">
 
         @if (!haySession) {
         <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;"
-                (click)="navigateToLogin()">Iniciar Sesión</a>
+            <a class="text-success text-decoration-none"
+               style="cursor: pointer; font-weight: bold; user-select: none;"
+               (click)="navigateToLogin()">Iniciar Sesión</a>
         </li>
         <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;"
-                (click)="navigateToSignUp()">Registrarse</a>
+            <a class="text-success text-decoration-none"
+               style="cursor: pointer; font-weight: bold; user-select: none;"
+               (click)="navigateToSignUp()">Registrarse</a>
         </li>
         }
 
         @if (esCliente) {
-        <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;">
-                Opción Cliente 1
-            </a>
-        </li>
-        <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;">
-                Opción Cliente 2
-            </a>
-        </li>
-        <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;">
-                Opción Cliente 3
-            </a>
-        </li>
+        <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Cliente 1</a></li>
+        <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Cliente 2</a></li>
+        <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Cliente 3</a></li>
         }
 
         @if (esProfesional) {
-        <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;">
-                Opción Profesional 1
-            </a>
-        </li>
-        <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;">
-                Opción Profesional 2
-            </a>
-        </li>
-        <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;">
-                Opción Profesional 3
-            </a>
-        </li>
+        <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Profesional 1</a></li>
+        <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Profesional 2</a></li>
+        <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Profesional 3</a></li>
         }
 
         @if (esAdministrador) {
-        <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;">
-                Opción Admin 1
-            </a>
-        </li>
-        <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;">
-                Opción Admin 2
-            </a>
-        </li>
-        <li>
-            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;">
-                Opción Admin 3
-            </a>
-        </li>
+        <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin 1</a></li>
+        <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin 2</a></li>
+        <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin 3</a></li>
         }
 
         @if (haySession) {
         <li>
-            <a class="text-danger text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;"
-                (click)="logout()">Cerrar sesión</a>
+            <a class="text-danger text-decoration-none"
+               style="cursor: pointer; font-weight: bold; user-select: none;"
+               (click)="logout()">Cerrar sesión</a>
         </li>
         }
 
     </ul>
+
+    } @else {
+
+    
+    <div class="me-3 text-success" style="font-weight: bold;">
+        Cargando sesión...
+    </div>
+
+    }
 
 </header>

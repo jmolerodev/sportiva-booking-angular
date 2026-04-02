@@ -1,3 +1,18 @@
+@if (loading) {
+
+<div style="min-height: 100vh; background-color: #057b2a;"
+    class="d-flex flex-column justify-content-center align-items-center py-5 text-white">
+
+    <div class="spinner-border mb-3" role="status"></div>
+
+    <h5 class="fw-bold">
+        Cargando centros deportivos...
+    </h5>
+
+</div>
+
+} @else {
+
 <div style="min-height: 100vh; background-color: #057b2a;"
     class="d-flex flex-column justify-content-center align-items-center py-5">
 
@@ -5,111 +20,106 @@
         Tus Centros Deportivos Disponibles
     </h1>
 
-    <!-- ─── Opciones del Administrador ───────────────────── -->
+
 
     @if (esAdministrador) {
 
-        <!-- Admin sin centro → botón para crear -->
-        @if (!centroAdmin) {
-            <div class="card shadow text-center p-4 mb-4" style="border-radius: 12px; max-width: 480px; width: 100%;">
-                <i class="bi bi-building-add" style="font-size: 3rem; color: #057b2a;"></i>
-                <h5 class="fw-bold mt-3" style="color: #057b2a;">Aún no tienes un centro deportivo</h5>
-                <p class="text-muted mt-1">Crea tu centro para que los clientes puedan encontrarte.</p>
-                <button class="btn btn-success mt-2 fw-bold" (click)="navigateToAddSportCentre()">
-                    <i class="bi bi-plus-circle me-2"></i>Añadir centro deportivo
+
+    @if (!centroAdmin) {
+    <div class="card shadow text-center p-4 mb-4" style="border-radius: 12px; max-width: 480px; width: 100%;">
+        <i class="bi bi-building-add" style="font-size: 3rem; color: #057b2a;"></i>
+        <h5 class="fw-bold mt-3" style="color: #057b2a;">Aún no tienes un centro deportivo</h5>
+        <p class="text-muted mt-1">Crea tu centro para que los clientes puedan encontrarte.</p>
+        <button class="btn btn-success mt-2 fw-bold" (click)="navigateToAddSportCentre()">
+            <i class="bi bi-plus-circle me-2"></i>Añadir centro deportivo
+        </button>
+    </div>
+    }
+
+
+    @if (centroAdmin) {
+    <div class="card shadow mb-4 mx-auto" style="border-radius: 12px; max-width: 560px; width: 100%;">
+        <img [src]="getFoto(centroAdmin.foto)" class="card-img-top"
+            style="height: 220px; object-fit: cover; border-radius: 12px 12px 0 0;" [alt]="centroAdmin.nombre"
+            (error)="centroAdmin.foto = imagenPorDefecto">
+        <div class="card-body p-4" style="user-select: none;">
+            <h5 class="card-title fw-bold text-success">{{ centroAdmin.nombre }}</h5>
+            <p class="card-text text-muted mb-1">
+                <i class="bi bi-geo-alt me-1 text-success"></i>{{ centroAdmin.direccion }}
+            </p>
+            <p class="card-text text-muted">
+                <i class="bi bi-telephone me-1 text-success"></i>{{ centroAdmin.telefono }}
+            </p>
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-success fw-bold w-50" (click)="navigateToEditSportCentre()">
+                    <i class="bi bi-pencil me-2"></i>Editar
+                </button>
+                <button class="btn btn-danger fw-bold w-50" (click)="deleteSportCentre()">
+                    <i class="bi bi-trash me-2"></i>Eliminar
                 </button>
             </div>
-        }
-
-        <!-- Admin con centro → su centro con opciones de editar y eliminar -->
-        @if (centroAdmin) {
-            <div class="card shadow mb-4 mx-auto" style="border-radius: 12px; max-width: 560px; width: 100%;">
-                <img [src]="getFoto(centroAdmin.foto)" class="card-img-top"
-                    style="height: 220px; object-fit: cover; border-radius: 12px 12px 0 0;"
-                    [alt]="centroAdmin.nombre"
-                    (error)="centroAdmin.foto = imagenPorDefecto">
-                <div class="card-body p-4" style="user-select: none;">
-                    <h5 class="card-title fw-bold text-success">{{ centroAdmin.nombre }}</h5>
-                    <p class="card-text text-muted mb-1">
-                        <i class="bi bi-geo-alt me-1 text-success"></i>{{ centroAdmin.direccion }}
-                    </p>
-                    <p class="card-text text-muted">
-                        <i class="bi bi-telephone me-1 text-success"></i>{{ centroAdmin.telefono }}
-                    </p>
-                    <div class="d-flex gap-2 mt-3">
-                        <button class="btn btn-success fw-bold w-50" (click)="navigateToEditSportCentre()">
-                            <i class="bi bi-pencil me-2"></i>Editar
-                        </button>
-                        <button class="btn btn-danger fw-bold w-50" (click)="deleteSportCentre()">
-                            <i class="bi bi-trash me-2"></i>Eliminar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        }
+        </div>
+    </div>
+    }
 
     }
 
-    <!-- ─── Sin centros disponibles ──────────────────────── -->
+
 
     @if (centros.length == 0 && !esAdministrador) {
-        <div class="card shadow text-center p-5" style="border-radius: 12px; max-width: 480px; width: 100%;">
-            <i class="bi bi-building-x" style="font-size: 4rem; color: #057b2a;"></i>
-            <h5 class="fw-bold mt-3" style="color: #057b2a;">Aún no hay centros deportivos disponibles</h5>
-            <p class="text-muted mt-2">En cuanto un administrador registre su centro, aparecerá aquí.</p>
-        </div>
+    <div class="card shadow text-center p-5" style="border-radius: 12px; max-width: 480px; width: 100%;">
+        <i class="bi bi-building-x" style="font-size: 4rem; color: #057b2a;"></i>
+        <h5 class="fw-bold mt-3" style="color: #057b2a;">Aún no hay centros deportivos disponibles</h5>
+        <p class="text-muted mt-2">En cuanto un administrador registre su centro, aparecerá aquí.</p>
+    </div>
     }
 
-    <!-- ─── Carrusel de centros ───────────────────────────── -->
+
 
     @if (centros.length > 0 && !esAdministrador) {
 
-        <div id="carouselCentros" class="carousel slide" style="max-width: 560px; width: 100%;"
-            data-bs-ride="carousel">
+    <div id="carouselCentros" class="carousel slide" style="max-width: 560px; width: 100%;" data-bs-ride="carousel">
 
-            <div class="carousel-indicators">
-                @for (centro of centros; track centro; let i = $index) {
-                    <button type="button" data-bs-target="#carouselCentros"
-                        [attr.data-bs-slide-to]="i"
-                        [class.active]="i == 0"
-                        [attr.aria-current]="i == 0 ? 'true' : null">
-                    </button>
-                }
-            </div>
-
-            <div class="carousel-inner">
-                @for (centro of centros; track centro; let i = $index) {
-                    <div class="carousel-item" [class.active]="i == 0">
-                        <div class="card shadow mx-auto" style="border-radius: 12px; width: 100%;">
-                            <img [src]="getFoto(centro.foto)" class="card-img-top"
-                                style="height: 220px; object-fit: cover; border-radius: 12px 12px 0 0;"
-                                [alt]="centro.nombre"
-                                (error)="centro.foto = imagenPorDefecto">
-                            <div class="card-body p-4" style="user-select: none;">
-                                <h5 class="card-title fw-bold text-success">{{ centro.nombre }}</h5>
-                                <p class="card-text text-muted mb-1">
-                                    <i class="bi bi-geo-alt me-1 text-success"></i>{{ centro.direccion }}
-                                </p>
-                                <p class="card-text text-muted">
-                                    <i class="bi bi-telephone me-1 text-success"></i>{{ centro.telefono }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <button class="carousel-control-prev" type="button"
-                data-bs-target="#carouselCentros" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
+        <div class="carousel-indicators">
+            @for (centro of centros; track centro; let i = $index) {
+            <button type="button" data-bs-target="#carouselCentros" [attr.data-bs-slide-to]="i" [class.active]="i == 0"
+                [attr.aria-current]="i == 0 ? 'true' : null">
             </button>
-            <button class="carousel-control-next" type="button"
-                data-bs-target="#carouselCentros" data-bs-slide="next">
-                <span class="carousel-control-next-icon"></span>
-            </button>
-
+            }
         </div>
+
+        <div class="carousel-inner">
+            @for (centro of centros; track centro; let i = $index) {
+            <div class="carousel-item" [class.active]="i == 0">
+                <div class="card shadow mx-auto" style="border-radius: 12px; width: 100%;">
+                    <img [src]="getFoto(centro.foto)" class="card-img-top"
+                        style="height: 220px; object-fit: cover; border-radius: 12px 12px 0 0;" [alt]="centro.nombre"
+                        (error)="centro.foto = imagenPorDefecto">
+                    <div class="card-body p-4" style="user-select: none;">
+                        <h5 class="card-title fw-bold text-success">{{ centro.nombre }}</h5>
+                        <p class="card-text text-muted mb-1">
+                            <i class="bi bi-geo-alt me-1 text-success"></i>{{ centro.direccion }}
+                        </p>
+                        <p class="card-text text-muted">
+                            <i class="bi bi-telephone me-1 text-success"></i>{{ centro.telefono }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselCentros" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselCentros" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+
+    </div>
 
     }
 
 </div>
+
+}
