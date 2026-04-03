@@ -88,4 +88,11 @@ export class Login {
     this.showPassword = !this.showPassword;
   }
 
+  /**
+ * Metodo mediante el cual navegaremos a la pestaña de Reset Password (Restablecer contraseña)
+ */
+navigateToResetPassword() {
+  this.router.navigate(['/reset-password']);
+}
+
 }

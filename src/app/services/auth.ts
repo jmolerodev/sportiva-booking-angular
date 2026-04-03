@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, authState, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
+import { Auth, authState, createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
 import { from, map, Observable, of, switchMap } from 'rxjs';
 import { Rol } from '../enums/Rol';
 import { child, Database, objectVal } from '@angular/fire/database';
@@ -11,7 +11,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 })
 export class AuthService {
 
-  public auth = inject(Auth); 
+  public auth = inject(Auth);
   private database = inject(Database);
   private authState$ = authState(this.auth);
 
@@ -84,6 +84,13 @@ export class AuthService {
         );
       })
     );
+  }
+
+  /**
+ * Metodo mediante el cual enviaremos un correo de restablecimiento de contraseña via Firebase Auth
+ */
+  sendPasswordResetEmail(email: string): Observable<void> {
+    return from(sendPasswordResetEmail(this.auth, email));
   }
 
 }

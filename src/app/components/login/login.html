@@ -31,7 +31,8 @@
                             placeholder="Introduce tu contraseña" formControlName="password" [ngClass]="{'is-invalid': loginForm.get('password')?.invalid && loginForm.get('password')?.touched,
                             'is-valid': loginForm.get('password')?.valid && loginForm.get('password')?.touched}">
                         <span class="input-group-text" style="cursor: pointer;" (click)="togglePassword()">
-                            <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'" style="font-weight: bold; color: #057b2a;"></i>
+                            <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                                style="font-weight: bold; color: #057b2a;"></i>
                         </span>
                     </div>
                     @if (loginForm.get('password')?.touched && loginForm.get('password')?.hasError('required')) {
@@ -46,7 +47,7 @@
                     }
                 </div>
 
-            
+
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" formControlName="remember" id="rememberCheck">
                     <label class="form-check-label text-success fw-bold" for="rememberCheck">
@@ -60,10 +61,16 @@
                     </button>
                 </div>
 
-                <div class="text-center mt-3">
+                <div class="text-center mt-4">
                     <span class="fw-bold" style="font-size: 0.9rem;">¿Aún no tienes una cuenta?</span>
                     <span class="text-success fw-bold ms-1" style="font-size: 0.9rem; cursor: pointer;"
                         (click)="navigateToSignUp()">Regístrate ahora mismo</span>
+                </div>
+
+                
+                <div class="text-center mt-3">
+                    <span class="text-success fw-bold" style="font-size: 0.85rem; cursor: pointer;"
+                        (click)="navigateToResetPassword()">¿Has olvidado tu contraseña?</span>
                 </div>
             </form>
 
