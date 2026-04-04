@@ -11,4 +11,5 @@ export interface IProfesional {
   descripcion:       string;
   annos_experiencia: number;
   especialidad:      Especialidad;
+  centroId?:         string; 
 }

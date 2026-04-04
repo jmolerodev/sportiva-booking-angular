@@ -20,6 +20,8 @@ export class Header implements OnInit, OnDestroy {
   /*Variable booleana que indica si hay sesión iniciada*/
   haySession: boolean = false;
 
+  /*Variable para controlar si el menú desplegable está visible*/
+  menuAbierto: boolean = false;
 
   isReady: boolean = false;
 
@@ -65,19 +67,34 @@ export class Header implements OnInit, OnDestroy {
     return this.rol == Rol.ADMINISTRADOR;
   }
 
+  /*Alterna el estado del menú*/
+  toggleMenu(): void {
+    this.menuAbierto = !this.menuAbierto;
+  }
+
   navigateToLogin(): void {
+    this.menuAbierto = false;
     this.router.navigate(['/login']);
   }
 
-   navigateToHome() : void {
+  navigateToHome() : void {
+    this.menuAbierto = false;
     this.router.navigate(['/home']);
-   }
+  }
 
   navigateToSignUp(): void {
+    this.menuAbierto = false;
     this.router.navigate(['/signup']);
   }
 
+  navigateToAddProfesional() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['/add-profesional-to-center']);
+  }
+
+
   logout(): void {
+    this.menuAbierto = false;
     this.authService.logout().subscribe({
       next: () => {
         this.snackbar.showSuccess("Sesión Cerrada Con Éxito. Vuelve Pronto...");

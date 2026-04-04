@@ -9,10 +9,11 @@ export interface IHorarioSemana {
 }
 
 export interface ISportCentre {
-  nombre:    string;
-  direccion: string;
-  telefono:  string;
-  foto:      string;
-  adminUid:  string;
-  horario:   IHorarioSemana; 
+  nombre:            string;
+  direccion:         string;
+  telefono:          string;
+  foto:              string;
+  adminUid:          string;
+  horario:           IHorarioSemana;
+  profesionalesUids?: string[]; 
 }

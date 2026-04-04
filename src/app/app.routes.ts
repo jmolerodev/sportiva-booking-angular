@@ -6,6 +6,7 @@ import { SignUp } from './components/signup/signup';
 import { NotFound } from './components/not-found/not-found';
 import { AddSportCentre } from './components/add-sport-centre/add-sport-centre';
 import { ResetPassword } from './components/reset-password/reset-password';
+import { AddProfesionalToCenter } from './components/add-profesional-to-center/add-profesional-to-center';
 
 export const routes: Routes = [
     { path: 'login', component: Login },
@@ -14,6 +15,7 @@ export const routes: Routes = [
     { path: 'signup', component: SignUp },
     { path: 'reset-password', component: ResetPassword},
     { path: 'add-sport-centre', component: AddSportCentre },
+    { path: 'add-profesional-to-center', component: AddProfesionalToCenter},
     { path: '', redirectTo: 'home', pathMatch: 'full' },
     { path: '**', component: NotFound }
 ];
