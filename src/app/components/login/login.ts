@@ -9,6 +9,7 @@ import { setPersistence, browserLocalPersistence, browserSessionPersistence } fr
 
 @Component({
   selector: 'app-login',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
@@ -42,7 +43,10 @@ export class Login {
    */
   login(): void {
 
+    /* Si el formulario es inválido, mostramos el snackbar y marcamos los errores visualmente */
     if (this.loginForm.invalid) {
+      this.snackbar.showError("Por favor, rellena los campos correctamente para iniciar sesión");
+      this.loginForm.markAllAsTouched();
       return;
     }
 
@@ -91,8 +95,16 @@ export class Login {
   /**
  * Metodo mediante el cual navegaremos a la pestaña de Reset Password (Restablecer contraseña)
  */
-navigateToResetPassword() {
-  this.router.navigate(['/reset-password']);
-}
+  navigateToResetPassword() {
+    this.router.navigate(['/reset-password']);
+  }
+
+  /**
+   * Metodo mediante el que navegaremos a la pestaña de 'Home'
+   */
+  navigateToHome() : void {
+    this.router.navigate(['/home']);
+   }
+
 
 }

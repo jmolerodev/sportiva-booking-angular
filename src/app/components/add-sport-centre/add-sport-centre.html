@@ -1,102 +1,107 @@
-<div style="min-height: 100vh; background-color: #057b2a;"
-  class="d-flex justify-content-center align-items-center position-relative py-5">
+<div style="min-height: 100vh; background-color: #057b2a;" class="d-flex justify-content-center align-items-center py-5">
+  <div class="card shadow border-0" style="width: 100%; max-width: 800px; border-radius: 15px;">
+    <div class="card-body p-4 p-md-5">
 
-  <div class="card shadow" style="width: 100%; max-width: 520px; border-radius: 12px;">
-    <div class="card-body p-4 p-md-5" style="user-select: none;">
-
-      <img src="logo-app.png" class="d-block mx-auto mb-3" style="width: 150px; height: 150px;" />
+      <img src="logo-app.png" class="d-block mx-auto mb-4" style="width: 100px;" />
 
       @if (isInitialLoading) {
         <div class="text-center py-5">
-          <div class="spinner-border text-success mb-3" role="status"></div>
-          <h5 class="text-success fw-bold">Cargando datos del centro...</h5>
+          <div class="spinner-border text-success mb-2"></div>
+          <h5 class="text-success fw-bold">Sincronizando calendario...</h5>
         </div>
       }
 
       <form [formGroup]="centroForm" (ngSubmit)="saveSportCentre()" [style.display]="isInitialLoading ? 'none' : 'block'">
-
-        <div class="mb-3">
-          <label class="form-label text-success fw-bold">Nombre del centro</label>
-          <input type="text" class="form-control" placeholder="Ej: Polideportivo Municipal"
-            formControlName="nombre"
-            [ngClass]="{
-              'is-invalid': centroForm.get('nombre')?.invalid && centroForm.get('nombre')?.touched,
-              'is-valid':   centroForm.get('nombre')?.valid   && centroForm.get('nombre')?.touched
-            }">
+        
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label text-success fw-bold">Nombre del Centro</label>
+            <input type="text" class="form-control" formControlName="nombre" 
+                   [class.is-invalid]="centroForm.get('nombre')?.invalid && centroForm.get('nombre')?.touched">
+            <div class="invalid-feedback">El nombre es obligatorio</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-success fw-bold">Teléfono</label>
+            <input type="tel" class="form-control" formControlName="telefono"
+                   [class.is-invalid]="centroForm.get('telefono')?.invalid && centroForm.get('telefono')?.touched">
+            <div class="invalid-feedback">El teléfono es obligatorio</div>
+          </div>
+          <div class="col-12">
+            <label class="form-label text-success fw-bold">Dirección Física</label>
+            <input type="text" class="form-control" formControlName="direccion"
+                   [class.is-invalid]="centroForm.get('direccion')?.invalid && centroForm.get('direccion')?.touched">
+            <div class="invalid-feedback">La dirección es obligatoria</div>
+          </div>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label text-success fw-bold">Dirección</label>
-          <input type="text" class="form-control" placeholder="Calle, Número, Ciudad"
-            formControlName="direccion"
-            [ngClass]="{
-              'is-invalid': centroForm.get('direccion')?.invalid && centroForm.get('direccion')?.touched,
-              'is-valid':   centroForm.get('direccion')?.valid   && centroForm.get('direccion')?.touched
-            }">
-        </div>
+        <h5 class="text-success fw-bold mb-3 border-bottom pb-2">Configuración de Horarios</h5>
+        <div formGroupName="horario" class="row g-2 mb-4">
+          @for (dia of diasSemana; track dia) {
+            <div class="col-sm-6 col-md-4 col-lg-3" [formGroupName]="dia">
+              <div class="card h-100 border-0 shadow-sm p-2 text-center" 
+                   [style.background-color]="centroForm.get('horario.'+dia+'.abierto')?.value ? '#f0fff4' : '#fff5f5'">
+                
+                <div class="form-check form-switch d-inline-block">
+                  <input class="form-check-input" type="checkbox" formControlName="abierto">
+                  <label class="fw-bold small">{{ dia }}</label>
+                </div>
 
-        <div class="mb-3">
-          <label class="form-label text-success fw-bold">Teléfono</label>
-          <input type="tel" class="form-control" placeholder="Introduce el teléfono"
-            formControlName="telefono"
-            [ngClass]="{
-              'is-invalid': centroForm.get('telefono')?.invalid && centroForm.get('telefono')?.touched,
-              'is-valid':   centroForm.get('telefono')?.valid   && centroForm.get('telefono')?.touched
-            }">
-        </div>
-
-        <div class="mb-4">
-          <label class="form-label text-success fw-bold">
-            Foto <span class="text-muted fw-normal">(opcional)</span>
-          </label>
-
-          @if (!previewImagen) {
-            <div class="d-flex justify-content-center">
-              <label class="btn btn-outline-success fw-bold" style="cursor: pointer;">
-                <i class="bi bi-image me-2"></i>Seleccionar imagen
-                <input type="file" accept="image/*" class="d-none"
-                  (change)="onImagenSeleccionada($event)">
-              </label>
-            </div>
-          }
-
-          @if (previewImagen) {
-            <div class="text-center">
-              <img [src]="previewImagen" class="img-fluid rounded mb-2 mt-3 shadow-sm"
-                style="max-height: 200px; width: 100%; object-fit: cover; border-radius: 8px;"
-                (load)="onFotoCargada()"
-                (error)="onFotoError()">
-              <div>
-                <button type="button" class="btn btn-outline-danger btn-sm fw-bold mt-3"
-                  (click)="eliminarImagen()">
-                  <i class="bi bi-trash me-1"></i>Eliminar imagen
-                </button>
+                @if (centroForm.get('horario.'+dia+'.abierto')?.value) {
+                  <div class="mt-2">
+                    <input type="time" class="form-control form-control-sm mb-1" formControlName="apertura"
+                           [class.is-invalid]="centroForm.get('horario.'+dia+'.apertura')?.invalid && centroForm.get('horario.'+dia+'.apertura')?.touched">
+                    <input type="time" class="form-control form-control-sm" formControlName="cierre"
+                           [class.is-invalid]="centroForm.get('horario.'+dia+'.cierre')?.invalid && centroForm.get('horario.'+dia+'.cierre')?.touched">
+                  </div>
+                } @else {
+                  <div class="text-danger small fw-bold mt-3">CERRADO</div>
+                }
               </div>
             </div>
           }
         </div>
 
-        <div class="d-flex justify-content-center gap-2">
-          <button type="submit" class="btn btn-success fw-bold w-50 py-2"
-            [disabled]="centroForm.invalid || isLoading">
-            @if (isLoading) {
-              <span class="spinner-border spinner-border-sm me-2"></span>...
-            } @else {
-              {{ modoEdicion ? 'Guardar Cambios' : 'Crear Centro' }}
-            }
-          </button>
-
-          @if (modoEdicion) {
-            <button type="button" class="btn btn-outline-secondary fw-bold w-50 py-2" 
-              (click)="cancelarEdicion()" [disabled]="isLoading">
-              Cancelar
-            </button>
+        <div class="mb-5 text-center">
+          @if (!previewImagen) {
+            <div class="p-4 border border-2 border-dashed rounded-3 bg-light">
+              <label class="btn btn-outline-success fw-bold px-4 py-2">
+                <i class="bi bi-camera me-2"></i>Subir Foto del Centro
+                <input type="file" class="d-none" (change)="onImagenSeleccionada($event)">
+              </label>
+              <p class="text-muted small mt-2 mb-0">Formatos permitidos: JPG, PNG</p>
+            </div>
+          } @else {
+            <div class="position-relative d-inline-block shadow-sm rounded-3 overflow-hidden border">
+              <img [src]="previewImagen" (load)="onFotoCargada()" (error)="onFotoError()" 
+                   class="img-fluid d-block mx-auto" 
+                   style="width: 100%; max-width: 400px; height: 250px; object-fit: cover;">
+              
+              <button type="button" 
+                      class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 shadow" 
+                      style="border-radius: 50%; width: 35px; height: 35px;"
+                      (click)="eliminarImagen()"
+                      title="Quitar foto">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            <p class="text-success small fw-bold mt-2"><i class="bi bi-check-circle-fill me-1"></i>Imagen cargada con éxito</p>
           }
         </div>
 
-      </form>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-success fw-bold w-100 py-3 shadow-sm" [disabled]="isLoading">
+             @if (isLoading) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+             }
+            {{ modoEdicion ? 'Actualizar Centro' : 'Crear Centro Deportivo' }}
+          </button>
+          
+          <button type="button" class="btn btn-outline-secondary fw-bold w-100 py-3 shadow-sm" (click)="navigateToHome()">
+            Volver a Home
+          </button>
+        </div>
 
+      </form>
     </div>
   </div>
-
 </div>

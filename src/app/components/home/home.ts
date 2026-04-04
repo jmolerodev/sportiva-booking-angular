@@ -5,11 +5,12 @@ import { Subscription, switchMap, of } from 'rxjs';
 import { SportCentreService } from '../../services/sport-centre-service';
 import { AuthService } from '../../services/auth';
 import { SnackbarService } from '../../services/snackbar';
-import { Sport_Centre } from '../../models/Sport_Centre';
+import { ISportCentre } from '../../interfaces/Sport-Centre-Interface'; /* Importamos la interfaz */
 import { Rol } from '../../enums/Rol';
 
 @Component({
   selector: 'app-home',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './home.html',
   styleUrl: './home.css',
@@ -17,10 +18,10 @@ import { Rol } from '../../enums/Rol';
 export class Home implements OnInit, OnDestroy {
 
   /* Lista global de todos los centros deportivos disponibles en la plataforma */
-  public centros: Sport_Centre[] = [];
+  public centros: ISportCentre[] = [];
 
   /* Instancia del centro deportivo vinculado al administrador autenticado */
-  public centroAdmin: Sport_Centre | null = null;
+  public centroAdmin: ISportCentre | null = null;
 
   /* Identificador único (UID) del administrador para consultas en tiempo real */
   public adminUid: string | null = null;
@@ -74,6 +75,7 @@ export class Home implements OnInit, OnDestroy {
     this.subscription.add(
       this.sportCentreService.getAllSportCentres().subscribe({
         next: (centros) => {
+          /* Mapeamos los centros recibidos a nuestra interfaz */
           this.centros = centros ?? [];
           this.loadingCentros = false;
           this.checkLoading();
@@ -91,27 +93,33 @@ export class Home implements OnInit, OnDestroy {
       this.authService.getCurrentUser().pipe(
         switchMap(user => {
           if (!user) {
+            /* LIMPIEZA REACTIVA: Si no hay usuario (logout), reseteamos el estado local */
+            this.centroAdmin = null;
+            this.adminUid = null;
+            this.esAdministrador = false;
             this.loadingUsuario = false;
             this.checkLoading();
-            return of({ rol: null, uid: null });
+            return of(null);
           }
           this.adminUid = user.uid;
           return this.authService.getRol().pipe(
             switchMap(rol => of({ rol, uid: user.uid }))
           );
         })
-      ).subscribe(({ rol, uid }) => {
-        this.esAdministrador = rol === Rol.ADMINISTRADOR;
+      ).subscribe((data) => {
+        if (!data) return; /* Si es null (logout), el switchMap de arriba ya hizo la limpieza */
 
-        if (this.esAdministrador && uid) {
+        this.esAdministrador = data.rol === Rol.ADMINISTRADOR;
+
+        if (this.esAdministrador && data.uid) {
           this.subscription.add(
-            this.sportCentreService.getSportCentreByAdminUid(uid).subscribe({
+            this.sportCentreService.getSportCentreByAdminUid(data.uid).subscribe({
               next: (centro) => {
                 if (centro) {
                   /* LÓGICA DE PRIORIDAD:
-                     Si recibimos una fotoReciente por QueryParams, la imponemos sobre el dato de Firebase.
+                      Si recibimos una fotoReciente por QueryParams, la imponemos sobre el dato de Firebase.
                   */
-                  const fotoNueva = (fotoReciente !== undefined) ? fotoReciente : centro.foto;
+                  const fotoNueva = (fotoReciente !== undefined && fotoReciente !== null) ? fotoReciente : centro.foto;
 
                   /* Activamos el spinner de imagen solo si hay una foto que cargar */
                   this.imagenCargando = !!(fotoNueva && fotoNueva.trim() !== '');
@@ -120,6 +128,15 @@ export class Home implements OnInit, OnDestroy {
                     ...centro,
                     foto: fotoNueva
                   };
+
+                  /* LIMPIEZA DE URL: Una vez asignada, quitamos el parámetro para que no ensucie futuras sesiones */
+                  if (fotoReciente !== undefined) {
+                    this.router.navigate([], {
+                      queryParams: { fotoReciente: null },
+                      queryParamsHandling: 'merge',
+                      replaceUrl: true 
+                    });
+                  }
                 } else {
                   this.centroAdmin = null;
                 }
@@ -157,6 +174,8 @@ export class Home implements OnInit, OnDestroy {
    */
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    /* Nos aseguramos de vaciar el centro al destruir el componente */
+    this.centroAdmin = null;
   }
 
   /**
@@ -179,7 +198,7 @@ export class Home implements OnInit, OnDestroy {
    */
   navigateToEditSportCentre(): void {
     /* PASO DE TESTIGO: Si el Home ya sabe que hay una foto nueva, se la pasamos al Add de vuelta */
-    const fotoActual = this.route.snapshot.queryParams['fotoReciente'] || (this.centroAdmin ? this.centroAdmin.foto : '');
+    const fotoActual = this.centroAdmin ? this.centroAdmin.foto : '';
 
     this.router.navigate(['/add-sport-centre'], {
       queryParams: {

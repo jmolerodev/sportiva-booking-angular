@@ -69,19 +69,22 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['/login']);
   }
 
+   navigateToHome() : void {
+    this.router.navigate(['/home']);
+   }
+
   navigateToSignUp(): void {
     this.router.navigate(['/signup']);
   }
 
   logout(): void {
-
-
     this.authService.logout().subscribe({
       next: () => {
         this.snackbar.showSuccess("Sesión Cerrada Con Éxito. Vuelve Pronto...");
+        this.router.navigate(['/login']); 
       },
       error: (e) => {
-
+        console.error("Error al cerrar sesión:", e);
       }
     });
   }

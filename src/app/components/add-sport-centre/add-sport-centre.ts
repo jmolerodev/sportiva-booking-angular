@@ -5,10 +5,12 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 import { AuthService } from '../../services/auth';
 import { SportCentreService } from '../../services/sport-centre-service';
-import { ISportCentre } from '../../interfaces/Sport-Centre-Interface';
+import { SnackbarService } from '../../services/snackbar'; /* Inyectamos el servicio para las alertas */
+import { ISportCentre, IHorarioSemana } from '../../interfaces/Sport-Centre-Interface';
 
 @Component({
   selector: 'app-add-sport-centre',
+  standalone: true, /* Añadimos standalone si no estaba */
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './add-sport-centre.html',
   styleUrl: './add-sport-centre.css',
@@ -39,6 +41,12 @@ export class AddSportCentre implements OnInit {
   /*URL original de la imagen ya guardada en Storage (para poder eliminarla si se reemplaza)*/
   private urlImagenOriginal: string | null = null;
 
+  /*Variable para guardar el estado inicial del centro y comparar si hay cambios reales*/
+  private datosOriginales: string = '';
+
+  /*Días de la semana para generar el calendario visual*/
+  public diasSemana: string[] = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
   /**
    * Constructor del componente: inicialización de dependencias
    */
@@ -46,6 +54,7 @@ export class AddSportCentre implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private sportCentreService: SportCentreService,
+    private snackbarService: SnackbarService, /* Inyectamos el snackbar para los avisos */
     private storage: Storage,
     private router: Router,
     private route: ActivatedRoute
@@ -54,7 +63,23 @@ export class AddSportCentre implements OnInit {
       nombre:    ['', Validators.required],
       direccion: ['', Validators.required],
       telefono:  ['', Validators.required],
+      horario:   this.fb.group(this.initGrupoHorario()) /* Añadimos el grupo de horarios */
     });
+  }
+
+  /**
+   * Método privado para inicializar el subgrupo de horarios por cada día de la semana
+   */
+  private initGrupoHorario() {
+    const grupo: any = {};
+    this.diasSemana.forEach(dia => {
+      grupo[dia] = this.fb.group({
+        abierto:  [true],
+        apertura: ['08:00', Validators.required],
+        cierre:   ['22:00', Validators.required]
+      });
+    });
+    return grupo;
   }
 
   /**
@@ -83,6 +108,7 @@ export class AddSportCentre implements OnInit {
                 nombre:    centro.nombre,
                 direccion: centro.direccion,
                 telefono:  centro.telefono,
+                horario:   centro.horario /* Mapeamos el horario recuperado */
               });
 
               /*Usamos la foto del queryParam si existe; si no, la de Firebase*/
@@ -95,6 +121,12 @@ export class AddSportCentre implements OnInit {
                 this.previewImagen      = fotoDefinitiva;
                 this.urlImagenOriginal  = fotoDefinitiva;
               }
+
+              /* Guardamos una "captura" del estado inicial para comparaciones futuras */
+              this.datosOriginales = JSON.stringify({
+                form: this.centroForm.value,
+                foto: this.previewImagen
+              });
 
               this.isInitialLoading = false;
             }
@@ -143,11 +175,31 @@ export class AddSportCentre implements OnInit {
    */
   saveSportCentre(): void {
 
-    if (this.centroForm.invalid || !this.adminUid) return;
+    /* Validación manual para activar el snackbar si el usuario pulsa y el formulario es inválido */
+    if (this.centroForm.invalid) {
+      this.snackbarService.showError('Por favor, rellena todos los campos obligatorios para continuar');
+      this.centroForm.markAllAsTouched();
+      return;
+    }
+
+    /* Comprobamos si hay cambios reales comparando el estado actual con el original capturado en el inicio */
+    if (this.modoEdicion) {
+      const datosActuales = JSON.stringify({
+        form: this.centroForm.value,
+        foto: this.previewImagen
+      });
+
+      if (this.datosOriginales === datosActuales) {
+        this.snackbarService.showError('No se han detectado cambios para actualizar');
+        return;
+      }
+    }
+
+    if (!this.adminUid) return;
 
     this.isLoading = true;
 
-    const { nombre, direccion, telefono } = this.centroForm.value;
+    const { nombre, direccion, telefono, horario } = this.centroForm.value;
 
     if (this.imagenSeleccionada) {
 
@@ -157,10 +209,11 @@ export class AddSportCentre implements OnInit {
       }
 
       /*Subimos la imagen a Firebase Storage bajo la ruta Sport-Centre/nombre-archivo*/
-      const storageRef = ref(this.storage, `Sport-Centre/${this.imagenSeleccionada.name}`);
+      /* Usamos Date.now() para asegurar unicidad y evitar problemas de caché en el navegador */
+      const storageRef = ref(this.storage, `Sport-Centre/${Date.now()}_${this.imagenSeleccionada.name}`);
       uploadBytes(storageRef, this.imagenSeleccionada)
         .then(snapshot => getDownloadURL(snapshot.ref))
-        .then(url => this.guardarDatosFinales(nombre, direccion, telefono, url))
+        .then(url => this.guardarDatosFinales(nombre, direccion, telefono, url, horario))
         .catch(() => this.isLoading = false);
 
     } else if (!this.previewImagen) {
@@ -169,12 +222,12 @@ export class AddSportCentre implements OnInit {
       if (this.urlImagenOriginal) {
         deleteObject(ref(this.storage, this.urlImagenOriginal)).catch(() => { });
       }
-      this.guardarDatosFinales(nombre, direccion, telefono, '');
+      this.guardarDatosFinales(nombre, direccion, telefono, '', horario);
 
     } else {
 
       /*Sin imagen nueva — mantenemos la URL original existente*/
-      this.guardarDatosFinales(nombre, direccion, telefono, this.urlImagenOriginal || '');
+      this.guardarDatosFinales(nombre, direccion, telefono, this.urlImagenOriginal || '', horario);
 
     }
 
@@ -187,8 +240,9 @@ export class AddSportCentre implements OnInit {
    * @param direccion Dirección del centro deportivo
    * @param telefono Teléfono del centro deportivo
    * @param foto URL de la foto del centro deportivo
+   * @param horario Configuración de los horarios semanales
    */
-  private guardarDatosFinales(nombre: string, direccion: string, telefono: string, foto: string): void {
+  private guardarDatosFinales(nombre: string, direccion: string, telefono: string, foto: string, horario: IHorarioSemana): void {
 
     const centro: ISportCentre = {
       nombre,
@@ -196,10 +250,11 @@ export class AddSportCentre implements OnInit {
       telefono,
       foto,
       adminUid: this.adminUid!,
+      horario /* Incluimos el horario en el objeto final */
     };
 
     this.sportCentreService.saveSportCentre(this.adminUid!, centro).then(() => {
-      console.log(this.modoEdicion ? 'Centro actualizado correctamente:' : 'Centro creado correctamente:', centro);
+      this.snackbarService.showSuccess(this.modoEdicion ? 'Centro actualizado correctamente' : 'Centro creado correctamente');
       this.router.navigate(['/home'], {
         queryParams: { fotoReciente: foto }
       }).then(() => {
