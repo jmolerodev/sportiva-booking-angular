@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { child, Database, listVal, objectVal, ref, remove, set, update } from '@angular/fire/database';
 import { Storage, ref as refStorage, deleteObject } from '@angular/fire/storage';
 import { map, Observable, from, of } from 'rxjs';
@@ -11,8 +11,7 @@ export class SportCentreService {
   private COLLECTION_NAME = 'Sports-Centre';
   private database = inject(Database);
   private storage  = inject(Storage);
-
-  private allSportCentres$ = listVal<ISportCentre>(ref(this.database, `/${this.COLLECTION_NAME}`));
+  private injector = inject(Injector);
 
   /* Obtiene un centro por su ID */
   getSportCentreByUid(uid: string): Observable<ISportCentre | null> {
@@ -22,14 +21,18 @@ export class SportCentreService {
 
   /* Obtiene el centro de un administrador */
   getSportCentreByAdminUid(adminUid: string): Observable<ISportCentre | null> {
-    return this.allSportCentres$.pipe(
+    return runInInjectionContext(this.injector, () =>
+      listVal<ISportCentre>(ref(this.database, `/${this.COLLECTION_NAME}`))
+    ).pipe(
       map(centros => centros?.find(c => c.adminUid == adminUid) ?? null)
     );
   }
 
   /* Lista todos los centros */
   getAllSportCentres(): Observable<ISportCentre[]> {
-    return this.allSportCentres$;
+    return runInInjectionContext(this.injector, () =>
+      listVal<ISportCentre>(ref(this.database, `/${this.COLLECTION_NAME}`))
+    );
   }
 
   /* Actualización parcial */

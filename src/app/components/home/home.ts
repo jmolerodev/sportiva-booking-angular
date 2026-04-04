@@ -5,7 +5,7 @@ import { Subscription, switchMap, of } from 'rxjs';
 import { SportCentreService } from '../../services/sport-centre-service';
 import { AuthService } from '../../services/auth';
 import { SnackbarService } from '../../services/snackbar';
-import { ISportCentre } from '../../interfaces/Sport-Centre-Interface'; /* Importamos la interfaz */
+import { ISportCentre, IHorarioSemana } from '../../interfaces/Sport-Centre-Interface'; /* Importamos las interfaces */
 import { Rol } from '../../enums/Rol';
 
 @Component({
@@ -29,6 +29,15 @@ export class Home implements OnInit, OnDestroy {
   /* Flag booleano que determina si el usuario en sesión posee el rol de Administrador */
   public esAdministrador: boolean = false;
 
+  /* Flag booleano que determina si el usuario en sesión posee el rol de Profesional */
+  public esProfesional: boolean = false;
+
+  /* Flag booleano que determina si el usuario en sesión posee el rol de Cliente */
+  public esCliente: boolean = false;
+
+  /* Flag booleano que indica si hay una sesión activa en la plataforma */
+  public sesionIniciada: boolean = false;
+
   /* Recurso gráfico de respaldo para centros que no cuentan con una fotografía subida */
   public readonly imagenPorDefecto = 'centro-default.png';
 
@@ -42,7 +51,7 @@ export class Home implements OnInit, OnDestroy {
   private loadingCentros: boolean = true;
   private loadingUsuario: boolean = true;
 
-  /* Manejador de suscripciones para centralizar la limpieza y evitar fugas de memoria */
+  
   private subscription: Subscription = new Subscription();
 
   /**
@@ -97,6 +106,9 @@ export class Home implements OnInit, OnDestroy {
             this.centroAdmin = null;
             this.adminUid = null;
             this.esAdministrador = false;
+            this.esProfesional = false;
+            this.esCliente = false;
+            this.sesionIniciada = false;
             this.loadingUsuario = false;
             this.checkLoading();
             return of(null);
@@ -109,7 +121,11 @@ export class Home implements OnInit, OnDestroy {
       ).subscribe((data) => {
         if (!data) return; /* Si es null (logout), el switchMap de arriba ya hizo la limpieza */
 
+        /* Asignamos los flags de rol y marcamos la sesión como activa */
         this.esAdministrador = data.rol === Rol.ADMINISTRADOR;
+        this.esProfesional = data.rol === Rol.PROFESIONAL;
+        this.esCliente = data.rol === Rol.CLIENTE;
+        this.sesionIniciada = true;
 
         if (this.esAdministrador && data.uid) {
           this.subscription.add(
@@ -134,7 +150,7 @@ export class Home implements OnInit, OnDestroy {
                     this.router.navigate([], {
                       queryParams: { fotoReciente: null },
                       queryParamsHandling: 'merge',
-                      replaceUrl: true 
+                      replaceUrl: true
                     });
                   }
                 } else {
@@ -184,6 +200,15 @@ export class Home implements OnInit, OnDestroy {
    */
   getFoto(foto: string): string {
     return (foto && foto.trim() !== '') ? foto : this.imagenPorDefecto;
+  }
+
+  /**
+   * Devuelve los días del horario en orden de lunes a domingo
+   * @param horario Objeto horario semanal del centro
+   */
+  getDias(horario: IHorarioSemana): string[] {
+    const orden = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    return orden.filter(dia => horario[dia] !== undefined);
   }
 
   /**
