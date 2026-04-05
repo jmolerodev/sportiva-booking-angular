@@ -31,13 +31,17 @@ export class SportCentreService {
 
   /**
    * Obtiene el centro donde trabaja un profesional de forma directa usando su 'centroId'
+   * @param proUid UID del profesional que busca su centro
+   * @returns Observable con los datos del centro deportivo
    */
   getSportCentreByProfessionalUid(proUid: string): Observable<ISportCentre | null> {
     const proRef = child(ref(this.database), `${this.PERSONS_COLLECTION}/${proUid}/centroId`);
     
     return objectVal<string>(proRef).pipe(
       switchMap(centroId => {
+        /* Si el profesional no tiene centroId asignado, devolvemos null directamente */
         if (!centroId) return of(null);
+        /* Si lo tiene, usamos el método que ya tenemos para traer los datos del centro */
         return this.getSportCentreByUid(centroId);
       })
     );

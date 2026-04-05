@@ -23,6 +23,9 @@ export class Home implements OnInit, OnDestroy {
   /* Instancia del centro deportivo vinculado al administrador autenticado */
   public centroAdmin: ISportCentre | null = null;
 
+  /* Instancia del centro deportivo vinculado al profesional autenticado */
+  public centroTrabajo: ISportCentre | null = null;
+
   /* Identificador único (UID) del administrador para consultas en tiempo real */
   public adminUid: string | null = null;
 
@@ -51,7 +54,6 @@ export class Home implements OnInit, OnDestroy {
   private loadingCentros: boolean = true;
   private loadingUsuario: boolean = true;
 
-  
   private subscription: Subscription = new Subscription();
 
   /**
@@ -104,6 +106,7 @@ export class Home implements OnInit, OnDestroy {
           if (!user) {
             /* LIMPIEZA REACTIVA: Si no hay usuario (logout), reseteamos el estado local */
             this.centroAdmin = null;
+            this.centroTrabajo = null;
             this.adminUid = null;
             this.esAdministrador = false;
             this.esProfesional = false;
@@ -132,18 +135,13 @@ export class Home implements OnInit, OnDestroy {
             this.sportCentreService.getSportCentreByAdminUid(data.uid).subscribe({
               next: (centro) => {
                 if (centro) {
-                  /* LÓGICA DE PRIORIDAD:
-                      Si recibimos una fotoReciente por QueryParams, la imponemos sobre el dato de Firebase.
-                  */
+                  /* LÓGICA DE PRIORIDAD: Si recibimos una fotoReciente por QueryParams, la imponemos sobre el dato de Firebase. */
                   const fotoNueva = (fotoReciente !== undefined && fotoReciente !== null) ? fotoReciente : centro.foto;
 
                   /* Activamos el spinner de imagen solo si hay una foto que cargar */
                   this.imagenCargando = !!(fotoNueva && fotoNueva.trim() !== '');
 
-                  this.centroAdmin = {
-                    ...centro,
-                    foto: fotoNueva
-                  };
+                  this.centroAdmin = { ...centro, foto: fotoNueva };
 
                   /* LIMPIEZA DE URL: Una vez asignada, quitamos el parámetro para que no ensucie futuras sesiones */
                   if (fotoReciente !== undefined) {
@@ -156,13 +154,29 @@ export class Home implements OnInit, OnDestroy {
                 } else {
                   this.centroAdmin = null;
                 }
-
                 this.loadingUsuario = false;
                 this.checkLoading();
                 this.cdr.detectChanges();
               },
               error: (e) => {
                 console.error('Error al obtener centro admin:', e);
+                this.loadingUsuario = false;
+                this.checkLoading();
+              }
+            })
+          );
+        } else if (this.esProfesional && data.uid) {
+          /* Lógica para recuperar el centro donde trabaja el profesional */
+          this.subscription.add(
+            this.sportCentreService.getSportCentreByProfessionalUid(data.uid).subscribe({
+              next: (centro) => {
+                this.centroTrabajo = centro;
+                this.loadingUsuario = false;
+                this.checkLoading();
+                this.cdr.detectChanges();
+              },
+              error: (e) => {
+                console.error('Error al obtener centro del profesional:', e);
                 this.loadingUsuario = false;
                 this.checkLoading();
               }
@@ -192,6 +206,7 @@ export class Home implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
     /* Nos aseguramos de vaciar el centro al destruir el componente */
     this.centroAdmin = null;
+    this.centroTrabajo = null;
   }
 
   /**
@@ -222,14 +237,9 @@ export class Home implements OnInit, OnDestroy {
    * Navegación hacia el formulario de edición enviando también la fotoReciente si existe
    */
   navigateToEditSportCentre(): void {
-    /* PASO DE TESTIGO: Si el Home ya sabe que hay una foto nueva, se la pasamos al Add de vuelta */
     const fotoActual = this.centroAdmin ? this.centroAdmin.foto : '';
-
     this.router.navigate(['/add-sport-centre'], {
-      queryParams: {
-        editar: true,
-        fotoReciente: fotoActual
-      }
+      queryParams: { editar: true, fotoReciente: fotoActual }
     });
   }
 
@@ -249,7 +259,6 @@ export class Home implements OnInit, OnDestroy {
             this.snackbarService.showSuccess('Centro eliminado correctamente');
             this.centroAdmin = null;
             this.imagenCargando = false;
-            /* Limpiamos la URL para que no quede rastro del parámetro de la foto borrada */
             this.router.navigate([], { queryParams: { fotoReciente: null }, queryParamsHandling: 'merge' });
             this.loading = false;
             this.cdr.detectChanges();
