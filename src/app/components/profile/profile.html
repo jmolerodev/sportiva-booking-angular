@@ -1,0 +1,175 @@
+<div style="min-height: 100vh; background-color: #057b2a;"
+    class="d-flex flex-column align-items-center py-5 position-relative">
+
+    @if (loading) {
+    <div class="card shadow border-0" style="width: 100%; max-width: 500px; border-radius: 15px;">
+        <div class="card-body p-5 text-center">
+            <img src="logo-app.png" class="d-block mx-auto mb-3" style="width: 120px; height: 120px;" />
+            <div class="spinner-border text-success mb-3" role="status"></div>
+            <h5 class="text-success fw-bold">Sincronizando tus datos...</h5>
+        </div>
+    </div>
+    } @else if (perfil) {
+
+    <div class="text-center mb-4" style="user-select: none;">
+        <h3 class="text-white fw-bold" style="font-size: 1.8rem;">
+            {{ modoEdicion ? 'Editando mi Perfil' : 'Mi Perfil de Usuario' }}
+        </h3>
+        <p class="text-white-50 small">Gestiona tu información personal y profesional</p>
+    </div>
+
+    <div class="card shadow border-0 overflow-hidden" style="max-width: 650px; width: 95%; border-radius: 20px;">
+
+        <div class="p-4 text-center border-bottom bg-light">
+            <div class="position-relative d-inline-block">
+
+
+                @if (!fotoPerfilCargada) {
+                <div class="rounded-circle d-flex flex-column align-items-center justify-content-center shadow-sm"
+                    style="width: 130px; height: 130px; border: 5px solid white; background-color: #f8f9fa;">
+                    <div class="spinner-border text-success spinner-border-sm mb-1" role="status"></div>
+                    <p class="text-success small fw-bold mb-0" style="font-size: 0.65rem;">Cargando imagen...</p>
+                </div>
+                }
+
+
+                <img [src]="previewImagen || 'user-default.png'" class="rounded-circle shadow-sm"
+                    style="width: 130px; height: 130px; object-fit: cover; border: 5px solid white;"
+                    [style.display]="fotoPerfilCargada ? 'block' : 'none'" (load)="fotoPerfilCargada = true"
+                    (error)="previewImagen = null; fotoPerfilCargada = true">
+
+                @if (modoEdicion) {
+
+
+                <label for="inputFotoPerfil"
+                    class="position-absolute bottom-0 end-0 bg-success text-white rounded-circle p-2 shadow-sm"
+                    style="cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-camera-fill" style="font-size: 0.85rem;"></i>
+                </label>
+
+
+                <input id="inputFotoPerfil" type="file" accept="image/*" class="d-none"
+                    (change)="onImagenSeleccionada($event)">
+
+
+                @if (previewImagen) {
+                <button type="button"
+                    class="position-absolute top-0 end-0 btn btn-danger btn-sm rounded-circle p-0 shadow-sm"
+                    style="width: 26px; height: 26px; font-size: 0.6rem; line-height: 1;" (click)="eliminarFoto()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+                }
+
+                }
+            </div>
+            <h4 class="fw-bold mt-3 mb-1 text-dark">{{ perfil.nombre }} {{ perfil.apellidos }}</h4>
+            <span class="badge rounded-pill bg-success-subtle text-success px-4 py-2 text-uppercase"
+                style="letter-spacing: 1px;">
+                {{ perfil.rol }}
+            </span>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+            <form #profileForm="ngForm">
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12 border-start border-success border-4 ps-3 mb-2">
+                        <h6 class="text-success fw-bold text-uppercase m-0">Información Básica</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Nombre</label>
+                        <input type="text" class="form-control rounded-3" [(ngModel)]="perfil.nombre" name="nombre"
+                            [disabled]="!modoEdicion" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Apellidos</label>
+                        <input type="text" class="form-control rounded-3" [(ngModel)]="perfil.apellidos"
+                            name="apellidos" [disabled]="!modoEdicion" required>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4 bg-light p-3 rounded-3 mx-0 border">
+                    <div class="col-12">
+                        <label class="form-label small fw-bold text-muted">Correo Electrónico Asociado</label>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-envelope-at me-2 text-success"></i>
+                            <span class="fw-semibold text-dark">{{ emailUsuario }}</span>
+                        </div>
+                        <div class="form-text small mt-2">Por seguridad, el email solo puede cambiarse mediante soporte.
+                        </div>
+                    </div>
+                </div>
+
+                @if (perfil.rol == Roles.CLIENTE) {
+                <div class="row g-3 mb-4">
+                    <div class="col-12 border-start border-success border-4 ps-3 mb-2">
+                        <h6 class="text-success fw-bold text-uppercase m-0">Detalles de Cliente</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">DNI / Identificación</label>
+                        <input type="text" class="form-control" [(ngModel)]="$any(perfil).dni" name="dni"
+                            [disabled]="!modoEdicion">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Dirección Postal</label>
+                        <input type="text" class="form-control" [(ngModel)]="$any(perfil).direccion" name="direccion"
+                            [disabled]="!modoEdicion">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Fecha de Registro</label>
+                        <p class="text-dark fw-bold"><i class="bi bi-calendar-check me-2 text-success"></i>{{
+                            $any(perfil).fecha_alta | date:'dd MMMM, yyyy' }}</p>
+                    </div>
+                </div>
+                }
+
+                @if (perfil.rol == Roles.PROFESIONAL) {
+                <div class="row g-3 mb-4">
+                    <div class="col-12 border-start border-success border-4 ps-3 mb-2">
+                        <h6 class="text-success fw-bold text-uppercase m-0">Perfil del Profesional</h6>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label small fw-bold text-muted">Breve Biografía / Descripción</label>
+                        <textarea class="form-control" [(ngModel)]="$any(perfil).descripcion" name="descripcion"
+                            [disabled]="!modoEdicion" rows="3"
+                            placeholder="Cuéntanos sobre tu trayectoria..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Años de Experiencia</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" [(ngModel)]="$any(perfil).annos_experiencia"
+                                name="annos_experiencia" [disabled]="!modoEdicion">
+                            <span class="input-group-text bg-white text-muted">años</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Especialidad Principal</label>
+                        <p class="text-dark fw-bold"><i class="bi bi-award me-2 text-success"></i>{{
+                            $any(perfil).especialidad }}</p>
+                    </div>
+                </div>
+                }
+
+                <div class="d-flex gap-3 mt-5 pt-3 border-top">
+                    @if (!modoEdicion) {
+                    <button type="button"
+                        class="btn btn-success w-100 fw-bold py-3 rounded-pill shadow-sm d-flex align-items-center justify-content-center"
+                        (click)="toggleEdicion()">
+                        <i class="bi bi-pencil-square me-2"></i>Editar mis datos
+                    </button>
+                    } @else {
+                    <button type="button" class="btn btn-outline-secondary w-50 fw-bold py-3 rounded-pill"
+                        (click)="toggleEdicion()">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success w-50 fw-bold py-3 rounded-pill shadow"
+                        (click)="guardarCambios()" [disabled]="!profileForm.valid">
+                        <i class="bi bi-check-lg me-2"></i>Guardar cambios
+                    </button>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+    }
+</div>

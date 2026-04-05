@@ -5,7 +5,7 @@ import { Subscription, switchMap, of } from 'rxjs';
 import { SportCentreService } from '../../services/sport-centre-service';
 import { AuthService } from '../../services/auth';
 import { SnackbarService } from '../../services/snackbar';
-import { ISportCentre, IHorarioSemana } from '../../interfaces/Sport-Centre-Interface'; /* Importamos las interfaces */
+import { ISportCentre, IHorarioSemana } from '../../interfaces/Sport-Centre-Interface';
 import { Rol } from '../../enums/Rol';
 
 @Component({
@@ -47,8 +47,12 @@ export class Home implements OnInit, OnDestroy {
   /* Flag de control para la gestión del estado de carga global (Spinner) */
   public loading: boolean = true;
 
-  /* Flag de control para mostrar el spinner mientras la imagen del centro admin carga */
-  public imagenCargando: boolean = false;
+  /* Flags de control para mostrar el spinner mientras la imagen del centro carga de forma individual */
+  public imagenAdminCargada: boolean = false;
+  public imagenProCargada: boolean = false;
+
+  /* Flags de carga de imagen por cada centro del carousel */
+  public imagenesCarouselCargadas: boolean[] = [];
 
   /* Controladores de estado para la carga asíncrona de datos */
   private loadingCentros: boolean = true;
@@ -86,8 +90,9 @@ export class Home implements OnInit, OnDestroy {
     this.subscription.add(
       this.sportCentreService.getAllSportCentres().subscribe({
         next: (centros) => {
-          /* Mapeamos los centros recibidos a nuestra interfaz */
           this.centros = centros ?? [];
+          /* Inicializamos el array de flags de carga para el carousel */
+          this.imagenesCarouselCargadas = new Array(this.centros.length).fill(false);
           this.loadingCentros = false;
           this.checkLoading();
         },
@@ -122,7 +127,7 @@ export class Home implements OnInit, OnDestroy {
           );
         })
       ).subscribe((data) => {
-        if (!data) return; /* Si es null (logout), el switchMap de arriba ya hizo la limpieza */
+        if (!data) return;
 
         /* Asignamos los flags de rol y marcamos la sesión como activa */
         this.esAdministrador = data.rol === Rol.ADMINISTRADOR;
@@ -135,13 +140,11 @@ export class Home implements OnInit, OnDestroy {
             this.sportCentreService.getSportCentreByAdminUid(data.uid).subscribe({
               next: (centro) => {
                 if (centro) {
-                  /* LÓGICA DE PRIORIDAD: Si recibimos una fotoReciente por QueryParams, la imponemos sobre el dato de Firebase. */
+                  /* LÓGICA DE PRIORIDAD: Si recibimos una fotoReciente por QueryParams, la imponemos sobre el dato de Firebase */
                   const fotoNueva = (fotoReciente !== undefined && fotoReciente !== null) ? fotoReciente : centro.foto;
-
-                  /* Activamos el spinner de imagen solo si hay una foto que cargar */
-                  this.imagenCargando = !!(fotoNueva && fotoNueva.trim() !== '');
-
                   this.centroAdmin = { ...centro, foto: fotoNueva };
+                  /* Reseteamos el flag de imagen al recibir un nuevo centro */
+                  this.imagenAdminCargada = false;
 
                   /* LIMPIEZA DE URL: Una vez asignada, quitamos el parámetro para que no ensucie futuras sesiones */
                   if (fotoReciente !== undefined) {
@@ -171,6 +174,8 @@ export class Home implements OnInit, OnDestroy {
             this.sportCentreService.getSportCentreByProfessionalUid(data.uid).subscribe({
               next: (centro) => {
                 this.centroTrabajo = centro;
+                /* Reseteamos el flag de imagen al recibir un nuevo centro */
+                this.imagenProCargada = false;
                 this.loadingUsuario = false;
                 this.checkLoading();
                 this.cdr.detectChanges();
@@ -204,7 +209,6 @@ export class Home implements OnInit, OnDestroy {
    */
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
-    /* Nos aseguramos de vaciar el centro al destruir el componente */
     this.centroAdmin = null;
     this.centroTrabajo = null;
   }
@@ -223,7 +227,15 @@ export class Home implements OnInit, OnDestroy {
    */
   getDias(horario: IHorarioSemana): string[] {
     const orden = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    return orden.filter(dia => horario[dia] !== undefined);
+    return orden.filter(dia => horario && horario[dia] !== undefined);
+  }
+
+  /**
+   * Marca como cargada la imagen de un centro concreto del carousel
+   * @param index Índice del centro en el array
+   */
+  setImagenCarouselCargada(index: number): void {
+    this.imagenesCarouselCargadas[index] = true;
   }
 
   /**
@@ -258,8 +270,6 @@ export class Home implements OnInit, OnDestroy {
           next: () => {
             this.snackbarService.showSuccess('Centro eliminado correctamente');
             this.centroAdmin = null;
-            this.imagenCargando = false;
-            this.router.navigate([], { queryParams: { fotoReciente: null }, queryParamsHandling: 'merge' });
             this.loading = false;
             this.cdr.detectChanges();
           },

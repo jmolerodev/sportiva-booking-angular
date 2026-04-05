@@ -1,78 +1,90 @@
-<header class="d-flex flex-wrap justify-content-between align-items-center py-3 border-bottom position-relative bg-white">
+<header
+    class="d-flex flex-wrap justify-content-between align-items-center py-3 border-bottom position-relative bg-white">
 
-    <span class="d-flex align-items-center ms-3">
-        <span class="fw-bold text-success fs-3" style="cursor: pointer; user-select: none;" (click)="navigateToHome()">
-            Sportiva Booking
+        <span class="d-flex align-items-center ms-3" (click)="navigateToHome()" style="cursor: pointer; user-select: none;">
+                <img src="logo-app.png" alt="Logo" style="height: 40px; width: 40px; margin-right: 12px; object-fit: contain;">
+                <span class="fw-bold text-success fs-3">Sportiva Booking</span>
         </span>
-    </span>
 
     @if (isReady) {
 
-        @if (!haySession) {
-            <ul class="d-flex align-items-center list-unstyled mb-0 gap-3 me-3">
-                <li>
-                    <a class="text-success text-decoration-none"
-                       style="cursor: pointer; font-weight: bold; user-select: none;"
-                       (click)="navigateToLogin()">Iniciar Sesión</a>
-                </li>
-                <li>
-                    <a class="text-success text-decoration-none"
-                       style="cursor: pointer; font-weight: bold; user-select: none;"
-                       (click)="navigateToSignUp()">Registrarse</a>
-                </li>
-            </ul>
-        }
+    @if (!haySession) {
+    <ul class="d-flex align-items-center list-unstyled mb-0 gap-3 me-3">
+        <li>
+            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;"
+                (click)="navigateToLogin()">Iniciar Sesión</a>
+        </li>
+        <li>
+            <a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold; user-select: none;"
+                (click)="navigateToSignUp()">Registrarse</a>
+        </li>
+    </ul>
+    }
 
-        @if (haySession) {
-            <button class="btn ms-auto me-3 p-1" 
-                    (click)="toggleMenu()" 
-                    style="border: 2px solid #198754; background: none; box-shadow: none;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
-                    <path stroke="#198754" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"/>
-                </svg>
-            </button>
+    @if (haySession) {
+    <button class="btn ms-auto me-3 p-1" (click)="toggleMenu()"
+        style="border: 2px solid #198754; background: none; box-shadow: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
+            <path stroke="#198754" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2"
+                d="M4 7h22M4 15h22M4 23h22" />
+        </svg>
+    </button>
 
-            @if (menuAbierto) {
-            <div class="position-absolute end-0 bg-white border shadow-sm p-3" 
-                 style="top: 100%; z-index: 1000; min-width: 220px; border-radius: 0 0 0 10px;">
-                
-                <ul class="d-flex flex-column align-items-center text-center list-unstyled mb-0 gap-3">
+    @if (menuAbierto) {
+    <div class="position-absolute end-0 bg-white border shadow-sm p-3"
+        style="top: 100%; z-index: 1000; min-width: 220px; border-radius: 0 0 0 10px;">
 
-                    @if (esCliente) {
-                    <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Cliente 1</a></li>
-                    <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Cliente 2</a></li>
-                    <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Cliente 3</a></li>
-                    }
+        <ul class="d-flex flex-column align-items-center text-center list-unstyled mb-0 gap-3">
 
-                    @if (esProfesional) {
-                    <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Profesional 1</a></li>
-                    <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Profesional 2</a></li>
-                    <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Profesional 3</a></li>
-                    }
-
-                    @if (esAdministrador) {
-                    <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;" (click)="navigateToAddProfesional()">Añadir Profesionales a tu Centro Deportivo</a></li>
-                    <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin 2</a></li>
-                    <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin 3</a></li>
-                    }
-
-                    <hr class="w-100 my-1 border-success" style="opacity: 0.2;">
-                    
-                    <li>
-                        <a class="text-danger text-decoration-none"
-                           style="cursor: pointer; font-weight: bold; user-select: none;"
-                           (click)="logout()">Cerrar sesión</a>
-                    </li>
-
-                </ul>
-            </div>
+            @if (esCliente) {
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;"
+                    (click)="navigateToProfile()">Mi Perfil</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Cliente
+                    1</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Cliente
+                    2</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Cliente
+                    3</a></li>
             }
-        }
+
+            @if (esProfesional) {
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;"
+                    (click)="navigateToProfile()">Mi Perfil</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción
+                    Profesional 1</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción
+                    Profesional 2</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción
+                    Profesional 3</a></li>
+            }
+
+            @if (esAdministrador) {
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;"
+                    (click)="navigateToProfile()">Mi Perfil</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;"
+                    (click)="navigateToAddProfesional()">Añadir Profesionales a tu Centro Deportivo</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin
+                    2</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin
+                    3</a></li>
+            }
+
+            <hr class="w-100 my-1 border-success" style="opacity: 0.2;">
+
+            <li>
+                <a class="text-danger text-decoration-none"
+                    style="cursor: pointer; font-weight: bold; user-select: none;" (click)="logout()">Cerrar sesión</a>
+            </li>
+
+        </ul>
+    </div>
+    }
+    }
 
     } @else {
-        <div class="me-3 text-success" style="font-weight: bold;">
-            Cargando sesión...
-        </div>
+    <div class="me-3 text-success" style="font-weight: bold;">
+        Cargando sesión...
+    </div>
     }
 
 </header>

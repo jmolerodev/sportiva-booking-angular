@@ -92,6 +92,11 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['/add-profesional-to-center']);
   }
 
+  navigateToProfile() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['/profile']);
+  }
+
 
   logout(): void {
     this.menuAbierto = false;
