@@ -10,6 +10,7 @@ import { Rol } from '../../enums/Rol';
 import { ICliente } from '../../interfaces/Cliente-Interface';
 import { IProfesional } from '../../interfaces/Profesional-Interface';
 import { IAdministrador } from '../../interfaces/Administrador-Interface';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-profile',
@@ -61,7 +62,8 @@ export class Profile implements OnInit, OnDestroy {
     private snackbarService: SnackbarService,
     private db: Database,
     private storage: Storage, /*Inyectamos Storage para gestionar la foto de perfil*/
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router : Router
   ) { }
 
   /**
@@ -171,6 +173,10 @@ export class Profile implements OnInit, OnDestroy {
         this.urlImagenOriginal  = url;
         this.imagenSeleccionada = null;
 
+        /*Reseteamos el flag de carga para que al cambiar la URL en el HTML aparezca el spinner 
+          mientras el navegador descarga la nueva imagen de Storage*/
+        this.fotoPerfilCargada = false;
+
         /*Con la URL ya disponible persistimos el resto de cambios en RTDB*/
         this.persistirCambios();
       })
@@ -268,8 +274,9 @@ export class Profile implements OnInit, OnDestroy {
       this.previewImagen      = this.previewSnapshot;
       if (this.perfil) this.perfil.foto = this.previewSnapshot || '';
 
-      /*Restauramos el flag de carga según si hay foto o no tras la cancelación*/
-      this.fotoPerfilCargada = !this.previewImagen;
+      /*Forzamos a true para que al cancelar se vea la imagen de inmediato, ya que
+        al ser la misma URL que ya teníamos, el evento (load) podría no saltar*/
+      this.fotoPerfilCargada = true;
 
       this.modoEdicion = false;
       this.cdr.detectChanges();
@@ -280,4 +287,9 @@ export class Profile implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
+
+  navigateToHome() : void {
+    this.router.navigate(['/home']);
+  }
+
 }

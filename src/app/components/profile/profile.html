@@ -1,5 +1,5 @@
 <div style="min-height: 100vh; background-color: #057b2a;"
-    class="d-flex flex-column align-items-center py-5 position-relative">
+    class="d-flex flex-column align-items-center justify-content-center py-5 position-relative">
 
     @if (loading) {
     <div class="card shadow border-0" style="width: 100%; max-width: 500px; border-radius: 15px;">
@@ -23,7 +23,6 @@
         <div class="p-4 text-center border-bottom bg-light">
             <div class="position-relative d-inline-block">
 
-
                 @if (!fotoPerfilCargada) {
                 <div class="rounded-circle d-flex flex-column align-items-center justify-content-center shadow-sm"
                     style="width: 130px; height: 130px; border: 5px solid white; background-color: #f8f9fa;">
@@ -32,25 +31,21 @@
                 </div>
                 }
 
-
                 <img [src]="previewImagen || 'user-default.png'" class="rounded-circle shadow-sm"
                     style="width: 130px; height: 130px; object-fit: cover; border: 5px solid white;"
-                    [style.display]="fotoPerfilCargada ? 'block' : 'none'" (load)="fotoPerfilCargada = true"
+                    [style.display]="fotoPerfilCargada ? 'block' : 'none'" 
+                    (load)="fotoPerfilCargada = true"
                     (error)="previewImagen = null; fotoPerfilCargada = true">
 
                 @if (modoEdicion) {
-
-
                 <label for="inputFotoPerfil"
                     class="position-absolute bottom-0 end-0 bg-success text-white rounded-circle p-2 shadow-sm"
                     style="cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
                     <i class="bi bi-camera-fill" style="font-size: 0.85rem;"></i>
                 </label>
 
-
                 <input id="inputFotoPerfil" type="file" accept="image/*" class="d-none"
                     (change)="onImagenSeleccionada($event)">
-
 
                 @if (previewImagen) {
                 <button type="button"
@@ -59,7 +54,6 @@
                     <i class="bi bi-x-lg"></i>
                 </button>
                 }
-
                 }
             </div>
             <h4 class="fw-bold mt-3 mb-1 text-dark">{{ perfil.nombre }} {{ perfil.apellidos }}</h4>
@@ -150,22 +144,30 @@
                 </div>
                 }
 
-                <div class="d-flex gap-3 mt-5 pt-3 border-top">
+                <div class="d-flex flex-column gap-3 mt-5 pt-3 border-top">
                     @if (!modoEdicion) {
                     <button type="button"
                         class="btn btn-success w-100 fw-bold py-3 rounded-pill shadow-sm d-flex align-items-center justify-content-center"
                         (click)="toggleEdicion()">
                         <i class="bi bi-pencil-square me-2"></i>Editar mis datos
                     </button>
+                    
+                    <button type="button" 
+                        class="btn btn-secondary w-100 fw-bold py-3 rounded-pill opacity-75 d-flex align-items-center justify-content-center" (click)="navigateToHome()">
+                        <i class="bi bi-house-door me-2"></i>Volver a Home
+                    </button>
+
                     } @else {
-                    <button type="button" class="btn btn-outline-secondary w-50 fw-bold py-3 rounded-pill"
-                        (click)="toggleEdicion()">
-                        Cancelar
-                    </button>
-                    <button type="button" class="btn btn-success w-50 fw-bold py-3 rounded-pill shadow"
-                        (click)="guardarCambios()" [disabled]="!profileForm.valid">
-                        <i class="bi bi-check-lg me-2"></i>Guardar cambios
-                    </button>
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn btn-outline-secondary w-50 fw-bold py-3 rounded-pill"
+                            (click)="toggleEdicion()">
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-success w-50 fw-bold py-3 rounded-pill shadow"
+                            (click)="guardarCambios()" [disabled]="!profileForm.valid">
+                            <i class="bi bi-check-lg me-2"></i>Guardar cambios
+                        </button>
+                    </div>
                     }
                 </div>
             </form>
