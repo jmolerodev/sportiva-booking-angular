@@ -6,10 +6,10 @@ import { AuthService } from '../../services/auth';
 import { customEmailValidator, customPasswordValidator } from '../../validators/auth.validator';
 import { SnackbarService } from '../../services/snackbar';
 import { setPersistence, browserLocalPersistence, browserSessionPersistence } from '@angular/fire/auth';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
@@ -52,15 +52,23 @@ export class Login {
 
     const { email, password, remember } = this.loginForm.value;
 
+    /* Configuramos la persistencia según el checkbox */
     const persistence = remember ? browserLocalPersistence : browserSessionPersistence;
 
-    /*Configuramos persistencia antes del login*/
     setPersistence(this.authService.auth, persistence).then(() => {
-
+      
+      /* Ejecutamos el login */
       this.authService.login(email, password).subscribe({
-        next: (user) => {
-          this.snackbar.showSuccess("Bienvenido a Sportiva Booking");
-          this.router.navigate(['/home']);
+        next: () => {
+          
+          /*Nos suscribimos para confirmar que el usuario está autenticado realmente*/
+          this.authService.getUserAuthenticated().pipe(take(1)).subscribe((user) => {
+            if (user) {
+              this.snackbar.showSuccess("Bienvenido a Sportiva Booking");
+              this.router.navigate(['/home']);
+            }
+          });
+
         },
         error: (e) => {
           this.snackbar.showError("Lo sentimos, pero las credenciales son incorrectas");
@@ -93,8 +101,8 @@ export class Login {
   }
 
   /**
- * Metodo mediante el cual navegaremos a la pestaña de Reset Password (Restablecer contraseña)
- */
+  * Metodo mediante el cual navegaremos a la pestaña de Reset Password (Restablecer contraseña)
+  */
   navigateToResetPassword() {
     this.router.navigate(['/reset-password']);
   }
@@ -104,7 +112,6 @@ export class Login {
    */
   navigateToHome() : void {
     this.router.navigate(['/home']);
-   }
-
+  }
 
 }

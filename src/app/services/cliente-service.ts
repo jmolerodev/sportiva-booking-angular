@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { child, Database, objectVal, ref, remove, set, update } from '@angular/fire/database';
+import { child, Database, equalTo, listVal, objectVal, orderByChild, query, ref, remove, set, update } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 import { Cliente } from '../models/Cliente';
 
@@ -7,9 +7,9 @@ import { Cliente } from '../models/Cliente';
   providedIn: 'root',
 })
 export class ClienteService {
-  
+
   /*Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol*/
-  private COLLECTION_NAME = 'Persons'; 
+  private COLLECTION_NAME = 'Persons';
 
   private database = inject(Database);
 
@@ -24,13 +24,54 @@ export class ClienteService {
   }
 
   /**
+   * Método para obtener todos los clientes registrados en la plataforma
+   * @returns Observable con la lista de clientes
+   */
+  getAllClientes(): Observable<Cliente[] | null> {
+    const clientesRef = query(ref(this.database, `/${this.COLLECTION_NAME}`), orderByChild('rol'), equalTo('CLIENTE'));
+    return listVal(clientesRef, { keyField: 'uid' }) as Observable<Cliente[] | null>;
+  }
+
+  /**
+   * Método para vincular un cliente a un centro deportivo activando su suscripción
+   * @param clienteUid UID del cliente a vincular
+   * @param centroUid UID del centro deportivo
+   * @returns Promesa que se resuelve al completar la vinculación
+   */
+  vincularClienteACentro(clienteUid: string, centroUid: string): Promise<void> {
+    const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${clienteUid}`);
+    return update(clienteRef, { centroId: centroUid, is_active: true });
+  }
+
+  /**
+   * Método para desvincular un cliente de su centro deportivo desactivando su suscripción
+   * @param clienteUid UID del cliente a desvincular
+   * @returns Promesa que se resuelve al completar la desvinculación
+   */
+  desvincularClienteDeCentro(clienteUid: string): Promise<void> {
+    const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${clienteUid}`);
+    return update(clienteRef, { centroId: null, is_active: false });
+  }
+
+  /**
+   * Método para activar o desactivar manualmente la suscripción de un cliente
+   * @param clienteUid UID del cliente
+   * @param isActive Nuevo estado de la suscripción
+   * @returns Promesa que se resuelve al completar la actualización
+   */
+  toggleIsActive(clienteUid: string, isActive: boolean): Promise<void> {
+    const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${clienteUid}`);
+    return update(clienteRef, { is_active: isActive });
+  }
+
+  /**
    * Actualizar la información de un cliente ya existente
    * @param uid UID del cliente
    * @param data Objeto parcial con los campos del cliente a modificar
    * @returns Promesa que se resuelve una vez se actualicen los datos
    */
   updateCliente(uid: string, data: Partial<Cliente>): Promise<void> {
-    const clienteRef = ref(this.database, `/${this.COLLECTION_NAME}/${uid}`);
+    const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return update(clienteRef, data);
   }
 
@@ -40,7 +81,7 @@ export class ClienteService {
    * @returns Promesa que se resuelve al completar la operación
    */
   deleteCliente(uid: string): Promise<void> {
-    const clienteRef = ref(this.database, `/${this.COLLECTION_NAME}/${uid}`);
+    const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return remove(clienteRef);
   }
 
@@ -51,8 +92,8 @@ export class ClienteService {
    * @returns Promesa que se resuelve al finalizar el guardado
    */
   saveCliente(uid: string, cliente: any): Promise<void> {
-    const clienteRef = ref(this.database, `/${this.COLLECTION_NAME}/${uid}`);
+    const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return set(clienteRef, cliente);
   }
-  
+
 }

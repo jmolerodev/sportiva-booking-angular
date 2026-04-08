@@ -15,12 +15,10 @@
                             'is-valid': loginForm.get('email')?.valid && loginForm.get('email')?.touched
                         }">
                     @if (loginForm.get('email')?.touched && loginForm.get('email')?.hasError('required')) {
-                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">El correo electrónico
-                        es obligatorio.</small>
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">El correo electrónico es obligatorio.</small>
                     }
                     @if (loginForm.get('email')?.touched && loginForm.get('email')?.hasError('invalidEmail')) {
-                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">Introduce un correo
-                        electrónico válido.</small>
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">Introduce un correo electrónico válido.</small>
                     }
                 </div>
 
@@ -36,17 +34,13 @@
                         </span>
                     </div>
                     @if (loginForm.get('password')?.touched && loginForm.get('password')?.hasError('required')) {
-                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">La contraseña es
-                        obligatoria.</small>
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">La contraseña es obligatoria.</small>
                     }
                     @if(loginForm.get('password')?.touched && loginForm.get('password')?.hasError('invalidPassword')){
-                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">La contraseña no
-                        cumple con el formato correcto</small>
-                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">(9 caracteres, una
-                        mayúscula, una minúscula y un número)</small>
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">La contraseña no cumple con el formato correcto</small>
+                    <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">(9 caracteres, una mayúscula, una minúscula y un número)</small>
                     }
                 </div>
-
 
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" formControlName="remember" id="rememberCheck">

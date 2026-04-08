@@ -10,7 +10,6 @@ import { ISportCentre, IHorarioSemana } from '../../interfaces/Sport-Centre-Inte
 
 @Component({
   selector: 'app-add-sport-centre',
-  standalone: true, /* Añadimos standalone si no estaba */
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './add-sport-centre.html',
   styleUrl: './add-sport-centre.css',
@@ -54,7 +53,7 @@ export class AddSportCentre implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private sportCentreService: SportCentreService,
-    private snackbarService: SnackbarService, /* Inyectamos el snackbar para los avisos */
+    private snackbarService: SnackbarService, 
     private storage: Storage,
     private router: Router,
     private route: ActivatedRoute
@@ -250,7 +249,7 @@ export class AddSportCentre implements OnInit {
       telefono,
       foto,
       adminUid: this.adminUid!,
-      horario /* Incluimos el horario en el objeto final */
+      horario 
     };
 
     this.sportCentreService.saveSportCentre(this.adminUid!, centro).then(() => {

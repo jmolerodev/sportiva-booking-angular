@@ -59,14 +59,10 @@
             }
 
             @if (esAdministrador) {
-            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;"
-                    (click)="navigateToProfile()">Mi Perfil</a></li>
-            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;"
-                    (click)="navigateToAddProfesional()">Añadir Profesionales a tu Centro Deportivo</a></li>
-            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin
-                    2</a></li>
-            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin
-                    3</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;" (click)="navigateToProfile()">Mi Perfil</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;" (click)="navigateToAddProfesional()">Añadir Profesionales a tu Centro Deportivo</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;" (click)="navigateToManagement()">Gestión de Clientes</a></li>
+            <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Opción Admin 3</a></li>
             }
 
             <hr class="w-100 my-1 border-success" style="opacity: 0.2;">

@@ -1,0 +1,132 @@
+<div style="min-height: 100vh; background-color: #057b2a; user-select: none; -webkit-user-select: none;" class="py-5 px-3">
+
+    <div class="container bg-white shadow-lg p-4 p-md-5" style="border-radius: 20px; max-width: 1300px;">
+
+        <div class="text-center mb-5">
+            <img src="logo-app.png"
+                 style="width: 80px; pointer-events: none; user-select: none;"
+                 draggable="false"
+                 class="mb-3">
+            <h2 class="text-success fw-bold">Gestión de Clientes</h2>
+            <p class="text-muted">
+                Centro: <span class="fw-bold text-dark">{{ centroAdmin?.nombre }}</span>
+            </p>
+        </div>
+
+        @if (loading) {
+            <div class="text-center py-5">
+                <div class="spinner-border text-success" role="status"></div>
+            </div>
+        } @else {
+
+            <div class="row g-4">
+
+                <div class="col-12 col-xl-6">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 15px; overflow: hidden;">
+                        <div class="card-header bg-success text-white fw-bold py-3 border-0 text-center">
+                            <i class="bi bi-people-fill me-2"></i>Mis Clientes
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 text-center">
+                                    <thead class="table-light text-muted small">
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Apellidos</th>
+                                            <th>DNI</th>
+                                            <th>Suscripción</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (cliente of misClientes; track cliente.uid) {
+                                            <tr>
+                                                <td class="fw-bold text-dark">{{ cliente.nombre }}</td>
+                                                <td class="fw-bold text-dark">{{ cliente.apellidos }}</td>
+                                                <td class="text-muted small">{{ cliente.dni }}</td>
+                                                <td>
+                                                    <div class="form-check form-switch d-flex justify-content-center mb-0">
+                                                        <input class="form-check-input"
+                                                               type="checkbox"
+                                                               role="switch"
+                                                               [checked]="cliente.is_active"
+                                                               (change)="toggleSuscripcion(cliente.uid, !cliente.is_active)">
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-danger btn-sm px-3 fw-bold rounded-pill"
+                                                            (click)="darDeBaja(cliente.uid)">
+                                                        Baja
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        } @empty {
+                                            <tr>
+                                                <td colspan="5" class="text-center py-5 text-muted small">
+                                                    No tienes clientes en tu centro
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-xl-6">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 15px; overflow: hidden;">
+                        <div class="card-header bg-dark text-white fw-bold py-3 border-0 text-center">
+                            <i class="bi bi-person-plus-fill me-2"></i>Clientes Sin Centro
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 text-center">
+                                    <thead class="table-light text-muted small">
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Apellidos</th>
+                                            <th>DNI</th>
+                                            <th>Alta desde</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (cliente of clientesLibres; track cliente.uid) {
+                                            <tr>
+                                                <td class="fw-bold text-dark">{{ cliente.nombre }}</td>
+                                                <td class="fw-bold text-dark">{{ cliente.apellidos }}</td>
+                                                <td class="text-muted small">{{ cliente.dni }}</td>
+                                                <td class="text-muted small">{{ cliente.fecha_alta | date:'dd/MM/yyyy' }}</td>
+                                                <td>
+                                                    <button class="btn btn-success btn-sm px-3 fw-bold rounded-pill"
+                                                            (click)="darDeAlta(cliente.uid)">
+                                                        Dar de Alta
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        } @empty {
+                                            <tr>
+                                                <td colspan="5" class="text-center py-5 text-muted small">
+                                                    No hay clientes sin centro disponibles
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="text-center mt-5">
+                <button class="btn btn-success px-5 fw-bold" (click)="navigateToHome()">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Panel Principal
+                </button>
+            </div>
+
+        }
+    </div>
+</div>

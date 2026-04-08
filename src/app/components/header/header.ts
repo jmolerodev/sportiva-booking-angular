@@ -97,6 +97,11 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['/profile']);
   }
 
+  navigateToManagement() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['/management-clients'])
+  }
+
 
   logout(): void {
     this.menuAbierto = false;
