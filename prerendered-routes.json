@@ -1,0 +1,14 @@
+{
+  "routes": {
+    "/sportiva-booking-angular": {},
+    "/sportiva-booking-angular/about": {},
+    "/sportiva-booking-angular/add-profesional-to-center": {},
+    "/sportiva-booking-angular/add-sport-centre": {},
+    "/sportiva-booking-angular/home": {},
+    "/sportiva-booking-angular/login": {},
+    "/sportiva-booking-angular/management-clients": {},
+    "/sportiva-booking-angular/profile": {},
+    "/sportiva-booking-angular/reset-password": {},
+    "/sportiva-booking-angular/signup": {}
+  }
+}
