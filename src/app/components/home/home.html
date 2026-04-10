@@ -1,34 +1,49 @@
-<div class="about-section d-flex justify-content-center align-items-center">
-  <div class="info-card shadow-lg p-4 rounded-4">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-    <div class="header text-center" [class.visible]="showHeader">
-      <img src="logo-app.png" alt="Logo Sportiva Booking" class="logo mb-3" />
-      <h2 class="fw-bold mb-4">¿Qué ofrecemos en <span class="text-success">Sportiva Booking</span>?</h2>
-    </div>
+<div class="about-section d-flex flex-column justify-content-center align-items-center">
+  
+  <div class="section-title-wrapper text-center mb-4" [class.visible]="showHeader" style="user-select: none; border-bottom-color: rgba(255,255,255,0.2);">
+    <h3 class="section-title"> El Cambio <span class="text-dark">Comienza Ahora:</span></h3>
+  </div>
 
-    <div class="steps-wrapper">
-      @for (step of steps; track step) {
-        <div class="info-item d-flex align-items-center mb-4" [class.visible]="step.visible">
-          <div class="icon-circle bg-success text-white me-3">
-            <i class="bi" [ngClass]="step.icon"></i>
-          </div>
-          <p class="mb-0">{{ step.text }}</p>
+  <div class="info-card shadow-lg p-4 p-lg-5 rounded-4">
+    <div class="about-grid">
+      <div class="brand-column d-flex flex-column justify-content-center align-items-center text-center" [class.visible]="showHeader">
+        <div class="logo-wrapper mb-3">
+          <img src="logo-app.png" alt="Logo Sportiva Booking" class="logo" />
         </div>
-      }
+        <h1 class="brand-title mb-2">Sportiva<br><span class="brand-accent">Booking</span></h1>
+        <p class="text-dark fw-bold">Tu plataforma de gestión deportiva</p>
+        <div class="brand-divider"></div>
+      </div>
+
+      <div class="steps-column">
+        <h2 class="section-heading fw-bold mb-4" [class.visible]="showHeader">
+          ¿Qué ofrecemos?
+        </h2>
+        <div class="steps-wrapper">
+          @for (step of steps; track step) {
+            <div class="info-item d-flex align-start" [class.visible]="step.visible">
+              <div class="icon-circle bg-success text-white me-3 flex-shrink-0">
+                <i class="bi" [ngClass]="step.icon"></i>
+              </div>
+              <p class="mb-0">{{ step.text }}</p>
+            </div>
+          }
+        </div>
+      </div>
     </div>
 
-    <div class="scroll-hint text-center mt-4" [class.visible]="showFooter">
+    <div class="scroll-hint text-center mt-5" [class.visible]="showFooter">
       <p class="fw-bold mb-1">Descubre los centros disponibles</p>
       <a href="#centros" class="scroll-arrow">
         <i class="bi bi-chevron-double-down"></i>
       </a>
     </div>
-
   </div>
 </div>
 
 <div id="centros" class="centros-section d-flex flex-column justify-content-center align-items-center py-5">
-
   @if (loading) {
     <div class="card shadow" style="width: 100%; max-width: 520px; border-radius: 12px;">
       <div class="card-body p-4 p-md-5 text-center">
@@ -38,133 +53,45 @@
       </div>
     </div>
   } @else {
-
-    <div class="text-center mb-4" style="user-select: none;">
+    <div class="section-title-wrapper text-center mb-5" style="user-select: none;">
       @if (!sesionIniciada) {
-        <h3 class="text-white fw-bold" style="font-size: 1.6rem;">Lista de Centros Deportivos Disponibles:</h3>
+        <h3 class="section-title">Lista de <span class="highlight">Centros Deportivos</span> Disponibles:</h3>
       } @else if (esAdministrador) {
-        <h3 class="text-white fw-bold" style="font-size: 1.6rem;">Gestiona tu Centro Deportivo:</h3>
+        <h3 class="section-title">Gestiona tu <span class="highlight">Centro Deportivo:</span></h3>
       } @else if (esProfesional) {
-        <h3 class="text-white fw-bold" style="font-size: 1.6rem;">Tu Centro Deportivo:</h3>
+        <h3 class="section-title">Tu <span class="highlight">Centro Deportivo:</span></h3>
       } @else if (esCliente) {
-        <h3 class="text-white fw-bold" style="font-size: 1.6rem;">Tu Lista de Centros Deportivos:</h3>
+        <h3 class="section-title">Tu Lista de <span class="highlight">Centros Deportivos Disponibles:</span></h3>
       }
     </div>
 
-    @if (esAdministrador) {
-      @if (!centroAdmin) {
-        <div class="card shadow text-center p-4 mb-4" style="border-radius: 12px; max-width: 480px; width: 100%;">
-          <i class="bi bi-building-add" style="font-size: 3rem; color: #057b2a;"></i>
-          <h5 class="fw-bold mt-3" style="color: #057b2a;">Aún no tienes un centro deportivo</h5>
-          <button class="btn btn-success mt-2 fw-bold" (click)="navigateToAddSportCentre()">
-            <i class="bi bi-plus-circle me-2"></i>Añadir centro deportivo
-          </button>
-        </div>
-      } @else {
-        <div class="card shadow mb-4 mx-auto" style="border-radius: 12px; max-width: 560px; width: 100%;">
-          <div class="img-wrapper position-relative" style="min-height: 220px; background-color: #f8f9fa; border-radius: 12px 12px 0 0;">
-            @if (!imagenAdminCargada) {
-              <div class="position-absolute top-50 start-50 translate-middle text-center">
-                <div class="spinner-border text-success spinner-border-sm" role="status"></div>
-                <p class="text-success small fw-bold mb-0">Cargando imagen...</p>
-              </div>
-            }
-            <img [src]="getFoto(centroAdmin.foto)" class="img-fit" [alt]="centroAdmin.nombre"
-                 (load)="imagenAdminCargada = true"
-                 (error)="centroAdmin.foto = imagenPorDefecto; imagenAdminCargada = true"
-                 [style.opacity]="imagenAdminCargada ? 1 : 0">
-          </div>
-          <div class="card-body p-4">
-            <h5 class="card-title fw-bold text-success">{{ centroAdmin.nombre }}</h5>
-            <p class="card-text text-muted mb-1 small"><i class="bi bi-geo-alt me-1 text-success"></i>{{ centroAdmin.direccion }}</p>
-            <div class="mt-3">
-              <p class="fw-bold text-success mb-2 small"><i class="bi bi-clock me-1"></i>Horario</p>
-              <div class="horario-tabla border-top pt-2">
-                @for (dia of getDias(centroAdmin.horario); track dia) {
-                  <div class="horario-fila d-flex justify-content-between">
-                    <span class="text-capitalize small fw-bold">{{ dia }}</span>
-                    <span class="text-muted small">
-                      {{ centroAdmin.horario[dia].abierto ? centroAdmin.horario[dia].apertura + ' - ' + centroAdmin.horario[dia].cierre : 'Cerrado' }}
-                    </span>
-                  </div>
-                }
-              </div>
-            </div>
-            <div class="d-flex gap-2 mt-4">
-              <button class="btn btn-success fw-bold w-50" (click)="navigateToEditSportCentre()"><i class="bi bi-pencil me-2"></i>Editar</button>
-              <button class="btn btn-danger fw-bold w-50" (click)="deleteSportCentre()"><i class="bi bi-trash me-2"></i>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      }
-    }
-
-    @if (esProfesional) {
-      @if (centroTrabajo) {
-        <div class="card shadow mb-4 mx-auto" style="border-radius: 12px; max-width: 560px; width: 100%;">
-          <div class="img-wrapper position-relative" style="min-height: 220px; background-color: #f8f9fa; border-radius: 12px 12px 0 0;">
-            @if (!imagenProCargada) {
-              <div class="position-absolute top-50 start-50 translate-middle text-center">
-                <div class="spinner-border text-success spinner-border-sm" role="status"></div>
-                <p class="text-success small fw-bold mb-0">Cargando imagen...</p>
-              </div>
-            }
-            <img [src]="getFoto(centroTrabajo.foto)" class="img-fit" [alt]="centroTrabajo.nombre"
-                 (load)="imagenProCargada = true"
-                 (error)="centroTrabajo.foto = imagenPorDefecto; imagenProCargada = true"
-                 [style.opacity]="imagenProCargada ? 1 : 0">
-          </div>
-          <div class="card-body p-4">
-            <span class="badge bg-success mb-2">Personal Autorizado</span>
-            <h5 class="card-title fw-bold text-success">{{ centroTrabajo.nombre }}</h5>
-            <p class="card-text text-muted mb-1 small"><i class="bi bi-geo-alt me-1 text-success"></i>{{ centroTrabajo.direccion }}</p>
-            <div class="mt-3">
-              <p class="fw-bold text-success mb-2 small"><i class="bi bi-clock me-1"></i>Horario del Centro</p>
-              <div class="horario-tabla border-top pt-2">
-                @for (dia of getDias(centroTrabajo.horario); track dia) {
-                  <div class="horario-fila d-flex justify-content-between">
-                    <span class="text-capitalize small fw-bold">{{ dia }}</span>
-                    <span class="text-muted small">
-                      {{ centroTrabajo.horario[dia].abierto ? centroTrabajo.horario[dia].apertura + ' - ' + centroTrabajo.horario[dia].cierre : 'Cerrado' }}
-                    </span>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-      } @else {
-        <div class="card shadow text-center p-5" style="border-radius: 12px; max-width: 480px; width: 100%;">
-          <i class="bi bi-person-workspace" style="font-size: 3rem; color: #057b2a;"></i>
-          <h5 class="fw-bold text-success mt-3">No tienes ningún Centro Deportivo Vinculado</h5>
-          <h6 class="fw-bold text-dark mt-3">Por favor, contacta con tu Administrador</h6>
-        </div>
-      }
-    }
-
     @if (centros.length > 0 && (esCliente || !sesionIniciada)) {
-      <div id="carouselCentros" class="carousel slide shadow" style="max-width: 560px; width: 100%; border-radius: 12px; overflow: hidden;" data-bs-ride="carousel">
-        <div class="carousel-inner">
-          @for (centro of centros; track centro; let i = $index) {
-            <div class="carousel-item" [class.active]="i == 0">
-              <div class="card border-0">
-                <div class="img-wrapper position-relative" style="min-height: 220px; background-color: #f8f9fa;">
-                  @if (!imagenesCarouselCargadas[i]) {
-                    <div class="position-absolute top-50 start-50 translate-middle text-center">
-                      <div class="spinner-border text-success spinner-border-sm" role="status"></div>
-                      <p class="text-success small fw-bold mb-0">Cargando imagen...</p>
+      <div class="carousel-wrapper">
+        <div id="carouselCentros" class="carousel slide carousel-web" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            @for (centro of centros; track centro; let i = $index) {
+              <div class="carousel-item" [class.active]="i == 0">
+                <div class="card border-0">
+                  <div class="img-wrapper position-relative">
+                    @if (!imagenesCarouselCargadas[i]) {
+                      <div class="position-absolute top-50 start-50 translate-middle text-center">
+                        <div class="spinner-border text-success spinner-border-sm" role="status"></div>
+                        <p class="text-success small fw-bold mb-0">Cargando imagen...</p>
+                      </div>
+                    }
+                    <img [src]="getFoto(centro.foto)" class="img-fit" [alt]="centro.nombre"
+                         (load)="setImagenCarouselCargada(i)"
+                         (error)="centro.foto = imagenPorDefecto; setImagenCarouselCargada(i)"
+                         [style.opacity]="imagenesCarouselCargadas[i] ? 1 : 0">
+                    <div class="img-overlay">
+                      <h5 class="text-white fw-bold mb-1">{{ centro.nombre }}</h5>
+                      <p class="text-white-50 small mb-0">
+                        <i class="bi bi-geo-alt me-1"></i>{{ centro.direccion }}
+                      </p>
                     </div>
-                  }
-                  <img [src]="getFoto(centro.foto)" class="img-fit" [alt]="centro.nombre"
-                       (load)="setImagenCarouselCargada(i)"
-                       (error)="centro.foto = imagenPorDefecto; setImagenCarouselCargada(i)"
-                       [style.opacity]="imagenesCarouselCargadas[i] ? 1 : 0">
-                </div>
-                <div class="card-body p-4">
-                  <h5 class="card-title fw-bold text-success">{{ centro.nombre }}</h5>
-                  <p class="card-text text-muted mb-1 small"><i class="bi bi-geo-alt me-1 text-success"></i>{{ centro.direccion }}</p>
+                  </div>
                   @if (centro.horario) {
-                    <div class="mt-3">
+                    <div class="card-body p-4">
                       <p class="fw-bold text-success mb-2 small"><i class="bi bi-clock me-1"></i>Horario</p>
                       <div class="horario-tabla border-top pt-2">
                         @for (dia of getDias(centro.horario); track dia) {
@@ -180,29 +107,32 @@
                   }
                 </div>
               </div>
-            </div>
-          }
+            }
+          </div>
+          <div class="carousel-indicators carousel-indicators-web">
+            @for (centro of centros; track centro; let i = $index) {
+              <button type="button" data-bs-target="#carouselCentros" [attr.data-bs-slide-to]="i"
+                      [class.active]="i == 0" [attr.aria-current]="i == 0 ? 'true' : null"></button>
+            }
+          </div>
         </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#carouselCentros" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon"></span>
+        <button class="carousel-btn carousel-btn-prev" type="button" data-bs-target="#carouselCentros" data-bs-slide="prev">
+          <i class="bi bi-chevron-left"></i>
         </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselCentros" data-bs-slide="next">
-          <span class="carousel-control-next-icon"></span>
+        <button class="carousel-btn carousel-btn-next" type="button" data-bs-target="#carouselCentros" data-bs-slide="next">
+          <i class="bi bi-chevron-right"></i>
         </button>
       </div>
     }
-
-    @if (centros.length === 0 && (esCliente || !sesionIniciada)) {
-      <div class="card shadow text-center p-5" style="border-radius: 12px; max-width: 480px; width: 100%;">
-        <i class="bi bi-building-x" style="font-size: 4rem; color: #057b2a;"></i>
-        <h5 class="fw-bold mt-3" style="color: #057b2a;">No hay centros disponibles</h5>
-      </div>
-    }
-
   }
 
-  <div class="footer-app text-center mt-5 text-white small pb-3" [class.visible]="showFooter">
-    Molero Marín, Juan (2026) - Sportiva Booking &copy;
+  <div class="footer-app text-center mt-5 text-white pb-3" [class.visible]="showFooter">
+    <div class="footer-content">
+      <p class="mb-2 fw-bold">Molero Marín, Juan (2026) - Sportiva Booking &copy;</p>
+      <div class="social-links d-flex justify-content-center gap-4 mt-3">
+        <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
+        <a href="#" class="social-icon"><i class="bi bi-twitter-x"></i></a>
+      </div>
+    </div>
   </div>
-
 </div>
