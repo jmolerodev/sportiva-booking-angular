@@ -12,8 +12,8 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  opacity: 0; 
-  animation: fadeInImg 0.8s forwards; 
+  opacity: 0;
+  animation: fadeInImg 0.8s forwards;
 }
 
 @keyframes fadeInImg {
@@ -26,9 +26,8 @@
 
 @keyframes fadeInSection {
   from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
 
 .horario-tabla {
   display: grid;
@@ -44,7 +43,112 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
+.info-item p {
+  font-size: 1.05rem;
+  color: #057b2a;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
 .horario-dia {
   min-width: 70px;
   color: #333;
+}
+
+.about-section {
+  min-height: 100vh;
+  background-color: #057b2a;
+  padding: 2rem;
+}
+
+.info-card {
+  background-color: rgba(255, 255, 255, 0.95);
+  max-width: 1700px;
+  min-height: 600px;
+  width: 100%;
+  border-radius: 1rem;
+  transition: transform 0.3s ease-in-out;
+}
+
+.info-card:hover {
+  transform: translateY(-5px);
+}
+
+.logo {
+  max-width: 120px;
+}
+
+.icon-circle {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.header {
+  margin-bottom: 2.5rem;
+}
+
+.steps-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.header,
+.info-item,
+.scroll-hint,
+.footer-app {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+}
+
+.header.visible,
+.info-item.visible,
+.scroll-hint.visible,
+.footer-app.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.info-item {
+  margin-bottom: 0 !important;
+}
+
+.scroll-hint {
+  margin-top: 2.5rem !important;
+}
+
+.centros-section {
+  min-height: 100vh;
+  background-color: #057b2a;
+}
+
+.scroll-arrow {
+  display: inline-block;
+  font-size: 2rem;
+  color: #057b2a;
+  text-decoration: none;
+  animation: bounceArrow 1.4s infinite ease-in-out;
+}
+
+.scroll-arrow:hover {
+  color: #046322;
+}
+
+@keyframes bounceArrow {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(8px); }
+}
+
+html {
+  scroll-behavior: smooth;
 }

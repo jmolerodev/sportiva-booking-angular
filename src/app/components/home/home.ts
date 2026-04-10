@@ -17,46 +17,60 @@ import { Rol } from '../../enums/Rol';
 })
 export class Home implements OnInit, OnDestroy {
 
-  /* Lista global de todos los centros deportivos disponibles en la plataforma */
+  /*Lista global de todos los centros deportivos disponibles en la plataforma*/
   public centros: ISportCentre[] = [];
 
-  /* Instancia del centro deportivo vinculado al administrador autenticado */
+  /*Instancia del centro deportivo vinculado al administrador autenticado*/
   public centroAdmin: ISportCentre | null = null;
 
-  /* Instancia del centro deportivo vinculado al profesional autenticado */
+  /*Instancia del centro deportivo vinculado al profesional autenticado*/
   public centroTrabajo: ISportCentre | null = null;
 
-  /* Identificador único (UID) del administrador para consultas en tiempo real */
+  /*Identificador único (UID) del administrador para consultas en tiempo real*/
   public adminUid: string | null = null;
 
-  /* Flag booleano que determina si el usuario en sesión posee el rol de Administrador */
+  /*Flag booleano que determina si el usuario en sesión posee el rol de Administrador*/
   public esAdministrador: boolean = false;
 
-  /* Flag booleano que determina si el usuario en sesión posee el rol de Profesional */
+  /*Flag booleano que determina si el usuario en sesión posee el rol de Profesional*/
   public esProfesional: boolean = false;
 
-  /* Flag booleano que determina si el usuario en sesión posee el rol de Cliente */
+  /*Flag booleano que determina si el usuario en sesión posee el rol de Cliente*/
   public esCliente: boolean = false;
 
-  /* Flag booleano que indica si hay una sesión activa en la plataforma */
+  /*Flag booleano que indica si hay una sesión activa en la plataforma*/
   public sesionIniciada: boolean = false;
 
-  /* Recurso gráfico de respaldo para centros que no cuentan con una fotografía subida */
+  /*Recurso gráfico de respaldo para centros que no cuentan con una fotografía subida*/
   public readonly imagenPorDefecto = 'centro-default.png';
 
-  /* Flag de control para la gestión del estado de carga global (Spinner) */
+  /*Flag de control para la gestión del estado de carga global (Spinner)*/
   public loading: boolean = true;
 
-  /* Flags de control para mostrar el spinner mientras la imagen del centro carga de forma individual */
+  /*Flags de control para mostrar el spinner mientras la imagen del centro carga de forma individual*/
   public imagenAdminCargada: boolean = false;
   public imagenProCargada: boolean = false;
 
-  /* Flags de carga de imagen por cada centro del carousel */
+  /*Flags de carga de imagen por cada centro del carousel*/
   public imagenesCarouselCargadas: boolean[] = [];
 
-  /* Controladores de estado para la carga asíncrona de datos */
+  /*Controladores de estado para la carga asíncrona de datos*/
   private loadingCentros: boolean = true;
   private loadingUsuario: boolean = true;
+
+  /*Lista de bloques de texto con icono que representan los diferentes tipos de usuario.
+     Cada bloque tiene una propiedad 'visible' para controlar su aparición animada*/
+  public steps = [
+    { visible: false, icon: 'bi-gear-fill', text: 'Gestiona tu centro Deportivo: añade horarios, añade y elimina profesionales, ¡Y muchas más opciones!' },
+    { visible: false, icon: 'bi-person-video2', text: 'Crea y gestiona tus sesiones de Entrenamiento o Fisioterapia como Profesional adscrito a un centro.' },
+    { visible: false, icon: 'bi-calendar-check-fill', text: 'Reserva sesiones como Cliente en centros donde tengas membresía activa. Además, consulta la oferta de otros centros.' }
+  ];
+
+  /*Variable booleana con la que controlamos la visibilidad del encabezado de la sección About (logo y título)*/
+  public showHeader: boolean = false;
+
+  /*Variable booleana con la que controlamos la visibilidad del pie de página*/
+  public showFooter: boolean = false;
 
   private subscription: Subscription = new Subscription();
 
@@ -79,19 +93,35 @@ export class Home implements OnInit, OnDestroy {
   ) { }
 
   /**
-   * Inicialización del componente: gestión de datos por parámetros y suscripciones reactivas
+   * Inicialización del componente: gestión de datos por parámetros, animaciones de presentación
+   * y suscripciones reactivas
    */
   ngOnInit(): void {
 
-    /* Capturamos la URL de la foto enviada desde el formulario de edición/creación */
+    /*ANIMACIONES DE PRESENTACIÓN: Reseteamos los flags en cada entrada para que
+       las animaciones se repitan siempre al navegar de vuelta al Home*/
+    this.showHeader = false;
+    this.showFooter = false;
+    this.steps.forEach(step => step.visible = false);
+
+    setTimeout(() => { this.showHeader = true; }, 300);
+
+    this.steps.forEach((step, i) => {
+      setTimeout(() => { step.visible = true; }, 800 + i * 400);
+    });
+
+    /*El footer se activa al concluir la cadena de animaciones del About*/
+    setTimeout(() => { this.showFooter = true; }, 800 + this.steps.length * 400 + 400);
+
+    /*Capturamos la URL de la foto enviada desde el formulario de edición/creación*/
     const fotoReciente = this.route.snapshot.queryParams['fotoReciente'];
 
-    /* Recuperamos la lista global de centros deportivos */
+    /*Recuperamos la lista global de centros deportivos*/
     this.subscription.add(
       this.sportCentreService.getAllSportCentres().subscribe({
         next: (centros) => {
           this.centros = centros ?? [];
-          /* Inicializamos el array de flags de carga para el carousel */
+          /*Inicializamos el array de flags de carga para el carousel*/
           this.imagenesCarouselCargadas = new Array(this.centros.length).fill(false);
           this.loadingCentros = false;
           this.checkLoading();
@@ -104,12 +134,12 @@ export class Home implements OnInit, OnDestroy {
       })
     );
 
-    /* Validamos sesión y activamos la escucha del centro del administrador */
+    /*Validamos sesión y activamos la escucha del centro del administrador*/
     this.subscription.add(
       this.authService.getCurrentUser().pipe(
         switchMap(user => {
           if (!user) {
-            /* LIMPIEZA REACTIVA: Si no hay usuario (logout), reseteamos el estado local */
+            /*LIMPIEZA REACTIVA: Si no hay usuario (logout), reseteamos el estado local*/
             this.centroAdmin = null;
             this.centroTrabajo = null;
             this.adminUid = null;
@@ -129,7 +159,7 @@ export class Home implements OnInit, OnDestroy {
       ).subscribe((data) => {
         if (!data) return;
 
-        /* Asignamos los flags de rol y marcamos la sesión como activa */
+        /*Asignamos los flags de rol y marcamos la sesión como activa*/
         this.esAdministrador = data.rol === Rol.ADMINISTRADOR;
         this.esProfesional = data.rol === Rol.PROFESIONAL;
         this.esCliente = data.rol === Rol.CLIENTE;
@@ -140,13 +170,13 @@ export class Home implements OnInit, OnDestroy {
             this.sportCentreService.getSportCentreByAdminUid(data.uid).subscribe({
               next: (centro) => {
                 if (centro) {
-                  /* LÓGICA DE PRIORIDAD: Si recibimos una fotoReciente por QueryParams, la imponemos sobre el dato de Firebase */
+                  /*LÓGICA DE PRIORIDAD: Si recibimos una fotoReciente por QueryParams, la imponemos sobre el dato de Firebase*/
                   const fotoNueva = (fotoReciente !== undefined && fotoReciente !== null) ? fotoReciente : centro.foto;
                   this.centroAdmin = { ...centro, foto: fotoNueva };
-                  /* Reseteamos el flag de imagen al recibir un nuevo centro */
+                  /*Reseteamos el flag de imagen al recibir un nuevo centro*/
                   this.imagenAdminCargada = false;
 
-                  /* LIMPIEZA DE URL: Una vez asignada, quitamos el parámetro para que no ensucie futuras sesiones */
+                  /*LIMPIEZA DE URL: Una vez asignada, quitamos el parámetro para que no ensucie futuras sesiones*/
                   if (fotoReciente !== undefined) {
                     this.router.navigate([], {
                       queryParams: { fotoReciente: null },
@@ -169,12 +199,12 @@ export class Home implements OnInit, OnDestroy {
             })
           );
         } else if (this.esProfesional && data.uid) {
-          /* Lógica para recuperar el centro donde trabaja el profesional */
+          /*Lógica para recuperar el centro donde trabaja el profesional*/
           this.subscription.add(
             this.sportCentreService.getSportCentreByProfessionalUid(data.uid).subscribe({
               next: (centro) => {
                 this.centroTrabajo = centro;
-                /* Reseteamos el flag de imagen al recibir un nuevo centro */
+                /*Reseteamos el flag de imagen al recibir un nuevo centro*/
                 this.imagenProCargada = false;
                 this.loadingUsuario = false;
                 this.checkLoading();
