@@ -67,6 +67,11 @@ export class Header implements OnInit, OnDestroy {
     return this.rol == Rol.ADMINISTRADOR;
   }
 
+  /*Getter para identificar al superusuario Root*/
+  get esRoot(): boolean {
+    return this.rol == Rol.ROOT;
+  }
+
   /*Alterna el estado del menú*/
   toggleMenu(): void {
     this.menuAbierto = !this.menuAbierto;
@@ -100,6 +105,12 @@ export class Header implements OnInit, OnDestroy {
   navigateToManagement() : void {
     this.menuAbierto = false;
     this.router.navigate(['/management-clients'])
+  }
+
+  /* Método unificado para la gestión de administradores y profesionales */
+  navigateToAdminAndProManagement() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['/user-management']);
   }
 
 

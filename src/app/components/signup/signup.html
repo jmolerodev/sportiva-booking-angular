@@ -8,42 +8,9 @@
 
             <form [formGroup]="signUpForm" (ngSubmit)="signUp()">
 
-                <div class="mb-4">
-                    <label class="form-label text-success w-100 text-center" style="font-weight: bold;">
-                        ¿Cómo quieres registrarte?
-                    </label>
-                    <div class="d-flex justify-content-center gap-4 mt-3">
-
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" id="rolCliente"
-                                formControlName="rol" [value]="Rol.CLIENTE">
-                            <label class="form-check-label fw-bold" for="rolCliente">
-                                <i class="bi bi-person me-1" style="color: #057b2a;"></i> Cliente
-                            </label>
-                        </div>
-
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" id="rolProfesional"
-                                formControlName="rol" [value]="Rol.PROFESIONAL">
-                            <label class="form-check-label fw-bold" for="rolProfesional">
-                                <i class="bi bi-briefcase me-1" style="color: #057b2a;"></i> Profesional
-                            </label>
-                        </div>
-
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" id="rolAdministrador"
-                                formControlName="rol" [value]="Rol.ADMINISTRADOR">
-                            <label class="form-check-label fw-bold" for="rolAdministrador">
-                                <i class="bi bi-shield-lock me-1" style="color: #057b2a;"></i> Administrador
-                            </label>
-                        </div>
-
-                    </div>
-                    @if (signUpForm.get('rol')?.touched && signUpForm.get('rol')?.hasError('required')) {
-                        <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
-                            Debes seleccionar un tipo de cuenta.
-                        </small>
-                    }
+                <div class="mb-4 text-center">
+                    <h4 class="text-success fw-bold">Registro de Cliente</h4>
+                    <p class="text-muted small">Crea tu cuenta para gestionar tus reservas</p>
                 </div>
 
                 <div class="mb-3">
@@ -72,6 +39,36 @@
                     @if (signUpForm.get('apellidos')?.touched && signUpForm.get('apellidos')?.hasError('required')) {
                         <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
                             Los apellidos son obligatorios.
+                        </small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">DNI</label>
+                    <input type="text" class="form-control" placeholder="Introduce tu DNI"
+                        formControlName="dni"
+                        [ngClass]="{
+                            'is-invalid': signUpForm.get('dni')?.invalid && signUpForm.get('dni')?.touched,
+                            'is-valid':   signUpForm.get('dni')?.valid   && signUpForm.get('dni')?.touched
+                        }">
+                    @if (signUpForm.get('dni')?.touched && signUpForm.get('dni')?.hasError('required')) {
+                        <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                            El DNI es obligatorio.
+                        </small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-success" style="font-weight: bold;">Dirección</label>
+                    <input type="text" class="form-control" placeholder="Introduce tu dirección"
+                        formControlName="direccion"
+                        [ngClass]="{
+                            'is-invalid': signUpForm.get('direccion')?.invalid && signUpForm.get('direccion')?.touched,
+                            'is-valid':   signUpForm.get('direccion')?.valid   && signUpForm.get('direccion')?.touched
+                        }">
+                    @if (signUpForm.get('direccion')?.touched && signUpForm.get('direccion')?.hasError('required')) {
+                        <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
+                            La dirección es obligatoria.
                         </small>
                     }
                 </div>
@@ -151,95 +148,6 @@
                         </small>
                     }
                 </div>
-
-                @if (rolSeleccionado == Rol.CLIENTE) {
-
-                    <div class="mb-3">
-                        <label class="form-label text-success" style="font-weight: bold;">DNI</label>
-                        <input type="text" class="form-control" placeholder="Introduce tu DNI"
-                            formControlName="dni"
-                            [ngClass]="{
-                                'is-invalid': signUpForm.get('dni')?.invalid && signUpForm.get('dni')?.touched,
-                                'is-valid':   signUpForm.get('dni')?.valid   && signUpForm.get('dni')?.touched
-                            }">
-                        @if (signUpForm.get('dni')?.touched && signUpForm.get('dni')?.hasError('required')) {
-                            <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
-                                El DNI es obligatorio.
-                            </small>
-                        }
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label text-success" style="font-weight: bold;">Dirección</label>
-                        <input type="text" class="form-control" placeholder="Introduce tu dirección"
-                            formControlName="direccion"
-                            [ngClass]="{
-                                'is-invalid': signUpForm.get('direccion')?.invalid && signUpForm.get('direccion')?.touched,
-                                'is-valid':   signUpForm.get('direccion')?.valid   && signUpForm.get('direccion')?.touched
-                            }">
-                        @if (signUpForm.get('direccion')?.touched && signUpForm.get('direccion')?.hasError('required')) {
-                            <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
-                                La dirección es obligatoria.
-                            </small>
-                        }
-                    </div>
-
-                }
-
-                @if (rolSeleccionado == Rol.PROFESIONAL) {
-
-                    <div class="mb-3">
-                        <label class="form-label text-success" style="font-weight: bold;">Descripción profesional</label>
-                        <textarea class="form-control" rows="3"
-                            placeholder="Cuéntanos brevemente tu perfil profesional"
-                            formControlName="descripcion"
-                            [ngClass]="{
-                                'is-invalid': signUpForm.get('descripcion')?.invalid && signUpForm.get('descripcion')?.touched,
-                                'is-valid':   signUpForm.get('descripcion')?.valid   && signUpForm.get('descripcion')?.touched
-                            }">
-                        </textarea>
-                        @if (signUpForm.get('descripcion')?.touched && signUpForm.get('descripcion')?.hasError('required')) {
-                            <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
-                                La descripción es obligatoria.
-                            </small>
-                        }
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-success" style="font-weight: bold;">Años de experiencia</label>
-                        <input type="number" class="form-control" placeholder="Introduce tus años de experiencia"
-                            formControlName="annos_experiencia" min="0"
-                            [ngClass]="{
-                                'is-invalid': signUpForm.get('annos_experiencia')?.invalid && signUpForm.get('annos_experiencia')?.touched,
-                                'is-valid':   signUpForm.get('annos_experiencia')?.valid   && signUpForm.get('annos_experiencia')?.touched
-                            }">
-                        @if (signUpForm.get('annos_experiencia')?.touched && signUpForm.get('annos_experiencia')?.hasError('required')) {
-                            <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
-                                Los años de experiencia son obligatorios.
-                            </small>
-                        }
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label text-success" style="font-weight: bold;">Especialidad</label>
-                        <select class="form-select" formControlName="especialidad"
-                            [ngClass]="{
-                                'is-invalid': signUpForm.get('especialidad')?.invalid && signUpForm.get('especialidad')?.touched,
-                                'is-valid':   signUpForm.get('especialidad')?.valid   && signUpForm.get('especialidad')?.touched
-                            }">
-                            <option value="" disabled selected>Selecciona tu especialidad</option>
-                            @for (esp of especialidades; track esp) {
-                                <option [value]="esp">{{ esp }}</option>
-                            }
-                        </select>
-                        @if (signUpForm.get('especialidad')?.touched && signUpForm.get('especialidad')?.hasError('required')) {
-                            <small class="text-danger d-block text-center mt-2" style="font-weight: bold;">
-                                La especialidad es obligatoria.
-                            </small>
-                        }
-                    </div>
-
-                }
 
                 <div class="text-center">
                     <button type="submit" class="btn btn-success px-4"

@@ -1,0 +1,164 @@
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<div class="management-section d-flex flex-column justify-content-center align-items-center py-5">
+  
+  <div class="section-title-wrapper text-center mb-4" style="user-select: none;">
+    <h3 class="section-title">
+      @if (rolUsuarioLogueado === Rol.ROOT) {
+        Gestión de <span class="highlight">Administradores</span>
+      } @else {
+        Gestión de <span class="highlight">Profesionales</span>
+      }
+    </h3>
+  </div>
+
+  <div class="info-card shadow-lg p-4 p-lg-5 rounded-4">
+    <div class="text-center mb-4">
+      <img src="logo-app.png" alt="Logo" class="mb-3" style="width: 70px;">
+      <h2 class="brand-title fs-1">Nuevo <span class="brand-accent">Registro</span></h2>
+      <p class="text-muted fw-bold">Introduce los datos para el alta en el sistema</p>
+      <div class="brand-divider mx-auto"></div>
+    </div>
+
+    <form [formGroup]="managementForm" (ngSubmit)="createUser()" class="mt-4" novalidate>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-bold text-dark">Nombre</label>
+          <input type="text" class="form-control custom-input" formControlName="nombre" placeholder="Nombre"
+            [ngClass]="{
+              'is-invalid': managementForm.get('nombre')?.invalid && managementForm.get('nombre')?.touched,
+              'is-valid':   managementForm.get('nombre')?.valid   && managementForm.get('nombre')?.touched
+            }">
+          @if (managementForm.get('nombre')?.touched && managementForm.get('nombre')?.hasError('required')) {
+            <small class="text-danger d-block mt-1 fw-bold text-center">El nombre es obligatorio.</small>
+          }
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-bold text-dark">Apellidos</label>
+          <input type="text" class="form-control custom-input" formControlName="apellidos" placeholder="Apellidos"
+            [ngClass]="{
+              'is-invalid': managementForm.get('apellidos')?.invalid && managementForm.get('apellidos')?.touched,
+              'is-valid':   managementForm.get('apellidos')?.valid   && managementForm.get('apellidos')?.touched
+            }">
+          @if (managementForm.get('apellidos')?.touched && managementForm.get('apellidos')?.hasError('required')) {
+            <small class="text-danger d-block mt-1 fw-bold text-center">Los apellidos son obligatorios.</small>
+          }
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold text-dark">Email de Acceso</label>
+        <input type="email" class="form-control custom-input" formControlName="email" placeholder="ejemplo@sportiva.com"
+          [ngClass]="{
+            'is-invalid': managementForm.get('email')?.invalid && managementForm.get('email')?.touched,
+            'is-valid':   managementForm.get('email')?.valid   && managementForm.get('email')?.touched
+          }">
+        @if (managementForm.get('email')?.touched && managementForm.get('email')?.hasError('required')) {
+          <small class="text-danger d-block mt-1 fw-bold text-center">El correo electrónico es obligatorio.</small>
+        }
+        @if (managementForm.get('email')?.touched && managementForm.get('email')?.hasError('invalidEmail')) {
+          <small class="text-danger d-block mt-1 fw-bold text-center">Introduce un correo electrónico válido.</small>
+        }
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-bold text-dark">Contraseña</label>
+          <div class="input-group">
+            <input [type]="showPassword ? 'text' : 'password'" class="form-control custom-input" formControlName="password"
+              placeholder="Contraseña"
+              [ngClass]="{
+                'is-invalid': managementForm.get('password')?.invalid && managementForm.get('password')?.touched,
+                'is-valid':   managementForm.get('password')?.valid   && managementForm.get('password')?.touched
+              }">
+            <span class="input-group-text bg-white border-start-0" (click)="togglePassword()" style="cursor: pointer;">
+              <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+            </span>
+          </div>
+          @if (managementForm.get('password')?.touched && managementForm.get('password')?.hasError('required')) {
+            <small class="text-danger d-block mt-1 fw-bold text-center">La contraseña es obligatoria.</small>
+          }
+          @if (managementForm.get('password')?.touched && managementForm.get('password')?.hasError('invalidPassword')) {
+            <small class="text-danger d-block mt-1 fw-bold text-center" style="font-size: 0.8rem;">
+              9+ carac, Mayús, Minús, Núm y Símbolo.
+            </small>
+          }
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-bold text-dark">Confirmar</label>
+          <div class="input-group">
+            <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control custom-input" formControlName="confirmPassword"
+              placeholder="Repite contraseña"
+              [ngClass]="{
+                'is-invalid': managementForm.get('confirmPassword')?.invalid && managementForm.get('confirmPassword')?.touched,
+                'is-valid':   managementForm.get('confirmPassword')?.valid   && managementForm.get('confirmPassword')?.touched
+                              && !managementForm.get('confirmPassword')?.hasError('passwordMismatch')
+              }">
+            <span class="input-group-text bg-white border-start-0" (click)="toggleConfirmPassword()" style="cursor: pointer;">
+              <i class="bi" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+            </span>
+          </div>
+          @if (managementForm.get('confirmPassword')?.touched && managementForm.get('confirmPassword')?.hasError('required')) {
+            <small class="text-danger d-block mt-1 fw-bold text-center">Debes confirmar la contraseña.</small>
+          }
+          @if (managementForm.get('confirmPassword')?.touched && managementForm.get('confirmPassword')?.hasError('passwordMismatch')) {
+            <small class="text-danger d-block mt-1 fw-bold text-center">Las contraseñas no coinciden.</small>
+          }
+        </div>
+      </div>
+
+      @if (rolUsuarioLogueado === Rol.ADMINISTRADOR) {
+        <div class="info-item visible mt-4 mb-4">
+          <h5 class="fw-bold text-success mb-3"><i class="bi bi-person-workspace me-2"></i>Perfil Profesional</h5>
+          <div class="row">
+            <div class="col-md-8 mb-3">
+              <label class="form-label small fw-bold">Especialidad</label>
+              <select class="form-select custom-input" formControlName="especialidad"
+                [ngClass]="{'is-invalid': managementForm.get('especialidad')?.invalid && managementForm.get('especialidad')?.touched}">
+                <option value="" disabled selected>Seleccionar rama...</option>
+                @for (esp of especialidades; track esp) {
+                  <option [value]="esp">{{ esp }}</option>
+                }
+              </select>
+              @if (managementForm.get('especialidad')?.touched && managementForm.get('especialidad')?.hasError('required')) {
+                <small class="text-danger d-block mt-1 fw-bold">La especialidad es obligatoria.</small>
+              }
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label small fw-bold">Experiencia (Años)</label>
+              <input type="number" class="form-control custom-input" formControlName="annos_experiencia" min="0"
+                [ngClass]="{'is-invalid': managementForm.get('annos_experiencia')?.invalid && managementForm.get('annos_experiencia')?.touched}">
+              @if (managementForm.get('annos_experiencia')?.touched && managementForm.get('annos_experiencia')?.hasError('required')) {
+                <small class="text-danger d-block mt-1 fw-bold">Dato necesario.</small>
+              }
+            </div>
+          </div>
+          <div class="mb-0">
+            <label class="form-label small fw-bold">Biografía Breve</label>
+            <textarea class="form-control custom-input" rows="2" formControlName="descripcion" placeholder="Resumen del CV..."
+              [ngClass]="{'is-invalid': managementForm.get('descripcion')?.invalid && managementForm.get('descripcion')?.touched}"></textarea>
+            @if (managementForm.get('descripcion')?.touched && managementForm.get('descripcion')?.hasError('required')) {
+              <small class="text-danger d-block mt-1 fw-bold">La descripción es obligatoria.</small>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="d-grid gap-3 mt-5">
+        <button type="submit" class="btn-google-pro btn-outline-google-success w-100 py-3">
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm me-2"></span> Procesando...
+          } @else {
+            <i class="bi bi-shield-check me-2"></i> Confirmar Alta en el Sistema
+          }
+        </button>
+
+        <button type="button" class="btn-google-pro btn-outline-google-secondary w-100 py-3" (click)="navigateToHome()">
+          <i class="bi bi-house-door me-2"></i> Cancelar y volver al Panel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

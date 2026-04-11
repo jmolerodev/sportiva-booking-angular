@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap');
+
+.management-section {
+  min-height: 100vh;
+  background-color: #1e1e1e; 
+  font-family: 'Nunito', sans-serif;
+}
+
+.info-card {
+  background-color: rgba(255, 255, 255, 0.98);
+  max-width: 800px;
+  width: 95%;
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.brand-title {
+  font-family: 'Bebas Neue', cursive;
+  letter-spacing: 0.03em;
+  color: #1a1a1a;
+}
+
+.brand-accent { color: #057b2a; }
+
+.brand-divider {
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #057b2a, #00e676);
+  border-radius: 2px;
+}
+
+.section-title-wrapper {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1rem;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 3rem;
+  color: #fff;
+}
+
+.section-title .highlight { color: #00e676; }
+
+.custom-input {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  transition: all 0.3s ease;
+}
+
+.custom-input:focus {
+  border-color: #057b2a;
+  box-shadow: 0 0 0 3px rgba(5, 123, 42, 0.1);
+  outline: none;
+}
+
+.info-item {
+  background: rgba(5, 123, 42, 0.04);
+  border-left: 4px solid #057b2a;
+  border-radius: 0 8px 8px 0;
+  padding: 1.5rem;
+}
+
+.btn-google-pro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-outline-google-success {
+  border: 2px solid #057b2a;
+  background-color: transparent;
+  color: #057b2a;
+}
+
+.btn-outline-google-secondary {
+  border: 2px solid #6c757d;
+  background-color: transparent;
+  color: #6c757d;
+}
+
+.btn-outline-google-secondary:hover {
+  background-color: #6c757d;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
