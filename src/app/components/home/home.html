@@ -1,7 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <div class="about-section d-flex flex-column justify-content-center align-items-center">
-  
   <div class="section-title-wrapper text-center mb-4" [class.visible]="showHeader" style="user-select: none; border-bottom-color: rgba(255,255,255,0.2);">
     <h3 class="section-title"> El Cambio <span class="text-dark">Comienza Ahora:</span></h3>
   </div>
@@ -18,9 +17,7 @@
       </div>
 
       <div class="steps-column">
-        <h2 class="section-heading fw-bold mb-4" [class.visible]="showHeader">
-          ¿Qué ofrecemos?
-        </h2>
+        <h2 class="section-heading fw-bold mb-4" [class.visible]="showHeader">¿Qué ofrecemos?</h2>
         <div class="steps-wrapper">
           @for (step of steps; track step) {
             <div class="info-item d-flex align-start" [class.visible]="step.visible">
@@ -85,9 +82,7 @@
                          [style.opacity]="imagenesCarouselCargadas[i] ? 1 : 0">
                     <div class="img-overlay">
                       <h5 class="text-white fw-bold mb-1">{{ centro.nombre }}</h5>
-                      <p class="text-white-50 small mb-0">
-                        <i class="bi bi-geo-alt me-1"></i>{{ centro.direccion }}
-                      </p>
+                      <p class="text-white-50 small mb-0"><i class="bi bi-geo-alt me-1"></i>{{ centro.direccion }}</p>
                     </div>
                   </div>
                   @if (centro.horario) {
@@ -123,6 +118,66 @@
           <i class="bi bi-chevron-right"></i>
         </button>
       </div>
+    } @else if (centros.length === 0 && (esCliente || !sesionIniciada)) {
+      <div class="no-centre-card p-5 text-center shadow-lg">
+        <i class="bi bi-emoji-smile text-success display-4 mb-3"></i>
+        <h4 class="fw-bold text-dark mb-3">Próximamente nuevos centros</h4>
+        <p class="text-muted mb-0">Estamos trabajando para incorporar los mejores centros deportivos de tu zona. ¡Vuelve pronto!</p>
+      </div>
+    }
+
+    @if (sesionIniciada && ((esAdministrador && !centroAdmin) || (esProfesional && !centroTrabajo))) {
+      <div class="no-centre-card p-5 text-center shadow-lg">
+        <i class="bi bi-building-add text-success display-4 mb-3"></i>
+        <h4 class="fw-bold text-dark mb-3">Tu espacio deportivo te espera</h4>
+        <p class="text-muted mb-4">Aún no has configurado tu centro deportivo. Comienza a gestionar tus clientes y profesionales hoy mismo.</p>
+        @if (esAdministrador) {
+          <button (click)="navigateToAddSportCentre()" class="btn-google-pro btn-outline-google-success">
+            <i class="bi bi-plus-lg me-2"></i>Registrar mi Centro
+          </button>
+        } @else {
+          <div class="info-tag-google border-success mt-3">
+            <i class="bi bi-info-circle me-2"></i>
+            <span>Solicita a tu administrador que te vincule a su centro.</span>
+          </div>
+        }
+      </div>
+    }
+
+    @if (esAdministrador && centroAdmin) {
+       <div class="carousel-wrapper">
+          <div class="card border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="img-wrapper position-relative">
+              <img [src]="getFoto(centroAdmin.foto)" class="img-fit" [alt]="centroAdmin.nombre">
+              <div class="img-overlay">
+                <h5 class="text-white fw-bold mb-1">{{ centroAdmin.nombre }}</h5>
+                <p class="text-white-50 small mb-0"><i class="bi bi-geo-alt me-1"></i>{{ centroAdmin.direccion }}</p>
+              </div>
+            </div>
+            <div class="card-body p-4 bg-white">
+              <div class="d-flex justify-content-between align-items-center py-3">
+                <button (click)="navigateToEditSportCentre()" class="btn-google-pro btn-outline-google-success">
+                  <i class="bi bi-pencil-square me-2"></i>Editar Datos
+                </button>
+                <button (click)="deleteSportCentre()" class="btn-google-pro btn-outline-google-danger">
+                  <i class="bi bi-trash3 me-2"></i>Eliminar Centro
+                </button>
+              </div>
+              @if (centroAdmin.horario) {
+                <div class="horario-tabla border-top pt-4 mt-2">
+                  @for (dia of getDias(centroAdmin.horario); track dia) {
+                    <div class="horario-fila d-flex justify-content-between">
+                      <span class="text-capitalize small fw-bold text-dark">{{ dia }}</span>
+                      <span class="text-muted small">
+                        {{ centroAdmin.horario[dia].abierto ? centroAdmin.horario[dia].apertura + ' - ' + centroAdmin.horario[dia].cierre : 'Cerrado' }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+       </div>
     }
   }
 

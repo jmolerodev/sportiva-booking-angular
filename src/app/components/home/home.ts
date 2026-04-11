@@ -59,7 +59,7 @@ export class Home implements OnInit, OnDestroy {
   private loadingUsuario: boolean = true;
 
   /*Lista de bloques de texto con icono que representan los diferentes tipos de usuario.
-     Cada bloque tiene una propiedad 'visible' para controlar su aparición animada*/
+      Cada bloque tiene una propiedad 'visible' para controlar su aparición animada*/
   public steps = [
     { visible: false, icon: 'bi-gear-fill', text: 'Gestiona tu centro Deportivo: añade horarios, añade y elimina profesionales, ¡Y muchas más opciones!' },
     { visible: false, icon: 'bi-person-video2', text: 'Crea y gestiona tus sesiones de Entrenamiento o Fisioterapia como Profesional adscrito a un centro.' },
