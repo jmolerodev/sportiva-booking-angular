@@ -99,7 +99,7 @@ export class Home implements OnInit, OnDestroy {
   ngOnInit(): void {
 
     /*ANIMACIONES DE PRESENTACIÓN: Reseteamos los flags en cada entrada para que
-       las animaciones se repitan siempre al navegar de vuelta al Home*/
+        las animaciones se repitan siempre al navegar de vuelta al Home*/
     this.showHeader = false;
     this.showFooter = false;
     this.steps.forEach(step => step.visible = false);
