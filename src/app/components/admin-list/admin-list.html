@@ -41,17 +41,17 @@
       <table class="table admin-table mb-0">
         <thead>
           <tr>
-            <th scope="col" class="text-center"><i class="bi bi-person me-2"></i>Nombre</th>
-            <th scope="col" class="text-center"><i class="bi bi-card-text me-2"></i>Apellidos</th>
-            <th scope="col" class="text-center"><i class="bi bi-shield-check me-2"></i>Rol</th>
-            <th scope="col" class="text-center"><i class="bi bi-gear me-2"></i>Acciones</th>
+            <th scope="col" class="text-center fw-bold"><i class="bi bi-person me-2"></i>Nombre</th>
+            <th scope="col" class="text-center fw-bold"><i class="bi bi-card-text me-2"></i>Apellidos</th>
+            <th scope="col" class="text-center fw-bold"><i class="bi bi-shield-check me-2"></i>Rol</th>
+            <th scope="col" class="text-center fw-bold"><i class="bi bi-gear me-2"></i>Acciones</th>
           </tr>
         </thead>
         <tbody>
           @for (admin of administradores; track admin.uid) {
           <tr class="admin-row">
             <td class="text-center fw-bold">{{ admin.data.nombre }}</td>
-            <td class="text-center fw-semibold text-muted">{{ admin.data.apellidos }}</td>
+            <td class="text-center fw-bold">{{ admin.data.apellidos }}</td>
             <td class="text-center">
               <span class="role-badge">
                 <i class="bi bi-shield-fill me-1"></i>{{ admin.data.rol }}

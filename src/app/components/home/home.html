@@ -53,6 +53,8 @@
     <div class="section-title-wrapper text-center mb-5" style="user-select: none;">
       @if (!sesionIniciada) {
         <h3 class="section-title">Lista de <span class="highlight">Centros Deportivos</span> Disponibles:</h3>
+      } @else if (esRoot) {
+        <h3 class="section-title">Panel de <span class="highlight">Cuenta Principal:</span></h3>
       } @else if (esAdministrador) {
         <h3 class="section-title">Gestiona tu <span class="highlight">Centro Deportivo:</span></h3>
       } @else if (esProfesional) {
@@ -132,6 +134,14 @@
         <i class="bi bi-emoji-smile text-success display-4 mb-3"></i>
         <h4 class="fw-bold text-dark mb-3">Próximamente nuevos centros</h4>
         <p class="text-muted mb-0">Estamos trabajando para incorporar los mejores centros deportivos de tu zona. ¡Vuelve pronto!</p>
+      </div>
+    }
+
+    @if (sesionIniciada && esRoot) {
+      <div class="no-centre-card p-5 text-center shadow-lg border-top border-5 border-success">
+        <i class="bi bi-shield-lock-fill text-success display-4 mb-3"></i>
+        <p class="text-dark fw-bold mb-0">Estás actualmente con la cuenta principal de la plataforma.</p>
+        <p class="text-success fw-bold mt-2">Desde aquí puedes supervisar el funcionamiento global de Sportiva Booking.</p>
       </div>
     }
 

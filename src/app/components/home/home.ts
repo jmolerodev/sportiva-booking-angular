@@ -38,6 +38,9 @@ export class Home implements OnInit, OnDestroy {
   /*Flag booleano que determina si el usuario en sesión posee el rol de Cliente*/
   public esCliente: boolean = false;
 
+  /*Flag booleano que determina si el usuario en sesión posee el rol de Root*/
+  public esRoot: boolean = false;
+
   /*Flag booleano que indica si hay una sesión activa en la plataforma*/
   public sesionIniciada: boolean = false;
 
@@ -146,6 +149,7 @@ export class Home implements OnInit, OnDestroy {
             this.esAdministrador = false;
             this.esProfesional = false;
             this.esCliente = false;
+            this.esRoot = false;
             this.sesionIniciada = false;
             this.loadingUsuario = false;
             this.checkLoading();
@@ -163,6 +167,7 @@ export class Home implements OnInit, OnDestroy {
         this.esAdministrador = data.rol === Rol.ADMINISTRADOR;
         this.esProfesional = data.rol === Rol.PROFESIONAL;
         this.esCliente = data.rol === Rol.CLIENTE;
+        this.esRoot = data.rol === Rol.ROOT;
         this.sesionIniciada = true;
 
         if (this.esAdministrador && data.uid) {
