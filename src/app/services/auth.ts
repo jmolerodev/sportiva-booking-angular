@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, authState, createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
+import { Auth, authState, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
 import { from, map, Observable, of, switchMap } from 'rxjs';
 import { Rol } from '../enums/Rol';
 import { child, Database, objectVal } from '@angular/fire/database';
 import { ref } from 'firebase/database';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, getAuth, signOut as secondarySignOut } from 'firebase/auth';
+import { initializeApp, getApp } from '@angular/fire/app';
 
 @Injectable({
   providedIn: 'root',
@@ -37,6 +38,27 @@ export class AuthService {
    */
   register(email: string, password: string): Observable<UserCredential> {
     return from(createUserWithEmailAndPassword(this.auth, email, password));
+  }
+
+  /**
+   * Método especializado para la creación de usuarios por parte de un administrador.
+   * Crea una instancia secundaria de Firebase para evitar el cierre de sesión del usuario actual,
+   * envía el correo de verificación y limpia la sesión secundaria.
+   * @param email Correo electrónico del nuevo usuario
+   * @param password Contraseña provisional del nuevo usuario
+   * @returns Observable con las credenciales del usuario creado
+   */
+  registerByAdmin(email: string, password: string): Observable<UserCredential> {
+    const secondaryApp = initializeApp(getApp().options, 'SecondaryApp');
+    const secondaryAuth = getAuth(secondaryApp);
+
+    return from(createUserWithEmailAndPassword(secondaryAuth, email, password)).pipe(
+      switchMap(async (credential) => {
+        await sendEmailVerification(credential.user);
+        await secondarySignOut(secondaryAuth);
+        return credential;
+      })
+    );
   }
 
   /**
