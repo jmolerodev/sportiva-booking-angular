@@ -15,6 +15,7 @@ import { AddProfesionalToCenter } from './components/add-profesional-to-center/a
 import { Profile } from './components/profile/profile';
 import { ManagementClients } from './components/management-clients/management-clients';
 import { AdminUserManagement } from './components/admin-user-management/admin-user-management';
+import { AdminList } from './components/admin-list/admin-list';
 
 /**
  * Función Guard para proteger rutas de administración (ROOT y ADMINISTRADOR)
@@ -41,8 +42,7 @@ export const routes: Routes = [
     { path: 'profile', component: Profile},
     { path: 'management-clients', component: ManagementClients},
     { path: 'add-sport-centre', component: AddSportCentre },
-    
-    /* Componente existente para asignación */
+    { path: 'admin-list', component: AdminList},
     { path: 'add-profesional-to-center', component: AddProfesionalToCenter },
 
     /* Componente nuevo para el alta de staff (Admins/Pros) */

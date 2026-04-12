@@ -107,10 +107,15 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['/management-clients'])
   }
 
-  /* Método unificado para la gestión de administradores y profesionales */
+  
   navigateToAdminAndProManagement() : void {
     this.menuAbierto = false;
     this.router.navigate(['/user-management']);
+  }
+
+  navigateToAdminList() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['/admin-list'])
   }
 
 
