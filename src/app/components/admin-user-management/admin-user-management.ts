@@ -46,7 +46,6 @@ export class AdminUserManagement implements OnInit {
       email: ['', [Validators.required, customEmailValidator()]],
       password: ['', [Validators.required, customPasswordValidator()]],
       confirmPassword: ['', Validators.required],
-      /* Campos pro (se validan dinámicamente según el rol) */
       descripcion: [''],
       annos_experiencia: [''],
       especialidad: [''],
@@ -87,14 +86,24 @@ export class AdminUserManagement implements OnInit {
     this.isLoading = true;
     const { nombre, apellidos, email, password, descripcion, annos_experiencia, especialidad } = this.managementForm.value;
 
-    this.authService.register(email, password).subscribe({
+    
+    const adminIdActual = this.authService.auth.currentUser?.uid;
+
+    
+    this.authService.registerByAdmin(email, password).subscribe({
       next: (userCredential) => {
         const uid = userCredential.user.uid;
 
         if (this.rolUsuarioLogueado === Rol.ADMINISTRADOR) {
           const nuevoPro: IProfesional = {
-            nombre, apellidos, foto: '', rol: Rol.PROFESIONAL,
-            descripcion, annos_experiencia: Number(annos_experiencia), especialidad
+            nombre, 
+            apellidos, 
+            foto: '', 
+            rol: Rol.PROFESIONAL,
+            descripcion, 
+            annos_experiencia: Number(annos_experiencia), 
+            especialidad,
+            adminId: adminIdActual 
           };
           this.profesionalService.saveProfesional(uid, nuevoPro).then(() => {
             this.snackbar.showSuccess("Profesional registrado con éxito");

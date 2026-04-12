@@ -5,7 +5,7 @@ import { Rol } from '../enums/Rol';
 import { child, Database, objectVal } from '@angular/fire/database';
 import { ref } from 'firebase/database';
 import { onAuthStateChanged, getAuth, signOut as secondarySignOut } from 'firebase/auth';
-import { initializeApp, getApp } from '@angular/fire/app';
+import { initializeApp, getApp, deleteApp } from '@angular/fire/app';
 
 @Injectable({
   providedIn: 'root',
@@ -54,9 +54,13 @@ export class AuthService {
 
     return from(createUserWithEmailAndPassword(secondaryAuth, email, password)).pipe(
       switchMap(async (credential) => {
-        await sendEmailVerification(credential.user);
-        await secondarySignOut(secondaryAuth);
-        return credential;
+        try {
+          await sendEmailVerification(credential.user);
+          await secondarySignOut(secondaryAuth);
+          return credential;
+        } finally {
+          await deleteApp(secondaryApp);
+        }
       })
     );
   }

@@ -56,7 +56,4 @@ export class AdminService {
     const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return set(adminRef, administrador);
   }
-
-
-
 }
