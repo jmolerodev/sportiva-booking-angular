@@ -118,6 +118,11 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['/admin-list'])
   }
 
+  navigateToProfesionalList() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['/profesional-list']);
+  }
+
 
   logout(): void {
     this.menuAbierto = false;

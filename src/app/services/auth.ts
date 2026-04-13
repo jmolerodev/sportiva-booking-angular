@@ -14,7 +14,9 @@ export class AuthService {
 
   public auth = inject(Auth);
   private database = inject(Database);
-  private authState$ = authState(this.auth);
+
+  /* Observable que emite el estado de autenticación en tiempo real */
+  public authState$ = authState(this.auth);
 
   /**
    * Método mediante el cual realizaremos el inicio de sesión del usuario
@@ -113,10 +115,19 @@ export class AuthService {
   }
 
   /**
- * Metodo mediante el cual enviaremos un correo de restablecimiento de contraseña via Firebase Auth
- */
+   * Metodo mediante el cual enviaremos un correo de restablecimiento de contraseña via Firebase Auth
+   */
   sendPasswordResetEmail(email: string): Observable<void> {
     return from(sendPasswordResetEmail(this.auth, email));
+  }
+
+  /**
+   * Obtiene el UID del usuario autenticado de forma síncrona desde la instancia de Auth
+   * ⚠️ IMPORTANTE: Puede devolver null tras un refresh si Firebase aún no ha restaurado la sesión
+   * @returns El UID del usuario o null si no hay sesión iniciada
+   */
+  getUID(): string | null {
+    return this.auth.currentUser?.uid ?? null;
   }
 
 }

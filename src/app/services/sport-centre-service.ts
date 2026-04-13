@@ -71,13 +71,18 @@ export class SportCentreService {
   }
 
   /**
-   * Vincula un profesional a un centro deportivo (Nodo Persons)
-   */
-  vincularProfesionalACentro(proUid: string, centroUid: string): Promise<void> {
-    const proRef = child(ref(this.database), `${this.PERSONS_COLLECTION}/${proUid}`);
-    return update(proRef, { centroId: centroUid });
-  }
+ * Vincula o desvincula un profesional a un centro deportivo
+ * Si centroUid es null, se elimina la vinculación
+ */
+vincularProfesionalACentro(proUid: string, centroUid: string | null): Promise<void> {
+  const proRef = child(ref(this.database), `${this.PERSONS_COLLECTION}/${proUid}`);
 
+  if (centroUid) {
+    return update(proRef, { centroId: centroUid });
+  } else {
+    return update(proRef, { centroId: null });
+  }
+}
   /**
    * Desvincula a un profesional dejándolo libre (Nodo Persons)
    */

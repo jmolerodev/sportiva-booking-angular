@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Administrador } from '../models/Administrador';
 import { Rol } from '../enums/Rol';
+import { IProfesional } from '../interfaces/Profesional-Interface';
 
 
 @Injectable({
@@ -53,6 +54,27 @@ getAllAdministradores(): Observable<{ uid: string; data: Administrador }[]> {
     const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return update(adminRef, data);
   }
+
+  /* Filtra del nodo 'Persons' aquellos cuyo rol sea PROFESIONAL y su adminId coincida con el proporcionado.
+   * @param adminUid UID del administrador propietario de los profesionales
+   * @returns Observable con un array de objetos que contienen el UID y los datos (IProfesional) de cada registro
+   */
+  getProfesionalesByAdmin(adminUid: string): Observable<{ uid: string; data: IProfesional }[]> {
+    const personsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
+
+    return listVal<IProfesional & { uid: string }>(personsRef, { keyField: 'uid' }).pipe(
+      map(persons =>
+        (persons ?? [])
+          .filter(p => p.rol === Rol.PROFESIONAL && p.adminId === adminUid)
+          .map(({ uid, ...data }) => ({ 
+            uid, 
+            data: data as IProfesional 
+          }))
+      )
+    );
+  }
+
+
 
   /**
    * Método mediante el cual podremos eliminar a un Administrador de nuestra Base de Datos

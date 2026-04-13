@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { child, Database, objectVal, ref, remove, set, update } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 import { Profesional } from '../models/Profesional';
+import { IProfesional } from '../interfaces/Profesional-Interface';
 
 @Injectable({
   providedIn: 'root',
@@ -24,15 +25,14 @@ export class ProfesionalService {
     return objectVal(profesionalRef);
   }
 
-  /**
-   * Metodo para actualizar la información de un profesional ya existente
+ /**
+   * Metodo para actualizar la información utilizando la interfaz IProfesional
    * @param uid UID del profesional 
-   * @param data Objeto parcial con los campos del profesional a modificar
-   * @returns Promesa que se resuelve una vez que se actualicen los datos
+   * @param data Objeto parcial con los campos de IProfesional (aquí ya entrará centroId)
    */
-  updateProfesional (uid : string, data : Partial <Profesional>) : Promise <void>{
-     const profesionalRef = child (ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-     return update (profesionalRef, data);
+  updateProfesional(uid: string, data: Partial<IProfesional>): Promise<void> {
+     const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+     return update(profesionalRef, data);
   }
 
 
