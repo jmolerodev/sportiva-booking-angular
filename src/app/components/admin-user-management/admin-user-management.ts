@@ -61,7 +61,7 @@ export class AdminUserManagement implements OnInit {
 
   /* El Admin solo crea Profesionales (requiere campos extra), el Root Administradores */
   private configurarValidadoresSegunRol(): void {
-    if (this.rolUsuarioLogueado === Rol.ADMINISTRADOR) {
+    if (this.rolUsuarioLogueado == Rol.ADMINISTRADOR) {
       const camposPro = ['descripcion', 'annos_experiencia', 'especialidad'];
       camposPro.forEach(c => {
         this.managementForm.get(c)?.setValidators(Validators.required);
@@ -72,7 +72,7 @@ export class AdminUserManagement implements OnInit {
 
   /**
    * Método que gestiona la creación de usuarios administrativos o profesionales.
-   * Valida el formulario y muestra snackbar de error si algo falta.
+   * Valida el formulario y verifica si el email ya está en uso mediante el catch de Firebase.
    */
   createUser(): void {
     /* Marcamos todo como tocado para activar los estilos visuales de error en los inputs */
@@ -86,39 +86,49 @@ export class AdminUserManagement implements OnInit {
     this.isLoading = true;
     const { nombre, apellidos, email, password, descripcion, annos_experiencia, especialidad } = this.managementForm.value;
 
-    
     const adminIdActual = this.authService.auth.currentUser?.uid;
 
-    
+    /* Intentamos el registro; Firebase lanzará error si el email ya existe */
     this.authService.registerByAdmin(email, password).subscribe({
       next: (userCredential) => {
         const uid = userCredential.user.uid;
 
-        if (this.rolUsuarioLogueado === Rol.ADMINISTRADOR) {
+        if (this.rolUsuarioLogueado == Rol.ADMINISTRADOR) {
           const nuevoPro: IProfesional = {
-            nombre, 
-            apellidos, 
-            foto: '', 
+            nombre,
+            apellidos,
+            foto: '',
             rol: Rol.PROFESIONAL,
-            descripcion, 
-            annos_experiencia: Number(annos_experiencia), 
+            descripcion,
+            annos_experiencia: Number(annos_experiencia),
             especialidad,
-            adminId: adminIdActual 
+            adminId: adminIdActual
           };
           this.profesionalService.saveProfesional(uid, nuevoPro).then(() => {
             this.snackbar.showSuccess("Profesional registrado con éxito");
             this.finalizarYRedirigir();
+          }).catch(() => {
+            this.snackbar.showError("Error al guardar los datos del profesional");
+            this.isLoading = false;
           });
         } else {
           const nuevoAdmin: IAdministrador = { nombre, apellidos, foto: '', rol: Rol.ADMINISTRADOR };
           this.adminService.saveAdministrador(uid, nuevoAdmin).then(() => {
             this.snackbar.showSuccess("Administrador registrado con éxito");
             this.finalizarYRedirigir();
+          }).catch(() => {
+            this.snackbar.showError("Error al guardar los datos del administrador");
+            this.isLoading = false;
           });
         }
       },
       error: (err) => {
-        this.snackbar.showError("Error en el registro: " + err.message);
+        /* Replicamos la lógica de control de errores de SignUp */
+        if (err.code == 'auth/email-already-in-use') {
+          this.snackbar.showError("El correo electrónico ya está registrado. Pruebe de nuevo con una nueva dirección");
+        } else {
+          this.snackbar.showError("Error en el registro: " + err.message);
+        }
         this.isLoading = false;
       }
     });
@@ -130,15 +140,15 @@ export class AdminUserManagement implements OnInit {
     this.router.navigate(['/home']);
   }
 
-  togglePassword() { 
-    this.showPassword = !this.showPassword; 
-  }
-  
-  toggleConfirmPassword() { 
-    this.showConfirmPassword = !this.showConfirmPassword; 
+  togglePassword() {
+    this.showPassword = !this.showPassword;
   }
 
-  navigateToHome() : void {
+  toggleConfirmPassword() {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  navigateToHome(): void {
     this.router.navigate(['/home']);
   }
 }
