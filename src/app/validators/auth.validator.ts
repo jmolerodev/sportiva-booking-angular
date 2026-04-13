@@ -42,6 +42,31 @@ export function customPasswordValidator(): ValidatorFn {
 
 
 /**
+ * Validator personalizado para DNI español.
+ * Solo formato: 8 números + 1 letra
+ */
+export function customDniValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+
+        /* Cogemos el valor actual del campo como un string */
+        const dni = control.value as string;
+
+        /* Si está vacío devolvemos null, sin error, para no molestar al usuario antes de que escriba */
+        if (!dni) {
+            return null;
+        }
+
+        /*Expresión regular: exactamente 8 números y 1 letra*/
+        const dniRegex = /^\d{8}[A-Z]$/;
+
+        /*Si cumple la regex → null (válido). Si no → error*/
+        return dniRegex.test(dni) ? null : { 'invalidDni': true };
+
+    };
+}
+
+
+/**
  * Validator de grupo que comprueba en tiempo real si los campos
  * 'password' y 'confirmPassword' del formulario coinciden.
  * Se aplica al FormGroup completo, no a un campo individual.

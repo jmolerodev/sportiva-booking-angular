@@ -1,10 +1,5 @@
-import { inject } from '@angular/core';
 import { Routes, Router } from '@angular/router';
-import { map, take } from 'rxjs';
-import { AuthService } from './services/auth';
-import { Rol } from './enums/Rol';
 
-/* Componentes */
 import { Login } from './components/login/login';
 import { Home } from './components/home/home';
 import { SignUp } from './components/signup/signup';
@@ -17,22 +12,6 @@ import { ManagementClients } from './components/management-clients/management-cl
 import { AdminUserManagement } from './components/admin-user-management/admin-user-management';
 import { AdminList } from './components/admin-list/admin-list';
 
-/**
- * Función Guard para proteger rutas de administración (ROOT y ADMINISTRADOR)
- */
-const staffGuard = () => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
-  
-  return authService.getRol().pipe(
-    take(1),
-    map(rol => {
-      if (rol === Rol.ADMINISTRADOR || rol === Rol.ROOT) return true;
-      /* Si no tiene permiso, lo echamos al home */
-      return router.createUrlTree(['/home']);
-    })
-  );
-};
 
 export const routes: Routes = [
     { path: 'login', component: Login },
@@ -44,14 +23,7 @@ export const routes: Routes = [
     { path: 'add-sport-centre', component: AddSportCentre },
     { path: 'admin-list', component: AdminList},
     { path: 'add-profesional-to-center', component: AddProfesionalToCenter },
-
-    /* Componente nuevo para el alta de staff (Admins/Pros) */
-    { 
-      path: 'user-management', 
-      component: AdminUserManagement,
-      canActivate: [staffGuard] 
-    },
-
+    { path: 'user-management', component: AdminUserManagement},
     { path: '', redirectTo: 'home', pathMatch: 'full' },
     { path: '**', component: NotFound }
 ];

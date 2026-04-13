@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { child, Database, equalTo, listVal, objectVal, orderByChild, query, ref, remove, set, update } from '@angular/fire/database';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { Cliente } from '../models/Cliente';
 
 @Injectable({
@@ -30,6 +30,22 @@ export class ClienteService {
   getAllClientes(): Observable<Cliente[] | null> {
     const clientesRef = query(ref(this.database, `/${this.COLLECTION_NAME}`), orderByChild('rol'), equalTo('CLIENTE'));
     return listVal(clientesRef, { keyField: 'uid' }) as Observable<Cliente[] | null>;
+  }
+
+  /**
+   * Método para comprobar si un DNI ya está registrado en la base de datos
+   * @param dni DNI a verificar
+   * @returns Observable booleano: true si el DNI ya existe, false si está disponible
+   */
+  isDniAlreadyRegistered(dni: string): Observable<boolean> {
+    const dniQuery = query(
+      ref(this.database, `/${this.COLLECTION_NAME}`),
+      orderByChild('dni'),
+      equalTo(dni)
+    );
+    return listVal(dniQuery).pipe(
+      map((results) => results !== null && results.length > 0)
+    );
   }
 
   /**
