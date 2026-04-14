@@ -21,9 +21,6 @@ export class ManagementClients implements OnInit, OnDestroy {
   /*Listado de clientes que pertenecen al centro actual*/
   public misClientes: any[] = [];
 
-  /*Listado de clientes que no tienen ningún centro asignado*/
-  public clientesLibres: any[] = [];
-
   /*Información del centro deportivo gestionado por el administrador*/
   public centroAdmin: ISportCentre | null = null;
 
@@ -75,10 +72,6 @@ export class ManagementClients implements OnInit, OnDestroy {
 
           /* Filtramos los clientes que ya pertenecen a nuestro centro */
           this.misClientes = (todos ?? []).filter(c => (c as any).centroId === this.adminUid);
-
-          /* Filtramos los clientes que aún no tienen centro asignado */
-          this.clientesLibres = (todos ?? []).filter(c => !(c as any).centroId);
-
           this.loading = false;
           this.cdr.detectChanges();
         },
@@ -88,21 +81,6 @@ export class ManagementClients implements OnInit, OnDestroy {
         }
       })
     );
-  }
-
-  /**
-   * Método para dar de alta a un cliente vinculándolo al centro actual
-   * @param clienteUid UID del cliente a vincular
-   */
-  async darDeAlta(clienteUid: string): Promise<void> {
-    if (!this.adminUid) return;
-
-    try {
-      await this.clienteService.vincularClienteACentro(clienteUid, this.adminUid);
-      this.snackbar.showSuccess('¡Cliente dado de alta correctamente!');
-    } catch (e) {
-      this.snackbar.showError('No se pudo dar de alta al cliente');
-    }
   }
 
   /**

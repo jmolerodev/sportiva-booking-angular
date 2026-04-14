@@ -1,132 +1,85 @@
-<div style="min-height: 100vh; background-color: #057b2a; user-select: none; -webkit-user-select: none;" class="py-5 px-3">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap"
+  rel="stylesheet">
 
-    <div class="container bg-white shadow-lg p-4 p-md-5" style="border-radius: 20px; max-width: 1300px;">
+<div class="management-section d-flex flex-column justify-content-center align-items-center py-5">
 
-        <div class="text-center mb-5">
-            <img src="logo-app.png"
-                 style="width: 80px; pointer-events: none; user-select: none;"
-                 draggable="false"
-                 class="mb-3">
-            <h2 class="text-success fw-bold">Gestión de Clientes</h2>
-            <p class="text-muted">
-                Centro: <span class="fw-bold text-dark">{{ centroAdmin?.nombre }}</span>
-            </p>
-        </div>
+  <div class="section-title-wrapper text-center mb-4" style="user-select: none;">
+    <h3 class="section-title">
+      Gestión de <span class="highlight">Clientes</span>
+    </h3>
+    <p class="text-white fw-bold">Administra los clientes vinculados a tu centro deportivo</p>
+  </div>
 
-        @if (loading) {
-            <div class="text-center py-5">
-                <div class="spinner-border text-success" role="status"></div>
-            </div>
-        } @else {
+  <div class="info-card shadow-lg p-4 p-lg-5 rounded-4">
 
-            <div class="row g-4">
-
-                <div class="col-12 col-xl-6">
-                    <div class="card border-0 shadow-sm h-100" style="border-radius: 15px; overflow: hidden;">
-                        <div class="card-header bg-success text-white fw-bold py-3 border-0 text-center">
-                            <i class="bi bi-people-fill me-2"></i>Mis Clientes
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0 text-center">
-                                    <thead class="table-light text-muted small">
-                                        <tr>
-                                            <th>Nombre</th>
-                                            <th>Apellidos</th>
-                                            <th>DNI</th>
-                                            <th>Suscripción</th>
-                                            <th>Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (cliente of misClientes; track cliente.uid) {
-                                            <tr>
-                                                <td class="fw-bold text-dark">{{ cliente.nombre }}</td>
-                                                <td class="fw-bold text-dark">{{ cliente.apellidos }}</td>
-                                                <td class="text-muted small">{{ cliente.dni }}</td>
-                                                <td>
-                                                    <div class="form-check form-switch d-flex justify-content-center mb-0">
-                                                        <input class="form-check-input"
-                                                               type="checkbox"
-                                                               role="switch"
-                                                               [checked]="cliente.is_active"
-                                                               (change)="toggleSuscripcion(cliente.uid, !cliente.is_active)">
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-danger btn-sm px-3 fw-bold rounded-pill"
-                                                            (click)="darDeBaja(cliente.uid)">
-                                                        Baja
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        } @empty {
-                                            <tr>
-                                                <td colspan="5" class="text-center py-5 text-muted small">
-                                                    No tienes clientes en tu centro
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-xl-6">
-                    <div class="card border-0 shadow-sm h-100" style="border-radius: 15px; overflow: hidden;">
-                        <div class="card-header bg-dark text-white fw-bold py-3 border-0 text-center">
-                            <i class="bi bi-person-plus-fill me-2"></i>Clientes Sin Centro
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0 text-center">
-                                    <thead class="table-light text-muted small">
-                                        <tr>
-                                            <th>Nombre</th>
-                                            <th>Apellidos</th>
-                                            <th>DNI</th>
-                                            <th>Alta desde</th>
-                                            <th>Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (cliente of clientesLibres; track cliente.uid) {
-                                            <tr>
-                                                <td class="fw-bold text-dark">{{ cliente.nombre }}</td>
-                                                <td class="fw-bold text-dark">{{ cliente.apellidos }}</td>
-                                                <td class="text-muted small">{{ cliente.dni }}</td>
-                                                <td class="text-muted small">{{ cliente.fecha_alta | date:'dd/MM/yyyy' }}</td>
-                                                <td>
-                                                    <button class="btn btn-success btn-sm px-3 fw-bold rounded-pill"
-                                                            (click)="darDeAlta(cliente.uid)">
-                                                        Dar de Alta
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        } @empty {
-                                            <tr>
-                                                <td colspan="5" class="text-center py-5 text-muted small">
-                                                    No hay clientes sin centro disponibles
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="text-center mt-5">
-                <button class="btn btn-success px-5 fw-bold" (click)="navigateToHome()">
-                    <i class="bi bi-arrow-left me-2"></i>Volver al Panel Principal
-                </button>
-            </div>
-
-        }
+    <div class="text-center mb-4">
+      <img src="logo-app.png" alt="Logo" class="mb-3" style="width: 70px;">
+      <h2 class="brand-title fs-1">Mi <span class="brand-accent">Centro</span></h2>
+      <p class="text-success fw-bold">{{ centroAdmin?.nombre }}</p>
+      <div class="brand-divider mx-auto"></div>
     </div>
+
+    @if (loading) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-3 fw-bold text-muted">Cargando clientes...</p>
+    </div>
+    }
+
+    @if (!loading && misClientes.length === 0) {
+    <div class="empty-state text-center py-5">
+      <i class="bi bi-people empty-icon"></i>
+      <h5 class="fw-bold mt-3">No tienes clientes en tu centro</h5>
+      <p class="text-muted">Aún no hay ningún cliente vinculado a tu centro deportivo.</p>
+    </div>
+    }
+
+    @if (!loading && misClientes.length > 0) {
+    <div class="table-responsive rounded-3 overflow-hidden">
+      <table class="table admin-table mb-0">
+        <thead>
+          <tr>
+            <th scope="col" class="text-center fw-bold"><i class="bi bi-person me-2"></i>Nombre</th>
+            <th scope="col" class="text-center fw-bold"><i class="bi bi-card-text me-2"></i>Apellidos</th>
+            <th scope="col" class="text-center fw-bold"><i class="bi bi-credit-card me-2"></i>DNI</th>
+            <th scope="col" class="text-center fw-bold"><i class="bi bi-toggle-on me-2"></i>Suscripción</th>
+            <th scope="col" class="text-center fw-bold"><i class="bi bi-gear me-2"></i>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cliente of misClientes; track cliente.uid) {
+          <tr class="admin-row">
+            <td class="text-center fw-bold">{{ cliente.nombre }}</td>
+            <td class="text-center fw-bold">{{ cliente.apellidos }}</td>
+            <td class="text-center text-muted">{{ cliente.dni }}</td>
+            <td class="text-center">
+              <div class="form-check form-switch d-flex justify-content-center mb-0">
+                <input class="form-check-input"
+                       type="checkbox"
+                       role="switch"
+                       [checked]="cliente.is_active"
+                       (change)="toggleSuscripcion(cliente.uid, !cliente.is_active)">
+              </div>
+            </td>
+            <td class="text-center">
+              <button class="btn-action btn-delete" (click)="darDeBaja(cliente.uid)" title="Dar de baja al cliente">
+                <i class="bi bi-person-dash-fill"></i>
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+
+    <div class="d-grid gap-3 mt-5">
+      <button type="button" class="btn-google-pro btn-outline-google-secondary w-100 py-3" (click)="navigateToHome()">
+        <i class="bi bi-house-door me-2"></i> Volver a Home
+      </button>
+    </div>
+
+  </div>
 </div>
