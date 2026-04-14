@@ -148,8 +148,12 @@
     @if (sesionIniciada && ((esAdministrador && !centroAdmin) || (esProfesional && !centroTrabajo))) {
       <div class="no-centre-card p-5 text-center shadow-lg">
         <i class="bi bi-building-add text-success display-4 mb-3"></i>
-        <h4 class="fw-bold text-dark mb-3">Tu espacio deportivo te espera</h4>
-        <p class="text-muted mb-4">Aún no has configurado tu centro deportivo. Comienza a gestionar tus clientes y profesionales hoy mismo.</p>
+        <h4 class="fw-bold text-dark mb-3">
+          {{ esAdministrador ? 'Tu espacio deportivo te espera' : 'Vinculación pendiente' }}
+        </h4>
+        <p class="text-muted mb-4">
+          {{ esAdministrador ? 'Aún no has configurado tu centro deportivo. Comienza a gestionar tus clientes y profesionales hoy mismo.' : 'Tu cuenta de profesional aún no ha sido vinculada a ningún centro deportivo.' }}
+        </p>
         @if (esAdministrador) {
           <button (click)="navigateToAddSportCentre()" class="btn-google-pro btn-outline-google-success">
             <i class="bi bi-plus-lg me-2"></i>Registrar mi Centro
@@ -157,7 +161,7 @@
         } @else {
           <div class="info-tag-google border-success mt-3">
             <i class="bi bi-info-circle me-2"></i>
-            <span>Solicita a tu administrador que te vincule a su centro.</span>
+            <span>Contacta con tu administrador para que te asigne a su centro.</span>
           </div>
         }
       </div>
@@ -206,6 +210,53 @@
           </div>
        </div>
     }
+
+    @if (esProfesional && centroTrabajo) {
+      <div class="carousel-wrapper">
+         <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+           <div class="img-wrapper position-relative">
+             @if (!imagenProCargada) {
+               <div class="position-absolute top-50 start-50 translate-middle text-center">
+                 <div class="spinner-border text-success spinner-border-sm" role="status"></div>
+               </div>
+             }
+             <img [src]="getFoto(centroTrabajo.foto)" class="img-fit" [alt]="centroTrabajo.nombre"
+                  (load)="imagenProCargada = true"
+                  [style.opacity]="imagenProCargada ? 1 : 0">
+           </div>
+           <div class="card-body p-4 bg-white">
+             <h4 class="fw-bold text-dark mb-3">{{ centroTrabajo.nombre }}</h4>
+             
+             <div class="d-flex flex-column gap-2 mb-3">
+               <p class="text-muted mb-0 d-flex align-items-center">
+                 <i class="bi bi-geo-alt-fill text-success me-2"></i>{{ centroTrabajo.direccion }}
+               </p>
+               <p class="text-muted mb-0 d-flex align-items-center">
+                 <i class="bi bi-telephone-fill text-success me-2"></i>{{ centroTrabajo.telefono || 'Teléfono no disponible' }}
+               </p>
+             </div>
+
+             <div class="info-tag-google border-success mb-4 text-center">
+              <i class="bi bi-person-badge-fill me-2"></i>
+              <span>Panel de Profesional Activo</span>
+             </div>
+
+             @if (centroTrabajo.horario) {
+               <div class="horario-tabla">
+                 @for (dia of getDias(centroTrabajo.horario); track dia) {
+                   <div class="horario-fila d-flex justify-content-between">
+                     <span class="text-capitalize small fw-bold text-dark">{{ dia }}</span>
+                     <span class="text-muted small">
+                       {{ centroTrabajo.horario[dia].abierto ? centroTrabajo.horario[dia].apertura + ' - ' + centroTrabajo.horario[dia].cierre : 'Cerrado' }}
+                     </span>
+                   </div>
+                 }
+               </div>
+             }
+           </div>
+         </div>
+      </div>
+   }
   }
 
   <div class="footer-app text-center mt-5 text-white pb-3" [class.visible]="showFooter">

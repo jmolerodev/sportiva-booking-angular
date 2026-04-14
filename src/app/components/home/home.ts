@@ -219,6 +219,7 @@ export class Home implements OnInit, OnDestroy {
                 console.error('Error al obtener centro del profesional:', e);
                 this.loadingUsuario = false;
                 this.checkLoading();
+                this.cdr.detectChanges();
               }
             })
           );
