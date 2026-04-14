@@ -12,6 +12,7 @@ import { ManagementClients } from './components/management-clients/management-cl
 import { AdminUserManagement } from './components/admin-user-management/admin-user-management';
 import { AdminList } from './components/admin-list/admin-list';
 import { ProfesionalList } from './components/profesional-list/profesional-list';
+import { ProfesionalSessions } from './components/profesional-sessions/profesional-sessions';
 
 
 export const routes: Routes = [
@@ -26,6 +27,7 @@ export const routes: Routes = [
     { path: 'add-profesional-to-center', component: AddProfesionalToCenter },
     { path: 'user-management', component: AdminUserManagement},
     { path: 'profesional-list', component: ProfesionalList},
+    { path: 'profesional-sessions', component: ProfesionalSessions},
     { path: '', redirectTo: 'home', pathMatch: 'full' },
     { path: '**', component: NotFound }
 ];

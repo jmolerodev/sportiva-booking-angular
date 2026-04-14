@@ -1,0 +1,243 @@
+<section class="session-section">
+
+  <div *ngIf="loading" class="spinner-overlay d-flex align-items-center justify-content-center">
+    <div class="spinner-border text-success" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading" class="container py-5">
+
+    <div class="section-title-wrapper mb-4">
+      <h1 class="section-title">MIS <span class="highlight">SESIONES</span></h1>
+      <p class="section-subtitle" *ngIf="centro">{{ centro.nombre }} &mdash; {{ centro.direccion }}</p>
+      <p class="section-subtitle no-centre" *ngIf="!centro">No tienes ningún centro deportivo asignado</p>
+    </div>
+
+    <div *ngIf="centro" class="content-grid">
+
+      <div class="calendar-card">
+        <div class="calendar-header">
+          <button class="btn-nav" (click)="mesAnterior()">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <span class="mes-label">{{ getNombreMes(mesActual) | titlecase }}</span>
+          <button class="btn-nav" (click)="mesSiguiente()">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+        <div class="calendar-grid">
+          <div class="day-name" *ngFor="let d of diasSemana">{{ d }}</div>
+
+          <ng-container *ngFor="let semana of semanas">
+            <div
+              *ngFor="let dia of semana"
+              class="day-cell"
+              [class.empty]="!dia"
+              [class.today]="dia && esHoy(dia)"
+              [class.selected]="dia && esSeleccionado(dia)"
+              [class.past]="dia && esPasado(dia)"
+              (click)="dia && seleccionarDia(dia)">
+              <span *ngIf="dia">{{ dia.getDate() }}</span>
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="legend">
+          <span class="legend-item"><span class="dot dot-libre"></span>Libre</span>
+          <span class="legend-item"><span class="dot dot-propio"></span>Tuyo</span>
+          <span class="legend-item"><span class="dot dot-ocupado"></span>Ocupado</span>
+        </div>
+      </div>
+
+      <div class="slots-card">
+        <div class="slots-header">
+          <h2 class="slots-title">
+            <i class="bi bi-clock me-2"></i>
+            {{ fechaSeleccionada | date:'EEEE d \'de\' MMMM':'':'es' | titlecase }}
+          </h2>
+        </div>
+
+        <div *ngIf="slotsDelDia.length === 0" class="empty-state text-center py-5">
+          <i class="bi bi-calendar-x empty-icon d-block mb-3"></i>
+          <p>El centro está cerrado este día</p>
+        </div>
+
+        <div class="slots-list" *ngIf="slotsDelDia.length > 0">
+          <div
+            *ngFor="let slot of slotsDelDia"
+            class="slot-item"
+            [class.slot-libre]="slot.estado === 'LIBRE'"
+            [class.slot-propio]="slot.estado === 'PROPIO'"
+            [class.slot-ocupado]="slot.estado === 'OCUPADO'"
+            (click)="slot.estado === 'LIBRE' && abrirModal(slot)">
+
+            <div class="slot-time">
+              <span class="hora-inicio">{{ slot.horaInicio }}</span>
+              <span class="hora-sep">–</span>
+              <span class="hora-fin">{{ slot.horaFin }}</span>
+            </div>
+
+            <div class="slot-info" *ngIf="slot.estado === 'LIBRE'">
+              <span class="slot-badge badge-libre">
+                <i class="bi bi-plus-circle me-1"></i>Disponible
+              </span>
+            </div>
+
+            <div class="slot-info" *ngIf="slot.estado === 'PROPIO' && slot.sesion">
+              <span class="slot-title">{{ slot.sesion.titulo }}</span>
+              <div class="slot-meta">
+                <span class="slot-badge badge-tipo">{{ slot.sesion.tipo }}</span>
+                <span class="slot-badge badge-modalidad">{{ slot.sesion.modalidad }}</span>
+                <span class="slot-badge badge-aforo">
+                  <i class="bi bi-people me-1"></i>{{ slot.sesion.aforoActual }}/{{ slot.sesion.aforoMax }}
+                </span>
+              </div>
+            </div>
+
+            <div class="slot-info" *ngIf="slot.estado === 'OCUPADO' && slot.sesion">
+              <span class="slot-title muted">{{ slot.sesion.titulo }}</span>
+              <span class="slot-badge badge-ocupado">
+                <i class="bi bi-lock me-1"></i>Ocupado
+              </span>
+            </div>
+
+            <div class="slot-actions" *ngIf="slot.estado === 'PROPIO' && slot.sesion">
+              <button
+                class="btn-action btn-delete"
+                (click)="$event.stopPropagation(); eliminarSesion(slot.sesion)"
+                title="Eliminar sesión">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div *ngIf="centro" class="historial-card mt-5">
+      <div class="section-title-wrapper mb-4">
+        <h2 class="section-title sm">HISTORIAL DE <span class="highlight">SESIONES</span></h2>
+        <p class="section-subtitle">Sesiones pasadas registradas en tu cuenta</p>
+      </div>
+
+      <div *ngIf="sesionesHistorial.length === 0" class="empty-state text-center py-4">
+        <i class="bi bi-journal-x empty-icon d-block mb-3"></i>
+        <p>Aún no tienes sesiones pasadas registradas</p>
+      </div>
+
+      <div class="table-responsive" *ngIf="sesionesHistorial.length > 0">
+        <table class="admin-table w-100">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Horario</th>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Modalidad</th>
+              <th>Aforo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sesion of sesionesHistorial">
+              <td>{{ parsearFecha(sesion.fecha) }}</td>
+              <td>{{ sesion.horaInicio }} – {{ sesion.horaFin }}</td>
+              <td>{{ sesion.titulo }}</td>
+              <td><span class="role-badge">{{ sesion.tipo }}</span></td>
+              <td><span class="role-badge">{{ sesion.modalidad }}</span></td>
+              <td>
+                <span class="badge-count">{{ sesion.aforoActual }}/{{ sesion.aforoMax }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<div class="modal-backdrop" *ngIf="modalVisible" (click)="cerrarModal()"></div>
+
+<div class="modal-panel" *ngIf="modalVisible">
+  <div class="modal-header-custom">
+    <h3 class="modal-title-custom">
+      <i class="bi bi-plus-circle me-2"></i>Nueva Sesión
+    </h3>
+    <button class="btn-close-modal" (click)="cerrarModal()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <div class="modal-slot-info" *ngIf="slotSeleccionado">
+    <i class="bi bi-clock me-2"></i>
+    {{ slotSeleccionado.horaInicio }} – {{ slotSeleccionado.horaFin }}
+    &nbsp;·&nbsp;
+    {{ fechaSeleccionada | date:'d \'de\' MMMM':'':'es' | titlecase }}
+  </div>
+
+  <div class="modal-body-custom">
+
+    <div class="form-group">
+      <label class="form-label-custom">Título <span class="required">*</span></label>
+      <input
+        type="text"
+        class="form-control-custom"
+        [(ngModel)]="formSesion.titulo"
+        placeholder="Ej: Sesión de fuerza">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label-custom">Descripción</label>
+      <textarea
+        class="form-control-custom"
+        [(ngModel)]="formSesion.descripcion"
+        rows="3"
+        placeholder="Descripción opcional de la sesión"></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label-custom">Tipo <span class="required">*</span></label>
+        <select class="form-control-custom" [(ngModel)]="formSesion.tipo">
+          <option [ngValue]="null" disabled>Selecciona tipo</option>
+          <option [ngValue]="TipoSesion.ENTRENAMIENTO">Entrenamiento</option>
+          <option [ngValue]="TipoSesion.FISIOTERAPIA">Fisioterapia</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label-custom">Modalidad <span class="required">*</span></label>
+        <select class="form-control-custom" [(ngModel)]="formSesion.modalidad">
+          <option [ngValue]="null" disabled>Selecciona modalidad</option>
+          <option [ngValue]="ModalidadSesion.INDIVIDUAL">Individual</option>
+          <option [ngValue]="ModalidadSesion.GRUPAL">Grupal</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group" *ngIf="formSesion.modalidad === ModalidadSesion.GRUPAL">
+      <label class="form-label-custom">Aforo máximo <span class="required">*</span></label>
+      <input
+        type="number"
+        class="form-control-custom"
+        [(ngModel)]="formSesion.aforoMax"
+        min="2"
+        max="50">
+    </div>
+
+  </div>
+
+  <div class="modal-footer-custom">
+    <button class="btn-google-pro btn-outline-google-secondary" (click)="cerrarModal()">
+      Cancelar
+    </button>
+    <button class="btn-google-pro btn-outline-google-success" (click)="guardarSesion()">
+      <i class="bi bi-check-lg me-1"></i>Guardar sesión
+    </button>
+  </div>
+</div>

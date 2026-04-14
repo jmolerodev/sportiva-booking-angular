@@ -123,6 +123,11 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['/profesional-list']);
   }
 
+  navigateToProfesionalSessions() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['profesional-sessions']);
+  }
+
 
   logout(): void {
     this.menuAbierto = false;

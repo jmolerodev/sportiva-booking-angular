@@ -1,0 +1,4 @@
+export enum TipoSesion{
+    ENTRENAMIENTO = 'ENTRENAMIENTO',
+    FISIOTERAPIA = 'FISIOTERAPIA'
+}
