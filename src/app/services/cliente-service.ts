@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { child, Database, equalTo, listVal, objectVal, orderByChild, query, ref, remove, set, update } from '@angular/fire/database';
-import { map, Observable } from 'rxjs';
+import { map, Observable, take } from 'rxjs';
 import { Cliente } from '../models/Cliente';
 
 @Injectable({
@@ -38,13 +38,16 @@ export class ClienteService {
    * @returns Observable booleano: true si el DNI ya existe, false si está disponible
    */
   isDniAlreadyRegistered(dni: string): Observable<boolean> {
+
     const dniQuery = query(
       ref(this.database, `/${this.COLLECTION_NAME}`),
       orderByChild('dni'),
       equalTo(dni)
     );
+
     return listVal(dniQuery).pipe(
-      map((results) => results !== null && results.length > 0)
+      take(1), 
+      map((results) => results.length > 0)
     );
   }
 
