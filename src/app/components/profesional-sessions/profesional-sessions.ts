@@ -6,31 +6,17 @@ import { Subscription, switchMap, of } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { SessionService } from '../../services/session-service';
 import { SportCentreService } from '../../services/sport-centre-service';
+import { ProfesionalService } from '../../services/profesional-service';
 import { SnackbarService } from '../../services/snackbar';
 import { ISportCentre } from '../../interfaces/Sport-Centre-Interface';
 import { TipoSesion } from '../../enums/TipoSesion';
 import { ModalidadSesion } from '../../enums/ModalidadSesion';
 import { EstadoSesion } from '../../enums/EstadoSesion';
 import { Rol } from '../../enums/Rol';
-import { ISession } from '../../interfaces/Sesion-Interface';
+import { IFormSesion, ISession } from '../../interfaces/Sesion-Interface';
+import {ISlotHorario} from '../../interfaces/Sesion-Interface'
+import { EstadoSlot } from '../../enums/EstadoSlot';
 
-/*Tipos auxiliares internos al componente, no requieren fichero propio*/
-type EstadoSlot = 'LIBRE' | 'PROPIO' | 'OCUPADO';
-
-interface ISlotHorario {
-  horaInicio: string;
-  horaFin:    string;
-  estado:     EstadoSlot;
-  sesion:     ISession | null;
-}
-
-interface IFormSesion {
-  titulo:      string;
-  descripcion: string;
-  tipo:        TipoSesion | null;
-  modalidad:   ModalidadSesion | null;
-  aforoMax:    number;
-}
 
 @Component({
   selector: 'app-session-manager',
@@ -80,7 +66,7 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   /*Modelo de datos del formulario de creación enlazado con ngModel*/
   public formSesion: IFormSesion = this.getFormVacio();
 
-  /*Enums expuestos al template para su uso en directivas ngIf y comparaciones*/
+  /*Enums expuestos al template para su uso en directivas y comparaciones*/
   public readonly TipoSesion      = TipoSesion;
   public readonly ModalidadSesion = ModalidadSesion;
   public readonly EstadoSesion    = EstadoSesion;
@@ -99,27 +85,29 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    * @param authService Servicio encargado de la identidad y permisos del usuario
    * @param sessionService Servicio para la gestión de sesiones deportivas
    * @param sportCentreService Servicio para la gestión de centros deportivos
+   * @param profesionalService Servicio para la gestión de profesionales y su especialidad
    * @param snackbarService Servicio para el despliegue de alertas y confirmaciones
    * @param router Servicio para gestionar la navegación entre vistas
    * @param cdr Servicio para forzar la detección de cambios en el ciclo de Angular
    */
   constructor(
-    private authService:         AuthService,
-    private sessionService:      SessionService,
-    private sportCentreService:  SportCentreService,
-    private snackbarService:     SnackbarService,
-    private router:              Router,
-    private cdr:                 ChangeDetectorRef
+    private authService:        AuthService,
+    private sessionService:     SessionService,
+    private sportCentreService: SportCentreService,
+    private profesionalService: ProfesionalService,
+    private snackbarService:    SnackbarService,
+    private router:             Router,
+    private cdr:                ChangeDetectorRef
   ) { }
 
   /**
-   * Inicialización del componente: carga del profesional autenticado, su centro
-   * vinculado y el historial de sesiones pasadas en paralelo
+   * Inicialización del componente: carga del profesional autenticado, su especialidad,
+   * su centro vinculado y el historial de sesiones pasadas en paralelo
    */
   ngOnInit(): void {
     this.generarCalendario();
 
-    /*Flujo principal: validamos sesión, rol y cargamos el centro del profesional*/
+    /*Flujo principal: validamos sesión, rol, cargamos especialidad y centro del profesional*/
     this.subscription.add(
       this.authService.getCurrentUser().pipe(
         switchMap(user => {
@@ -134,6 +122,16 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
                 this.router.navigate(['/home']);
                 return of(null);
               }
+              /*Cargamos la especialidad en paralelo al centro sin bloquear el flujo*/
+              this.subscription.add(
+                this.profesionalService.getEspecialidadByUid(user.uid).subscribe({
+                  next: (esp) => {
+                    this.especialidad = esp;
+                    this.cdr.detectChanges();
+                  },
+                  error: (e) => console.error('Error al cargar la especialidad:', e)
+                })
+              );
               return this.sportCentreService.getSportCentreByProfessionalUid(user.uid);
             })
           );
@@ -170,7 +168,17 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
         next: (sesiones) => {
           const ahora = Date.now();
           this.sesionesHistorial = (sesiones ?? [])
-            .filter(s => s.fecha < ahora)
+            .filter(s => {
+              /*
+               * Una sesión es pasada cuando su fecha + hora de fin ya han transcurrido.
+               * Construimos el timestamp exacto del fin de la sesión combinando fecha y horaFin
+               * para que aparezca en el historial en el minuto exacto en que termina
+               */
+              const [hFin, mFin]   = s.horaFin.split(':').map(Number);
+              const fechaFin        = new Date(s.fecha);
+              fechaFin.setHours(hFin, mFin, 0, 0);
+              return fechaFin.getTime() < ahora;
+            })
             .sort((a, b) => b.fecha - a.fecha);
           this.loadingHistorial = false;
           this.checkLoading();
@@ -299,16 +307,16 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
 
       /*Buscamos si ya existe una sesión activa que ocupe este slot horario*/
       const sesion = this.sesionesDelDia.find(
-        s => s.horaInicio === horaInicio && s.estado === EstadoSesion.ACTIVA
+        s => s.horaInicio == horaInicio && s.estado == EstadoSesion.ACTIVA
       ) ?? null;
 
       let estado: EstadoSlot;
       if (!sesion) {
-        estado = 'LIBRE';
-      } else if (sesion.profesionalId === this.profesionalUid) {
-        estado = 'PROPIO';
+        estado = EstadoSlot.LIBRE;
+      } else if (sesion.profesionalId == this.profesionalUid) {
+        estado = EstadoSlot.PROPIO;
       } else {
-        estado = 'OCUPADO';
+        estado = EstadoSlot.OCUPADO;
       }
 
       slots.push({ horaInicio, horaFin, estado, sesion });
@@ -329,14 +337,24 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
 
   /**
    * Abre el modal de creación posicionándolo sobre el slot libre seleccionado.
-   * No hace nada si el slot ya está ocupado por otro profesional
+   * Pre-carga el tipo de sesión según la especialidad del profesional y fija
+   * la modalidad a INDIVIDUAL si es fisioterapeuta
    * @param slot Slot horario libre pulsado por el profesional
    */
   abrirModal(slot: ISlotHorario): void {
-    if (slot.estado !== 'LIBRE') return;
+    if (slot.estado !== EstadoSlot.LIBRE) return;
     this.slotSeleccionado = slot;
     this.formSesion       = this.getFormVacio();
-    this.modalVisible     = true;
+
+    /*Pre-seleccionamos tipo y modalidad según la especialidad del profesional*/
+    if (this.especialidad == 'ENTRENADOR') {
+      this.formSesion.tipo = TipoSesion.ENTRENAMIENTO;
+    } else if (this.especialidad == 'FISIOTERAPEUTA') {
+      this.formSesion.tipo      = TipoSesion.FISIOTERAPIA;
+      this.formSesion.modalidad = ModalidadSesion.INDIVIDUAL;
+    }
+
+    this.modalVisible = true;
   }
 
   /**
@@ -350,7 +368,8 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
 
   /**
    * Persiste la nueva sesión en Firebase con estado ACTIVA usando los datos
-   * del formulario y el slot horario seleccionado
+   * del formulario y el slot horario seleccionado.
+   * Aplica las restricciones de especialidad como capa de seguridad adicional
    */
   guardarSesion(): void {
     if (!this.slotSeleccionado || !this.centro || !this.profesionalUid) return;
@@ -359,8 +378,24 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
       return;
     }
 
+    /*Capa de seguridad: verificamos que el tipo coincide con la especialidad del profesional*/
+    const tipoValido =
+      (this.especialidad == 'ENTRENADOR'     && this.formSesion.tipo == TipoSesion.ENTRENAMIENTO) ||
+      (this.especialidad == 'FISIOTERAPEUTA' && this.formSesion.tipo == TipoSesion.FISIOTERAPIA);
+
+    if (!tipoValido) {
+      this.snackbarService.showError('El tipo de sesión no corresponde con tu especialidad');
+      return;
+    }
+
+    /*Los fisioterapeutas solo pueden crear sesiones individuales*/
+    if (this.especialidad == 'FISIOTERAPEUTA' && this.formSesion.modalidad !== ModalidadSesion.INDIVIDUAL) {
+      this.snackbarService.showError('Las sesiones de fisioterapia deben ser individuales');
+      return;
+    }
+
     /*Si la modalidad es INDIVIDUAL el aforo queda fijo en 1*/
-    const aforoMax = this.formSesion.modalidad === ModalidadSesion.INDIVIDUAL
+    const aforoMax = this.formSesion.modalidad == ModalidadSesion.INDIVIDUAL
       ? 1
       : this.formSesion.aforoMax;
 
@@ -368,18 +403,18 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
     fechaTimestamp.setHours(0, 0, 0, 0);
 
     const nuevaSesion: ISession = {
-      centroId:       this.centro.adminUid,
+      centroId:      this.centro.adminUid,
       profesionalId: this.profesionalUid,
-      tipo:           this.formSesion.tipo,
-      fecha:          fechaTimestamp.getTime(),
-      horaInicio:     this.slotSeleccionado.horaInicio,
-      horaFin:        this.slotSeleccionado.horaFin,
-      modalidad:      this.formSesion.modalidad,
-      aforoMax:       aforoMax,
-      aforoActual:    0,
-      titulo:         this.formSesion.titulo.trim(),
-      descripcion:    this.formSesion.descripcion.trim(),
-      estado:         EstadoSesion.ACTIVA
+      tipo:          this.formSesion.tipo,
+      fecha:         fechaTimestamp.getTime(),
+      horaInicio:    this.slotSeleccionado.horaInicio,
+      horaFin:       this.slotSeleccionado.horaFin,
+      modalidad:     this.formSesion.modalidad,
+      aforoMax:      aforoMax,
+      aforoActual:   0,
+      titulo:        this.formSesion.titulo.trim(),
+      descripcion:   this.formSesion.descripcion.trim(),
+      estado:        EstadoSesion.ACTIVA
     };
 
     this.subscription.add(
@@ -427,9 +462,9 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    */
   esHoy(dia: Date): boolean {
     const hoy = new Date();
-    return dia.getDate()     === hoy.getDate()     &&
-           dia.getMonth()    === hoy.getMonth()     &&
-           dia.getFullYear() === hoy.getFullYear();
+    return dia.getDate()     == hoy.getDate()     &&
+           dia.getMonth()    == hoy.getMonth()     &&
+           dia.getFullYear() == hoy.getFullYear();
   }
 
   /**
@@ -437,9 +472,9 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    * @param dia Objeto Date a comprobar
    */
   esSeleccionado(dia: Date): boolean {
-    return dia.getDate()     === this.fechaSeleccionada.getDate()     &&
-           dia.getMonth()    === this.fechaSeleccionada.getMonth()    &&
-           dia.getFullYear() === this.fechaSeleccionada.getFullYear();
+    return dia.getDate()     == this.fechaSeleccionada.getDate()     &&
+           dia.getMonth()    == this.fechaSeleccionada.getMonth()    &&
+           dia.getFullYear() == this.fechaSeleccionada.getFullYear();
   }
 
   /**

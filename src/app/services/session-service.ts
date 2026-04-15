@@ -1,7 +1,7 @@
 import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
-import { child, Database, listVal, objectVal, push, ref, remove, update, query, orderByChild, equalTo } from '@angular/fire/database';
+import { child, Database, listVal, ref, remove, push, update, query, orderByChild, equalTo } from '@angular/fire/database';
 import { map, Observable, from, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { ISession } from '../interfaces/Sesion-Interface';
 import { EstadoSesion } from '../enums/EstadoSesion';
 
@@ -9,8 +9,8 @@ import { EstadoSesion } from '../enums/EstadoSesion';
 export class SessionService {
 
   private COLLECTION_NAME = 'Sessions';
-  private database = inject(Database);
-  private injector = inject(Injector);
+  private database        = inject(Database);
+  private injector        = inject(Injector);
 
   /*Obtiene todas las sesiones de un centro en una fecha concreta (timestamp epoch del día)*/
   getSessionsByCentroAndFecha(centroId: string, fechaInicio: number, fechaFin: number): Observable<ISession[]> {
@@ -19,9 +19,9 @@ export class SessionService {
     ).pipe(
       map(sesiones => (sesiones ?? []).filter(s =>
         s.centroId === centroId &&
-        s.fecha >= fechaInicio  &&
-        s.fecha <= fechaFin     &&
-        s.estado === EstadoSesion.ACTIVA
+        s.fecha    >= fechaInicio  &&
+        s.fecha    <= fechaFin     &&
+        s.estado   === EstadoSesion.ACTIVA
       )),
       catchError(() => of([]))
     );
@@ -35,9 +35,9 @@ export class SessionService {
   getSessionsByProfesional(profesionalUid: string): Observable<ISession[]> {
     return runInInjectionContext(this.injector, () => {
       const sessionsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
-      const proQuery    = query(sessionsRef, orderByChild('profesionalUid'), equalTo(profesionalUid));
+      const proQuery    = query(sessionsRef, orderByChild('profesionalId'), equalTo(profesionalUid));
       return listVal<ISession>(proQuery, { keyField: 'uid' }).pipe(
-        map(sesiones => sesiones ?? []),
+        map(sesiones  => sesiones ?? []),
         catchError(() => of([]))
       );
     });
@@ -51,7 +51,7 @@ export class SessionService {
   createSession(sesion: ISession): Observable<void> {
     const sessionsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
     return from(push(sessionsRef, sesion)).pipe(
-      map(() => void 0),
+      map(()        => void 0),
       catchError(() => of(void 0))
     );
   }
