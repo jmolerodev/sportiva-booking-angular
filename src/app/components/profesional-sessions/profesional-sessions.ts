@@ -14,7 +14,7 @@ import { ModalidadSesion } from '../../enums/ModalidadSesion';
 import { EstadoSesion } from '../../enums/EstadoSesion';
 import { Rol } from '../../enums/Rol';
 import { IFormSesion, ISession } from '../../interfaces/Sesion-Interface';
-import {ISlotHorario} from '../../interfaces/Sesion-Interface'
+import { ISlotHorario } from '../../interfaces/Sesion-Interface'
 import { EstadoSlot } from '../../enums/EstadoSlot';
 
 
@@ -67,15 +67,15 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   public formSesion: IFormSesion = this.getFormVacio();
 
   /*Enums expuestos al template para su uso en directivas y comparaciones*/
-  public readonly TipoSesion      = TipoSesion;
+  public readonly TipoSesion = TipoSesion;
   public readonly ModalidadSesion = ModalidadSesion;
-  public readonly EstadoSesion    = EstadoSesion;
+  public readonly EstadoSesion = EstadoSesion;
 
   /*Nombres de los días de la semana para la cabecera del calendario*/
   public readonly diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   /*Flags de control para la carga asíncrona independiente de centro e historial*/
-  private loadingCentro:    boolean = true;
+  private loadingCentro: boolean = true;
   private loadingHistorial: boolean = true;
 
   private subscription: Subscription = new Subscription();
@@ -91,13 +91,13 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    * @param cdr Servicio para forzar la detección de cambios en el ciclo de Angular
    */
   constructor(
-    private authService:        AuthService,
-    private sessionService:     SessionService,
+    private authService: AuthService,
+    private sessionService: SessionService,
     private sportCentreService: SportCentreService,
     private profesionalService: ProfesionalService,
-    private snackbarService:    SnackbarService,
-    private router:             Router,
-    private cdr:                ChangeDetectorRef
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   /**
@@ -174,8 +174,8 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
                * Construimos el timestamp exacto del fin de la sesión combinando fecha y horaFin
                * para que aparezca en el historial en el minuto exacto en que termina
                */
-              const [hFin, mFin]   = s.horaFin.split(':').map(Number);
-              const fechaFin        = new Date(s.fecha);
+              const [hFin, mFin] = s.horaFin.split(':').map(Number);
+              const fechaFin = new Date(s.fecha);
               fechaFin.setHours(hFin, mFin, 0, 0);
               return fechaFin.getTime() < ahora;
             })
@@ -208,8 +208,8 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    * Rellena con null las celdas vacías anteriores al primer día de la semana
    */
   generarCalendario(): void {
-    const año       = this.mesActual.getFullYear();
-    const mes       = this.mesActual.getMonth();
+    const año = this.mesActual.getFullYear();
+    const mes = this.mesActual.getMonth();
     const primerDia = new Date(año, mes, 1);
     const ultimoDia = new Date(año, mes + 1, 0);
 
@@ -233,16 +233,20 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    */
   mesAnterior(): void {
     this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() - 1, 1);
+    this.fechaSeleccionada = new Date(this.mesActual); 
     this.generarCalendario();
+    this.cargarSesionesDelDia(); 
   }
 
   /**
    * Avanza al mes siguiente en el calendario y regenera la cuadrícula
    */
   mesSiguiente(): void {
-    this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() + 1, 1);
-    this.generarCalendario();
-  }
+  this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() + 1, 1);
+  this.fechaSeleccionada = new Date(this.mesActual); 
+  this.generarCalendario();
+  this.cargarSesionesDelDia(); 
+}
 
   /**
    * Gestiona la selección de un día en el calendario: actualiza la fecha
@@ -261,10 +265,10 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   cargarSesionesDelDia(): void {
     if (!this.centro) return;
 
-    const centroId  = this.centro.adminUid;
+    const centroId = this.centro.adminUid;
     const inicioDia = new Date(this.fechaSeleccionada);
     inicioDia.setHours(0, 0, 0, 0);
-    const finDia    = new Date(this.fechaSeleccionada);
+    const finDia = new Date(this.fechaSeleccionada);
     finDia.setHours(23, 59, 59, 999);
 
     this.subscription.add(
@@ -275,7 +279,7 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
       ).subscribe({
         next: (sesiones) => {
           this.sesionesDelDia = sesiones ?? [];
-          this.slotsDelDia    = this.generarSlots();
+          this.slotsDelDia = this.generarSlots();
           this.cdr.detectChanges();
         },
         error: (e) => console.error('Error al cargar sesiones del día:', e)
@@ -291,7 +295,10 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   private generarSlots(): ISlotHorario[] {
     if (!this.centro?.horario) return [];
 
-    const nombreDia  = this.getNombreDia(this.fechaSeleccionada);
+
+    if (this.esPasado(this.fechaSeleccionada)) return [];
+
+    const nombreDia = this.getNombreDia(this.fechaSeleccionada);
     const horarioDia = this.centro.horario[nombreDia];
 
     /*Si el centro está cerrado ese día no generamos ningún slot*/
@@ -299,13 +306,25 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
 
     const slots: ISlotHorario[] = [];
     const [hApertura] = horarioDia.apertura.split(':').map(Number);
-    const [hCierre]   = horarioDia.cierre.split(':').map(Number);
+    const [hCierre] = horarioDia.cierre.split(':').map(Number);
+
+    /* Referencia temporal para validar horas pasadas */
+    const ahora = new Date();
+    const esHoySeleccionado = this.esHoy(this.fechaSeleccionada);
+
+    /* 🔥 NUEVO: si es hoy pero el centro ya ha cerrado no mostramos slots */
+    if (esHoySeleccionado && ahora.getHours() >= hCierre) return [];
 
     for (let h = hApertura; h < hCierre; h++) {
-      const horaInicio = `${String(h).padStart(2, '0')}:00`;
-      const horaFin    = `${String(h + 1).padStart(2, '0')}:00`;
 
-      /*Buscamos si ya existe una sesión activa que ocupe este slot horario*/
+      /* Si es hoy, ignoramos horas que ya han pasado */
+      if (esHoySeleccionado && h <= ahora.getHours()) {
+        continue;
+      }
+
+      const horaInicio = `${String(h).padStart(2, '0')}:00`;
+      const horaFin = `${String(h + 1).padStart(2, '0')}:00`;
+
       const sesion = this.sesionesDelDia.find(
         s => s.horaInicio == horaInicio && s.estado == EstadoSesion.ACTIVA
       ) ?? null;
@@ -344,13 +363,13 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   abrirModal(slot: ISlotHorario): void {
     if (slot.estado !== EstadoSlot.LIBRE) return;
     this.slotSeleccionado = slot;
-    this.formSesion       = this.getFormVacio();
+    this.formSesion = this.getFormVacio();
 
     /*Pre-seleccionamos tipo y modalidad según la especialidad del profesional*/
     if (this.especialidad == 'ENTRENADOR') {
       this.formSesion.tipo = TipoSesion.ENTRENAMIENTO;
     } else if (this.especialidad == 'FISIOTERAPEUTA') {
-      this.formSesion.tipo      = TipoSesion.FISIOTERAPIA;
+      this.formSesion.tipo = TipoSesion.FISIOTERAPIA;
       this.formSesion.modalidad = ModalidadSesion.INDIVIDUAL;
     }
 
@@ -361,9 +380,9 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    * Cierra el modal de creación y limpia el estado del formulario y slot seleccionado
    */
   cerrarModal(): void {
-    this.modalVisible     = false;
+    this.modalVisible = false;
     this.slotSeleccionado = null;
-    this.formSesion       = this.getFormVacio();
+    this.formSesion = this.getFormVacio();
   }
 
   /**
@@ -380,7 +399,7 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
 
     /*Capa de seguridad: verificamos que el tipo coincide con la especialidad del profesional*/
     const tipoValido =
-      (this.especialidad == 'ENTRENADOR'     && this.formSesion.tipo == TipoSesion.ENTRENAMIENTO) ||
+      (this.especialidad == 'ENTRENADOR' && this.formSesion.tipo == TipoSesion.ENTRENAMIENTO) ||
       (this.especialidad == 'FISIOTERAPEUTA' && this.formSesion.tipo == TipoSesion.FISIOTERAPIA);
 
     if (!tipoValido) {
@@ -403,18 +422,18 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
     fechaTimestamp.setHours(0, 0, 0, 0);
 
     const nuevaSesion: ISession = {
-      centroId:      this.centro.adminUid,
+      centroId: this.centro.adminUid,
       profesionalId: this.profesionalUid,
-      tipo:          this.formSesion.tipo,
-      fecha:         fechaTimestamp.getTime(),
-      horaInicio:    this.slotSeleccionado.horaInicio,
-      horaFin:       this.slotSeleccionado.horaFin,
-      modalidad:     this.formSesion.modalidad,
-      aforoMax:      aforoMax,
-      aforoActual:   0,
-      titulo:        this.formSesion.titulo.trim(),
-      descripcion:   this.formSesion.descripcion.trim(),
-      estado:        EstadoSesion.ACTIVA
+      tipo: this.formSesion.tipo,
+      fecha: fechaTimestamp.getTime(),
+      horaInicio: this.slotSeleccionado.horaInicio,
+      horaFin: this.slotSeleccionado.horaFin,
+      modalidad: this.formSesion.modalidad,
+      aforoMax: aforoMax,
+      aforoActual: 0,
+      titulo: this.formSesion.titulo.trim(),
+      descripcion: this.formSesion.descripcion.trim(),
+      estado: EstadoSesion.ACTIVA
     };
 
     this.subscription.add(
@@ -462,9 +481,9 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    */
   esHoy(dia: Date): boolean {
     const hoy = new Date();
-    return dia.getDate()     == hoy.getDate()     &&
-           dia.getMonth()    == hoy.getMonth()     &&
-           dia.getFullYear() == hoy.getFullYear();
+    return dia.getDate() == hoy.getDate() &&
+      dia.getMonth() == hoy.getMonth() &&
+      dia.getFullYear() == hoy.getFullYear();
   }
 
   /**
@@ -472,9 +491,9 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    * @param dia Objeto Date a comprobar
    */
   esSeleccionado(dia: Date): boolean {
-    return dia.getDate()     == this.fechaSeleccionada.getDate()     &&
-           dia.getMonth()    == this.fechaSeleccionada.getMonth()    &&
-           dia.getFullYear() == this.fechaSeleccionada.getFullYear();
+    return dia.getDate() == this.fechaSeleccionada.getDate() &&
+      dia.getMonth() == this.fechaSeleccionada.getMonth() &&
+      dia.getFullYear() == this.fechaSeleccionada.getFullYear();
   }
 
   /**
@@ -510,11 +529,11 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    */
   private getFormVacio(): IFormSesion {
     return {
-      titulo:      '',
+      titulo: '',
       descripcion: '',
-      tipo:        null,
-      modalidad:   null,
-      aforoMax:    2
+      tipo: null,
+      modalidad: null,
+      aforoMax: 2
     };
   }
 
