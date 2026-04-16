@@ -128,6 +128,11 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['profesional-sessions']);
   }
 
+  navigateToProfesionalMedia() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['/profesional-media']);
+  }
+
 
   logout(): void {
     this.menuAbierto = false;

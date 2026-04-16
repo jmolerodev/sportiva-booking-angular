@@ -1,0 +1,161 @@
+<div class="management-section d-flex justify-content-center align-items-center py-5">
+  <div class="info-card shadow border-0 overflow-hidden">
+
+    <div class="p-4 border-bottom bg-white text-center">
+      <h2 class="brand-title m-0">GESTIÓN DE <span class="brand-accent">MULTIMEDIA</span></h2>
+      <div class="brand-divider mx-auto mt-2"></div>
+    </div>
+
+    <div class="card-body p-4 p-md-5">
+
+      @if (!centroId) {
+        <div class="text-center py-5">
+          <i class="bi bi-shield-lock-fill empty-icon text-danger mb-3 d-block"></i>
+          <h4 class="brand-title">CENTRO NO <span class="brand-accent">ASIGNADO</span></h4>
+          <p class="text-muted fw-bold">Actualmente no tienes permisos para subir contenido multimedia.</p>
+          <div class="brand-divider mx-auto my-3"></div>
+          <p class="small text-uppercase">Contacta con tu administrador para que te vincule a una sede deportiva.</p>
+          <button class="btn-google-pro btn-outline-google-secondary px-5 py-2 mt-4 shadow-sm" (click)="navigateToHome()">
+            VOLVER AL PANEL PRINCIPAL
+          </button>
+        </div>
+      }
+
+      @else {
+        <div class="row g-5">
+
+          <div class="col-lg-5">
+            <h5 class="section-heading mb-4">Nueva Publicación</h5>
+
+            <form [formGroup]="mediaForm" (ngSubmit)="saveMedia()">
+              <div class="mb-3">
+                <label class="form-label text-success fw-bold small">TÍTULO DEL VÍDEO</label>
+                <input type="text" class="form-control" formControlName="nombre"
+                       [class.is-invalid]="mediaForm.get('nombre')?.invalid && mediaForm.get('nombre')?.touched"
+                       placeholder="Ej: Técnica de peso muerto">
+                <div class="invalid-feedback">El título es obligatorio</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label text-success fw-bold small">DESCRIPCIÓN</label>
+                <textarea class="form-control" formControlName="descripcion" rows="3"
+                          [class.is-invalid]="mediaForm.get('descripcion')?.invalid && mediaForm.get('descripcion')?.touched"
+                          placeholder="Breve explicación del contenido..."></textarea>
+                <div class="invalid-feedback">La descripción es obligatoria</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label text-success fw-bold small">ARCHIVO DE VÍDEO (MP4)</label>
+                <input type="file" class="form-control" (change)="onVideoSelected($event)" accept="video/mp4">
+                <p class="text-muted small mt-1">Máximo recomendado: 50MB</p>
+              </div>
+
+              @if (previewUrl) {
+                <div class="video-preview-wrapper mb-4">
+                  <p class="text-success fw-bold small mb-2 text-uppercase">
+                    <i class="bi bi-eye-fill me-1"></i>Vista previa
+                  </p>
+                  <video class="video-preview" [src]="previewUrl" controls muted playsinline></video>
+                </div>
+              }
+
+              <button type="submit" class="btn btn-success fw-bold w-100 py-3 shadow-sm text-uppercase" [disabled]="isLoading">
+                @if (isLoading) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>SUBIENDO...
+                } @else {
+                  <i class="bi bi-cloud-upload me-2"></i>PUBLICAR CONTENIDO
+                }
+              </button>
+            </form>
+          </div>
+
+          <div class="col-lg-7 border-start">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h5 class="section-heading m-0">Mis Vídeos</h5>
+              <span class="badge-count">{{ misVideos.length }}</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table admin-table">
+                <thead>
+                  <tr>
+                    <th>CONTENIDO</th>
+                    <th class="text-center">REPRODUCIR</th>
+                    <th class="text-center">BORRAR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (video of misVideos; track video.url) {
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center gap-3">
+                          <div class="avatar-circle"><i class="bi bi-film"></i></div>
+                          <div>
+                            <p class="mb-0 fw-bold small">{{ video.nombre }}</p>
+                            <small class="text-muted d-block">{{ video.fecha_subida | date:'dd/MM/yyyy · HH:mm' }}</small>
+                            <small class="text-muted d-block text-truncate video-desc">{{ video.descripcion }}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <button class="btn-action btn-play" (click)="abrirReproductor(video)" title="Reproducir vídeo">
+                          <i class="bi bi-play-fill"></i>
+                        </button>
+                      </td>
+                      <td class="text-center">
+                        <button class="btn-action btn-delete" (click)="borrarVideo(video.url)" title="Eliminar vídeo">
+                          <i class="bi bi-trash3-fill"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="3" class="text-center py-5">
+                        <i class="bi bi-camera-video text-light d-block fs-1 mb-2"></i>
+                        <p class="empty-state small fw-bold text-uppercase m-0">Aún no has subido contenido</p>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <button class="btn btn-outline-secondary w-100 mt-4 fw-bold py-2" (click)="navigateToHome()">
+              VOLVER A HOME
+            </button>
+          </div>
+
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if (videoReproduciendo) {
+  <div class="modal-overlay" (click)="cerrarReproductor()">
+    <div class="modal-player" (click)="$event.stopPropagation()">
+      <div class="modal-player-header">
+        <div>
+          <p class="modal-player-title">{{ videoReproduciendo.nombre }}</p>
+          <small class="modal-player-desc">{{ videoReproduciendo.descripcion }}</small>
+        </div>
+        <button class="btn-close-modal" (click)="cerrarReproductor()" title="Cerrar reproductor">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <video
+        class="modal-video"
+        [src]="videoReproduciendo.url"
+        controls
+        autoplay
+        playsinline>
+      </video>
+      <div class="modal-player-footer">
+        <small class="text-muted">
+          <i class="bi bi-calendar3 me-1"></i>
+          Subido el {{ videoReproduciendo.fecha_subida | date:'dd/MM/yyyy \'a las\' HH:mm' }}
+        </small>
+      </div>
+    </div>
+  </div>
+}
