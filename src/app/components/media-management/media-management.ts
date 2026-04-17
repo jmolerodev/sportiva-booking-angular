@@ -29,6 +29,10 @@ export class MediaManagement implements OnInit {
   /* Estado de carga para el feedback visual durante la subida */
   public isLoading: boolean = false;
 
+  /* Bandera que controla la pantalla de carga inicial del perfil.
+   * Evita el parpadeo del aviso "centro no asignado" durante la hidratación de datos */
+  public isLoadingProfile: boolean = true;
+
   /* Colección local de vídeos vinculados al profesional autenticado */
   public misVideos: IMedia[] = [];
 
@@ -75,17 +79,25 @@ export class MediaManagement implements OnInit {
 
         /* Consultamos la colección 'Persons' usando la interfaz IProfesional */
         this.profesionalService.getProfesionalByUid(user.uid).subscribe((profesional: any) => {
-          const datos = profesional as IProfesional; // Cast a la interfaz que sí tiene centroId
+          const datos = profesional as IProfesional;
 
           if (datos && datos.centroId) {
             this.centroId = datos.centroId;
           } else {
             this.centroId = null;
           }
+
+          /* Desactivamos el estado de carga de perfil una vez resuelta la consulta,
+           * garantizando que la plantilla nunca muestre el aviso de "sin centro"
+           * durante la hidratación inicial de datos */
+          this.isLoadingProfile = false;
         });
 
-        /* La carga del historial es independiente del centroId */
         this.cargarMultimedia();
+
+      } else {
+        /* Usuario no autenticado: liberamos la pantalla de carga igualmente */
+        this.isLoadingProfile = false;
       }
     });
   }

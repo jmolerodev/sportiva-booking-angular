@@ -8,7 +8,14 @@
 
     <div class="card-body p-4 p-md-5">
 
-      @if (!centroId) {
+      @if (isLoadingProfile) {
+        <div class="text-center py-5">
+          <div class="spinner-grow text-success mb-3" role="status"></div>
+          <p class="text-muted fw-bold small text-uppercase">Cargando perfil...</p>
+        </div>
+      }
+
+      @else if (!centroId) {
         <div class="text-center py-5">
           <i class="bi bi-shield-lock-fill empty-icon text-danger mb-3 d-block"></i>
           <h4 class="brand-title">CENTRO NO <span class="brand-accent">ASIGNADO</span></h4>
@@ -52,9 +59,6 @@
 
               @if (previewUrl) {
                 <div class="video-preview-wrapper mb-4">
-                  <p class="text-success fw-bold small mb-2 text-uppercase">
-                    <i class="bi bi-eye-fill me-1"></i>Vista previa
-                  </p>
                   <video class="video-preview" [src]="previewUrl" controls muted playsinline></video>
                 </div>
               }
@@ -110,9 +114,14 @@
                     </tr>
                   } @empty {
                     <tr>
-                      <td colspan="3" class="text-center py-5">
-                        <i class="bi bi-camera-video text-light d-block fs-1 mb-2"></i>
-                        <p class="empty-state small fw-bold text-uppercase m-0">Aún no has subido contenido</p>
+                      <td colspan="3">
+                        <div class="empty-state-wrapper">
+                          <div class="empty-state-icon">
+                            <i class="bi bi-camera-video"></i>
+                          </div>
+                          <p class="empty-state-title">SIN CONTENIDO PUBLICADO</p>
+                          <p class="empty-state-sub">Sube tu primer vídeo usando el formulario de la izquierda</p>
+                        </div>
                       </td>
                     </tr>
                   }
