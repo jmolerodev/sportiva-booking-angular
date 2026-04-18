@@ -110,6 +110,10 @@
                         </div>
                       </div>
                     }
+                    <button class="btn btn-success fw-bold w-100 mt-4 py-2 text-uppercase"
+                            (click)="navigateToCentroDetail(centro.adminUid)">
+                      <i class="bi bi-eye me-2"></i>VER CENTRO
+                    </button>
                   </div>
                 </div>
               </div>
@@ -175,7 +179,7 @@
             </div>
             <div class="card-body p-4 bg-white">
               <h4 class="fw-bold text-dark mb-3">{{ centroAdmin.nombre }}</h4>
-              
+
               <div class="d-flex flex-column gap-2 mb-3">
                 <p class="text-muted mb-0 d-flex align-items-center">
                   <i class="bi bi-geo-alt-fill text-success me-2"></i>{{ centroAdmin.direccion }}
@@ -226,7 +230,7 @@
            </div>
            <div class="card-body p-4 bg-white">
              <h4 class="fw-bold text-dark mb-3">{{ centroTrabajo.nombre }}</h4>
-             
+
              <div class="d-flex flex-column gap-2 mb-3">
                <p class="text-muted mb-0 d-flex align-items-center">
                  <i class="bi bi-geo-alt-fill text-success me-2"></i>{{ centroTrabajo.direccion }}

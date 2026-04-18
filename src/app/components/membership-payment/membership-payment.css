@@ -1,0 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap');
+
+.payment-section {
+  min-height: 100vh;
+  background-color: #1e1e1e;
+  font-family: 'Nunito', sans-serif;
+}
+
+.payment-card {
+  background-color: rgba(255,255,255,0.98);
+  max-width: 680px;
+  width: 95%;
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+.brand-title {
+  font-family: 'Bebas Neue', cursive;
+  letter-spacing: 0.03em;
+  color: #1a1a1a;
+  font-size: 2.2rem;
+}
+
+.brand-accent { color: #057b2a; }
+
+.brand-divider {
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #057b2a, #00e676);
+  border-radius: 2px;
+}
+
+.section-heading {
+  font-family: 'Bebas Neue', cursive;
+  letter-spacing: 0.05em;
+  color: #057b2a;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+
+
+.centro-preview {
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px solid #f0f0f0;
+}
+
+.centro-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+
+.planes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 576px) {
+  .planes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.plan-card {
+  position: relative;
+  border: 2px solid #f0f0f0;
+  border-radius: 14px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.plan-card:hover {
+  border-color: rgba(5,123,42,0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(5,123,42,0.1);
+}
+
+.plan-selected {
+  border-color: #057b2a !important;
+  background: rgba(5,123,42,0.04) !important;
+  box-shadow: 0 4px 20px rgba(5,123,42,0.2) !important;
+}
+
+.plan-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #057b2a, #00e676);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  box-shadow: 0 3px 10px rgba(5,123,42,0.3);
+}
+
+.plan-icon {
+  font-size: 1.4rem;
+  color: #fff;
+}
+
+.plan-etiqueta {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+}
+
+.plan-precio {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #057b2a;
+  margin: 0 0 4px 0;
+}
+
+.plan-desc {
+  font-size: 0.72rem;
+  color: #888;
+  margin: 0;
+}
+
+.plan-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  background: #057b2a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+
+.payment-summary {
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px solid #f0f0f0;
+}
+
+.summary-price {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #057b2a;
+}
+
+.paypal-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.select-hint {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 2px dashed #e0e0e0;
+}
+
+
+.btn-primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #057b2a, #0a9e38);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 4px 14px rgba(5,123,42,0.35);
+}
+
+.btn-primary-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(5,123,42,0.45);
+}
+
+.btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 2px solid #dee2e6;
+  color: #6c757d;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #6c757d;
+  color: #fff;
+}
+
+
+.success-icon-wrapper {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(5,123,42,0.12), rgba(0,230,118,0.12));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.success-icon {
+  font-size: 3rem;
+  color: #057b2a;
+}

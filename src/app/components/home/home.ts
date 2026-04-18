@@ -318,4 +318,14 @@ export class Home implements OnInit, OnDestroy {
       );
     });
   }
+
+  /**
+ * Navega al detalle del centro deportivo seleccionado en el carrusel.
+ * Disponible tanto para clientes autenticados como para visitantes sin sesión.
+ * @param adminUid UID del administrador del centro, usado como centroId en la ruta
+ */
+navigateToCentroDetail(adminUid: string): void {
+  this.router.navigate(['/centre-detail', adminUid]);
+}
+ 
 }

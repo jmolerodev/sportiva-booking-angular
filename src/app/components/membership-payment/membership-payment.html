@@ -1,0 +1,95 @@
+<div class="payment-section d-flex justify-content-center align-items-center py-5">
+  <div class="payment-card shadow">
+
+    <div class="p-4 border-bottom bg-white text-center">
+      <h2 class="brand-title m-0">CONTRATAR <span class="brand-accent">MEMBRESÍA</span></h2>
+      <div class="brand-divider mx-auto mt-2"></div>
+    </div>
+
+    <div class="card-body p-4 p-md-5">
+
+      @if (loading) {
+        <div class="text-center py-5">
+          <div class="spinner-grow text-success mb-3" role="status"></div>
+          <p class="text-muted fw-bold small text-uppercase">Cargando información del centro...</p>
+        </div>
+      }
+
+      @else if (pagoCompletado) {
+        <div class="success-state text-center py-4">
+          <div class="success-icon-wrapper mb-4">
+            <i class="bi bi-patch-check-fill success-icon"></i>
+          </div>
+          <h3 class="brand-title mb-2">¡MEMBRESÍA <span class="brand-accent">ACTIVADA!</span></h3>
+          <p class="text-muted fw-bold mb-4">Tu membresía en <strong>{{ centro?.nombre }}</strong> ya está activa. ¡Empieza a reservar sesiones!</p>
+          <button class="btn-primary-action w-100 py-3" (click)="volverAlCentro()">
+            <i class="bi bi-arrow-right-circle me-2"></i>IR AL CENTRO
+          </button>
+        </div>
+      }
+
+      @else {
+        @if (centro) {
+          <div class="centro-preview d-flex align-items-center gap-3 mb-5 p-3">
+            <img [src]="getFoto(centro.foto)" [alt]="centro.nombre" class="centro-thumb">
+            <div>
+              <h5 class="mb-0 fw-bold">{{ centro.nombre }}</h5>
+              <small class="text-muted"><i class="bi bi-geo-alt-fill text-success me-1"></i>{{ centro.direccion }}</small>
+            </div>
+          </div>
+        }
+
+        <h5 class="section-heading mb-4">Elige tu plan</h5>
+
+        <div class="planes-grid mb-5">
+          @for (opcion of opciones; track opcion.tipo) {
+            <div class="plan-card"
+                 [class.plan-selected]="tipoSeleccionado === opcion.tipo"
+                 (click)="seleccionarTipo(opcion.tipo)">
+              <div class="plan-icon-wrapper mb-3">
+                <i class="bi {{ opcion.icono }} plan-icon"></i>
+              </div>
+              <p class="plan-etiqueta">{{ opcion.etiqueta }}</p>
+              <p class="plan-precio">{{ PRECIOS[opcion.tipo] | currency:'EUR' }}</p>
+              <p class="plan-desc">{{ opcion.descripcion }}</p>
+              @if (tipoSeleccionado === opcion.tipo) {
+                <div class="plan-check"><i class="bi bi-check-lg"></i></div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (tipoSeleccionado) {
+          <div class="payment-summary mb-4 p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-dark">Membresía {{ tipoSeleccionado }}</span>
+              <span class="summary-price">{{ PRECIOS[tipoSeleccionado] | currency:'EUR' }}</span>
+            </div>
+            <small class="text-muted d-block mt-1">Pago único · Activación inmediata</small>
+          </div>
+
+          @if (guardando) {
+            <div class="text-center py-3">
+              <div class="spinner-border text-success mb-2" role="status"></div>
+              <p class="text-muted small fw-bold">Activando tu membresía...</p>
+            </div>
+          } @else {
+            <div class="paypal-wrapper">
+              <ngx-paypal [config]="paypalConfig!"></ngx-paypal>
+            </div>
+          }
+        } @else {
+          <div class="select-hint text-center py-3">
+            <i class="bi bi-hand-index-fill text-success me-2"></i>
+            <span class="text-muted small fw-bold">Selecciona un plan para continuar con el pago</span>
+          </div>
+        }
+
+        <button class="btn-cancel w-100 mt-4" (click)="cancelarYVolver()">
+          <i class="bi bi-arrow-left me-2"></i>CANCELAR Y VOLVER
+        </button>
+      }
+
+    </div>
+  </div>
+</div>

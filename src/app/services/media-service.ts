@@ -16,7 +16,7 @@ export class MediaService {
   private STORAGE_PATH = 'Profesional-Media';
 
   private database = inject(Database);
-  private storage = inject(Storage);
+  private storage  = inject(Storage);
 
   /**
    * Método para obtener todos los vídeos subidos exclusivamente por un profesional
@@ -33,6 +33,22 @@ export class MediaService {
   }
 
   /**
+   * Obtiene todos los vídeos vinculados a un centro deportivo concreto.
+   * Permite mostrar la galería multimedia del centro en la vista de detalle
+   * independientemente del profesional que los subió.
+   * @param centroId Identificador único del centro deportivo
+   * @returns Observable con la lista de vídeos del centro
+   */
+  getMediaByCentro(centroId: string): Observable<IMedia[] | null> {
+    const mediaQuery = query(
+      ref(this.database, `/${this.COLLECTION_NAME}`),
+      orderByChild('centroId'),
+      equalTo(centroId)
+    );
+    return listVal(mediaQuery, { keyField: 'uid' }) as Observable<IMedia[] | null>;
+  }
+
+  /**
    * Método integral para subir un vídeo al Storage y registrar su metadata en Database.
    * Firebase push() genera un UID alfanumérico real y ordenado cronológicamente.
    * @param file Archivo de vídeo (Blob/File)
@@ -43,14 +59,14 @@ export class MediaService {
 
     /* 1.- Generamos una referencia con push() para obtener un UID real de Firebase */
     const collectionRef = ref(this.database, `/${this.COLLECTION_NAME}`);
-    const newNodeRef = push(collectionRef);
-    const firebaseUid = newNodeRef.key!;
+    const newNodeRef    = push(collectionRef);
+    const firebaseUid   = newNodeRef.key!;
 
     /* 2.- Subimos el archivo a Storage usando el UID de Firebase como prefijo del nombre */
-    const filePath = `${this.STORAGE_PATH}/${firebaseUid}_${file.name}`;
+    const filePath         = `${this.STORAGE_PATH}/${firebaseUid}_${file.name}`;
     const storageReference = stRef(this.storage, filePath);
-    const snapshot = await uploadBytes(storageReference, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
+    const snapshot         = await uploadBytes(storageReference, file);
+    const downloadURL      = await getDownloadURL(snapshot.ref);
 
     /* 3.- Guardamos el registro en el nodo exacto que push() ya reservó en la Database */
     const finalData: IMedia = { ...data, url: downloadURL, fecha_subida: Date.now() };
@@ -81,10 +97,10 @@ export class MediaService {
        * Las URLs de descarga tienen el formato: .../o/RUTA_ENCODED?...
        * Decodificamos el segmento entre '/o/' y '?' para obtener el path real */
       try {
-        const urlObj = new URL(url);
+        const urlObj      = new URL(url);
         const encodedPath = urlObj.pathname.split('/o/')[1];
         if (encodedPath) {
-          const filePath = decodeURIComponent(encodedPath);
+          const filePath         = decodeURIComponent(encodedPath);
           const storageReference = stRef(this.storage, filePath);
           await deleteObject(storageReference);
         }
