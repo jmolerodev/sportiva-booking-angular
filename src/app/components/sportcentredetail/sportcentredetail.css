@@ -668,3 +668,49 @@
   background: #1a1a1a;
   border-top: 1px solid rgba(255,255,255,0.06);
 }
+
+ç.soporte-textarea {
+  border: 2px solid #f0f0f0;
+  border-radius: 10px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  resize: none;
+}
+
+.soporte-textarea:focus {
+  border-color: #057b2a;
+  box-shadow: 0 0 0 0.25rem rgba(5, 123, 42, 0.1);
+}
+
+.soporte-alert {
+  padding: 0.85rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.soporte-alert-cerrado {
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+  border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+.soporte-status-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+.soporte-status-pending {
+  background: rgba(255, 193, 7, 0.15);
+  color: #b38600;
+}
+
+.soporte-status-activo {
+  background: rgba(5, 123, 42, 0.12);
+  color: #057b2a;
+}

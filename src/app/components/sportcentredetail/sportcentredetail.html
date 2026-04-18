@@ -219,7 +219,7 @@
           </div>
         </div>
 
-        <div class="section-block mb-5">
+        <div class="section-block mb-4">
           <div class="section-block-header mb-4">
             <h4 class="section-block-title"><i class="bi bi-camera-video me-2"></i>Multimedia del Centro</h4>
             <span class="badge-count">{{ videos.length }}</span>
@@ -247,6 +247,82 @@
               }
             </div>
           }
+        </div>
+
+        <div class="section-block mb-5">
+          <div class="section-block-header mb-4">
+            <h4 class="section-block-title"><i class="bi bi-headset me-2"></i>Soporte</h4>
+            @if (!membresiaActiva) {
+              <span class="lock-badge"><i class="bi bi-lock-fill me-1"></i>Requiere membresía</span>
+            } @else if (chatActual?.estado === EstadoChat.PENDIENTE) {
+              <span class="lock-badge" style="background:rgba(255,193,7,0.1);color:#b38600;"><i class="bi bi-hourglass-split me-1"></i>Pendiente</span>
+            } @else if (chatActual?.estado === EstadoChat.ACTIVO) {
+              <span class="active-badge"><i class="bi bi-chat-dots-fill me-1"></i>Chat activo</span>
+            } @else {
+              <span class="active-badge"><i class="bi bi-check-circle-fill me-1"></i>Disponible</span>
+            }
+          </div>
+
+          @if (!membresiaActiva) {
+            <div class="empty-media">
+              <i class="bi bi-lock-fill empty-media-icon text-danger"></i>
+              <p class="empty-media-title">ACCESO RESTRINGIDO</p>
+              <p class="empty-media-sub">Necesitas una membresía activa en este centro para contactar con soporte</p>
+            </div>
+          }
+
+          @else if (!chatActual || chatActual.estado === EstadoChat.CERRADO) {
+            <div class="row justify-content-center">
+              <div class="col-lg-6">
+                @if (chatActual?.estado === EstadoChat.CERRADO) {
+                  <div class="soporte-alert soporte-alert-cerrado mb-4">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Tu última solicitud fue cerrada. Puedes abrir una nueva si lo necesitas.
+                  </div>
+                }
+                <form [formGroup]="solicitudForm" (ngSubmit)="solicitarChat()">
+                  <div class="mb-3">
+                    <label class="form-label text-success fw-bold small">DESCRIBE TU CONSULTA</label>
+                    <textarea class="form-control soporte-textarea" formControlName="primerMensaje" rows="4"
+                      [class.is-invalid]="solicitudForm.get('primerMensaje')?.invalid && solicitudForm.get('primerMensaje')?.touched"
+                      placeholder="Explica tu consulta o incidencia al administrador del centro..."></textarea>
+                    <div class="invalid-feedback">La descripción de la consulta es obligatoria</div>
+                  </div>
+                  <button type="submit" class="btn-contratar w-100" [disabled]="isLoadingSoporte">
+                    @if (isLoadingSoporte) {
+                      <span class="spinner-border spinner-border-sm me-2"></span>ENVIANDO...
+                    } @else {
+                      <i class="bi bi-send me-2"></i>ENVIAR SOLICITUD
+                    }
+                  </button>
+                </form>
+              </div>
+            </div>
+          }
+
+          @else if (chatActual.estado === EstadoChat.PENDIENTE) {
+            <div class="text-center py-4">
+              <div class="soporte-status-icon soporte-status-pending mx-auto mb-3">
+                <i class="bi bi-hourglass-split"></i>
+              </div>
+              <p class="fw-bold mb-1">Solicitud enviada</p>
+              <p class="text-muted small">Tu solicitud está pendiente de revisión por el administrador del centro.</p>
+            </div>
+          }
+
+          @else if (chatActual.estado === EstadoChat.ACTIVO) {
+            <div class="text-center py-4">
+              <div class="soporte-status-icon soporte-status-activo mx-auto mb-3">
+                <i class="bi bi-chat-dots-fill"></i>
+              </div>
+              <p class="fw-bold mb-1">Chat aceptado</p>
+              <p class="text-muted small mb-4">El administrador ha aceptado tu solicitud. Accede al chat para continuar la conversación.</p>
+              <button class="btn-contratar" (click)="navigateToSoporte()">
+                <i class="bi bi-arrow-right me-2"></i>IR AL CHAT
+              </button>
+            </div>
+          }
+
         </div>
 
       </div>

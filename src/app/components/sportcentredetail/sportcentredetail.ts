@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule }                                     from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute }                           from '@angular/router';
 import { Subscription, switchMap, of }                      from 'rxjs';
 import { AuthService }          from '../../services/auth';
@@ -7,19 +8,22 @@ import { SportCentreService }   from '../../services/sport-centre-service';
 import { SessionService }       from '../../services/session-service';
 import { MediaService }         from '../../services/media-service';
 import { MembershipService }    from '../../services/membershipservice';
+import { SoporteService }       from '../../services/soporte-service';
 import { SnackbarService }      from '../../services/snackbar';
 import { ISportCentre }         from '../../interfaces/Sport-Centre-Interface';
 import { ISession, ISlotHorario } from '../../interfaces/Sesion-Interface';
 import { IMedia }               from '../../interfaces/Media-Interface';
 import { IMembership }          from '../../interfaces/Membresia-Interface';
+import { ISoporteChat } from '../../interfaces/SoporteChar-Interface';
 import { EstadoSlot }           from '../../enums/EstadoSlot';
 import { EstadoSesion }         from '../../enums/EstadoSesion';
+import { EstadoChat }           from '../../enums/EstadoChat';
 import { Rol }                  from '../../enums/Rol';
 
 @Component({
   selector:    'app-sport-centre-detail',
   standalone:  true,
-  imports:     [CommonModule],
+  imports:     [CommonModule, ReactiveFormsModule],
   templateUrl: './sportcentredetail.html',
   styleUrl:    './sportcentredetail.css'
 })
@@ -58,6 +62,18 @@ export class SportCentreDetail implements OnInit, OnDestroy {
   /* Sesión seleccionada para mostrar su detalle en el panel lateral */
   public sesionSeleccionada: ISession | null = null;
 
+  /* Chat de soporte vigente del cliente con este centro (si existe) */
+  public chatActual: (ISoporteChat & { uid: string }) | null = null;
+
+  /* Formulario reactivo para la solicitud de soporte */
+  public solicitudForm: FormGroup;
+
+  /* Estado de carga durante el envío de la solicitud de soporte */
+  public isLoadingSoporte: boolean = false;
+
+  /* Expone el enum al template para las comparaciones de estado del chat */
+  public EstadoChat = EstadoChat;
+
   /* Flag de control para el estado de carga global */
   public loading: boolean = true;
 
@@ -82,33 +98,39 @@ export class SportCentreDetail implements OnInit, OnDestroy {
 
   /**
    * Constructor del componente con inyección de dependencias
+   * @param fb                  Servicio para la construcción de formularios reactivos
    * @param authService         Servicio encargado de la identidad y permisos del usuario
    * @param sportCentreService  Servicio para la gestión de centros deportivos
    * @param sessionService      Servicio para la gestión de sesiones deportivas
    * @param mediaService        Servicio para la gestión del contenido multimedia
    * @param membershipService   Servicio para la verificación y gestión de membresías
+   * @param soporteService      Servicio para la gestión del sistema de soporte
    * @param snackbarService     Servicio para el despliegue de alertas y confirmaciones
    * @param router              Servicio para gestionar la navegación entre vistas
    * @param route               Servicio para capturar parámetros de la URL activa
    * @param cdr                 Servicio para forzar la detección de cambios en el ciclo de Angular
    */
   constructor(
-    private authService:        AuthService,
-    private sportCentreService: SportCentreService,
-    private sessionService:     SessionService,
-    private mediaService:       MediaService,
-    private membershipService:  MembershipService,
-    private snackbarService:    SnackbarService,
-    private router:             Router,
-    private route:              ActivatedRoute,
-    private cdr:                ChangeDetectorRef
-  ) { }
+    private fb:                   FormBuilder,
+    private authService:          AuthService,
+    private sportCentreService:   SportCentreService,
+    private sessionService:       SessionService,
+    private mediaService:         MediaService,
+    private membershipService:    MembershipService,
+    private soporteService:       SoporteService,
+    private snackbarService:      SnackbarService,
+    private router:               Router,
+    private route:                ActivatedRoute,
+    private cdr:                  ChangeDetectorRef
+  ) {
+    this.solicitudForm = this.fb.group({
+      primerMensaje: ['', [Validators.required, Validators.maxLength(500)]]
+    });
+  }
 
   /**
    * Inicialización del componente: extrae el centroId de la ruta, valida
    * que el usuario es un cliente autenticado y orquesta las cargas en paralelo.
-   * Si no hay sesión activa muestra un aviso informativo y redirige al login
-   * en lugar de petardear la aplicación silenciosamente.
    */
   ngOnInit(): void {
     this.generarCalendario();
@@ -117,7 +139,6 @@ export class SportCentreDetail implements OnInit, OnDestroy {
       this.authService.getCurrentUser().pipe(
         switchMap(user => {
           if (!user) {
-            /* Usuario no autenticado: informamos y redirigimos al login */
             this.snackbarService.showError('Inicia sesión para ver los detalles de este centro');
             this.router.navigate(['/login']);
             return of(null);
@@ -128,7 +149,6 @@ export class SportCentreDetail implements OnInit, OnDestroy {
       ).subscribe(rol => {
         if (!rol) return;
 
-        /* Solo los clientes pueden acceder a la vista de detalle de centro */
         if (rol !== Rol.CLIENTE) {
           this.snackbarService.showError('Esta sección es exclusiva para clientes');
           this.router.navigate(['/home']);
@@ -147,6 +167,14 @@ export class SportCentreDetail implements OnInit, OnDestroy {
         this.verificarMembresia();
       })
     );
+  }
+
+  /**
+   * Limpieza de suscripciones al destruir el componente
+   */
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+    this.centro = null;
   }
 
   /**
@@ -198,8 +226,7 @@ export class SportCentreDetail implements OnInit, OnDestroy {
 
   /**
    * Verifica si el cliente tiene una membresía activa y vigente con este centro.
-   * El resultado determina si puede acceder a la reserva de sesiones o es
-   * redirigido al flujo de pago de membresía.
+   * Si la tiene, inicia además la escucha del chat de soporte asociado.
    */
   private verificarMembresia(): void {
     if (!this.clienteUid || !this.centroId) return;
@@ -212,6 +239,10 @@ export class SportCentreDetail implements OnInit, OnDestroy {
         next: membresia => {
           this.membresiaActiva  = membresia;
           this.puedeReservar    = membresia !== null;
+
+          /* Solo cargamos el chat si el cliente tiene membresía activa en este centro */
+          if (membresia) this.cargarChatSoporte();
+
           this.loadingMembresia = false;
           this.checkLoading();
           this.cdr.detectChanges();
@@ -223,6 +254,71 @@ export class SportCentreDetail implements OnInit, OnDestroy {
         }
       })
     );
+  }
+
+  /**
+   * Se suscribe en tiempo real a los chats del cliente filtrados por este centro,
+   * y selecciona el chat vigente priorizando PENDIENTE o ACTIVO sobre CERRADO.
+   */
+  private cargarChatSoporte(): void {
+    if (!this.clienteUid) return;
+
+    this.subscription.add(
+      this.soporteService.getChatsByCliente(this.clienteUid).subscribe(chats => {
+        const lista = ((chats || []) as (ISoporteChat & { uid: string })[])
+          .filter(c => c.centroId === this.centroId);
+
+        const abierto = lista.find(
+          c => c.estado === EstadoChat.PENDIENTE || c.estado === EstadoChat.ACTIVO
+        );
+
+        this.chatActual = abierto ?? (lista.length ? lista[lista.length - 1] : null);
+        this.cdr.detectChanges();
+      })
+    );
+  }
+
+  /**
+   * Envía la solicitud de chat de soporte al administrador de este centro concreto.
+   * Solo es posible si el cliente tiene membresía activa y no hay un chat abierto.
+   */
+  solicitarChat(): void {
+    if (this.solicitudForm.invalid) {
+      this.solicitudForm.markAllAsTouched();
+      return;
+    }
+
+    if (!this.clienteUid || !this.centroId || !this.centro) {
+      this.snackbarService.showError('No se puede iniciar el chat: datos del centro no disponibles');
+      return;
+    }
+
+    this.isLoadingSoporte = true;
+
+    const { primerMensaje } = this.solicitudForm.value;
+
+    this.soporteService.solicitarChat({
+      centroId:      this.centroId,
+      clienteId:     this.clienteUid,
+      adminId:       this.centro.adminUid,
+      primerMensaje,
+    }).then(() => {
+      this.snackbarService.showSuccess('Solicitud enviada. El administrador la revisará en breve');
+      this.solicitudForm.reset();
+      this.isLoadingSoporte = false;
+    }).catch((e) => {
+  console.error('Error solicitarChat:', e);
+  this.snackbarService.showError('Error al enviar la solicitud de soporte');
+  this.isLoadingSoporte = false;
+});
+  }
+
+  /**
+   * Navega al componente de chat de soporte del cliente para continuar
+   * la conversación cuando el chat ya ha sido aceptado por el administrador.
+   */
+  navigateToSoporte(): void {
+    this.router.navigate(['/soporte-cliente']);
   }
 
   /**
@@ -245,7 +341,6 @@ export class SportCentreDetail implements OnInit, OnDestroy {
     const primerDia = new Date(año, mes, 1);
     const ultimoDia = new Date(año, mes + 1, 0);
 
-    /* Ajustamos el offset para que la semana arranque en Lunes (0=Lun ... 6=Dom) */
     const offsetInicio = (primerDia.getDay() + 6) % 7;
 
     const dias: (Date | null)[] = [
@@ -253,7 +348,6 @@ export class SportCentreDetail implements OnInit, OnDestroy {
       ...Array.from({ length: ultimoDia.getDate() }, (_, i) => new Date(año, mes, i + 1))
     ];
 
-    /* Agrupamos los días en filas de 7 celdas */
     this.semanas = [];
     for (let i = 0; i < dias.length; i += 7) {
       this.semanas.push(dias.slice(i, i + 7));
@@ -323,7 +417,6 @@ export class SportCentreDetail implements OnInit, OnDestroy {
   /**
    * Genera los slots horarios hora a hora a partir del horario del centro
    * para el día seleccionado en modo lectura (sin EstadoSlot.PROPIO).
-   * Los slots con sesión activa muestran la info de la sesión disponible.
    * @returns Array de slots con hora, estado y sesión asociada si la hay
    */
   private generarSlots(): ISlotHorario[] {
@@ -333,7 +426,6 @@ export class SportCentreDetail implements OnInit, OnDestroy {
     const nombreDia  = this.getNombreDia(this.fechaSeleccionada);
     const horarioDia = this.centro.horario[nombreDia];
 
-    /* Si el centro está cerrado ese día no generamos ningún slot */
     if (!horarioDia?.abierto) return [];
 
     const slots: ISlotHorario[] = [];
@@ -343,12 +435,9 @@ export class SportCentreDetail implements OnInit, OnDestroy {
     const ahora             = new Date();
     const esHoySeleccionado = this.esHoy(this.fechaSeleccionada);
 
-    /* Si es hoy pero el centro ya ha cerrado no mostramos slots */
     if (esHoySeleccionado && ahora.getHours() >= hCierre) return [];
 
     for (let h = hApertura; h < hCierre; h++) {
-
-      /* Si es hoy, ignoramos horas que ya han pasado */
       if (esHoySeleccionado && h <= ahora.getHours()) continue;
 
       const horaInicio = `${String(h).padStart(2, '0')}:00`;
@@ -358,9 +447,7 @@ export class SportCentreDetail implements OnInit, OnDestroy {
         s => s.horaInicio === horaInicio && s.estado === EstadoSesion.ACTIVA
       ) ?? null;
 
-      /* En la vista de cliente solo distinguimos LIBRE (sin sesión) u OCUPADO (con sesión) */
       const estado: EstadoSlot = sesion ? EstadoSlot.OCUPADO : EstadoSlot.LIBRE;
-
       slots.push({ horaInicio, horaFin, estado, sesion });
     }
 
@@ -497,13 +584,5 @@ export class SportCentreDetail implements OnInit, OnDestroy {
    */
   navigateToHome(): void {
     this.router.navigate(['/home']);
-  }
-
-  /**
-   * Limpieza de suscripciones al destruir el componente
-   */
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
-    this.centro = null;
   }
 }

@@ -133,6 +133,11 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['/profesional-media']);
   }
 
+  navigateToSupportAdmin() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['/soporte-admin']);
+  }
+
 
   logout(): void {
     this.menuAbierto = false;

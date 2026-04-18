@@ -1,0 +1,163 @@
+<div class="management-section d-flex justify-content-center align-items-center py-5">
+  <div class="info-card shadow border-0 overflow-hidden">
+
+    <div class="p-4 border-bottom bg-white text-center">
+      <h2 class="brand-title m-0">PANEL DE <span class="brand-accent">SOPORTE</span></h2>
+      <div class="brand-divider mx-auto mt-2"></div>
+    </div>
+
+    <div class="card-body p-4 p-md-5">
+
+      @if (isLoadingProfile) {
+        <div class="text-center py-5">
+          <div class="spinner-grow text-success mb-3" role="status"></div>
+          <p class="text-muted fw-bold small text-uppercase">Cargando solicitudes...</p>
+        </div>
+      }
+
+      @else {
+        <div class="row g-4">
+
+          <div class="col-lg-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h5 class="section-heading m-0">Solicitudes</h5>
+              <span class="badge-count">{{ chats.length }}</span>
+            </div>
+
+            <div class="chat-list">
+              @for (chat of chats; track chat.uid) {
+                <div class="chat-list-item" [class.selected]="chatSeleccionado?.uid === chat.uid"
+                  (click)="seleccionarChat(chat)">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="avatar-circle avatar-sm"><i class="bi bi-person-fill"></i></div>
+                    <div class="flex-grow-1 overflow-hidden">
+                      <p class="mb-0 fw-bold small text-truncate">{{ chat.clienteId }}</p>
+                      <small class="text-muted">{{ chat.fechaCreacion | date:'dd/MM/yyyy · HH:mm' }}</small>
+                    </div>
+                    <span class="estado-badge" [ngClass]="{
+                      'badge-pendiente': chat.estado === EstadoChat.PENDIENTE,
+                      'badge-activo':    chat.estado === EstadoChat.ACTIVO,
+                      'badge-cerrado':   chat.estado === EstadoChat.CERRADO
+                    }">{{ chat.estado }}</span>
+                  </div>
+                </div>
+              } @empty {
+                <div class="empty-state-wrapper">
+                  <div class="empty-state-icon"><i class="bi bi-chat-dots"></i></div>
+                  <p class="empty-state-title">SIN SOLICITUDES</p>
+                  <p class="empty-state-sub">No hay chats de soporte pendientes en tu centro</p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="col-lg-8 border-start">
+
+            @if (!chatSeleccionado) {
+              <div class="empty-state-wrapper h-100">
+                <div class="empty-state-icon"><i class="bi bi-chat-square-dots"></i></div>
+                <p class="empty-state-title">SELECCIONA UNA SOLICITUD</p>
+                <p class="empty-state-sub">Elige un chat de la lista para ver la conversación</p>
+              </div>
+            }
+
+            @else {
+              <div class="d-flex flex-column h-100">
+
+                <div class="chat-header mb-3">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="avatar-circle"><i class="bi bi-person-fill"></i></div>
+                      <div>
+                        <p class="chat-title mb-0">{{ chatSeleccionado.clienteId }}</p>
+                        <small class="text-muted">Desde {{ chatSeleccionado.fechaCreacion | date:'dd/MM/yyyy' }}</small>
+                      </div>
+                    </div>
+                    <span class="estado-badge" [ngClass]="{
+                      'badge-pendiente': chatSeleccionado.estado === EstadoChat.PENDIENTE,
+                      'badge-activo':    chatSeleccionado.estado === EstadoChat.ACTIVO,
+                      'badge-cerrado':   chatSeleccionado.estado === EstadoChat.CERRADO
+                    }">{{ chatSeleccionado.estado }}</span>
+                  </div>
+                </div>
+
+                @if (chatSeleccionado.estado === EstadoChat.PENDIENTE) {
+                  <div class="text-center py-4">
+                    <div class="status-icon status-pending mx-auto mb-4">
+                      <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <h5 class="brand-title">SOLICITUD <span class="brand-accent">PENDIENTE</span></h5>
+                    <p class="text-muted fw-bold small">¿Deseas atender esta solicitud de soporte?</p>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                      <button class="btn btn-success fw-bold px-5 py-2 shadow-sm"
+                        (click)="aceptarChat(chatSeleccionado)">
+                        <i class="bi bi-check-lg me-2"></i>ACEPTAR
+                      </button>
+                      <button class="btn btn-outline-danger fw-bold px-5 py-2"
+                        (click)="rechazarChat(chatSeleccionado)">
+                        <i class="bi bi-x-lg me-2"></i>RECHAZAR
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                @else if (chatSeleccionado.estado === EstadoChat.ACTIVO) {
+                  <div class="chat-wrapper flex-grow-1">
+                    <div class="chat-messages">
+                      @for (msg of mensajes; track msg.fecha) {
+                        <div class="message-wrapper" [class.message-own]="msg.emisorId === adminUid">
+                          <div class="message-bubble" [class.bubble-own]="msg.emisorId === adminUid">
+                            <p class="mb-1">{{ msg.texto }}</p>
+                            <small class="msg-time">{{ msg.fecha | date:'HH:mm' }}</small>
+                          </div>
+                        </div>
+                      } @empty {
+                        <div class="text-center py-4">
+                          <p class="text-muted small">Chat activo. Escribe el primer mensaje.</p>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="chat-input-area">
+                      <form [formGroup]="mensajeForm" (ngSubmit)="enviarMensaje(chatSeleccionado.uid)">
+                        <div class="d-flex gap-2">
+                          <input type="text" class="form-control" formControlName="texto"
+                            placeholder="Escribe un mensaje..." autocomplete="off">
+                          <button type="submit" class="btn btn-success btn-send" [disabled]="mensajeForm.invalid">
+                            <i class="bi bi-send-fill"></i>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+
+                  <button class="btn btn-outline-danger fw-bold w-100 mt-3 py-2"
+                    (click)="cerrarChat(chatSeleccionado)">
+                    <i class="bi bi-x-circle me-2"></i>CERRAR CHAT
+                  </button>
+                }
+
+                @else if (chatSeleccionado.estado === EstadoChat.CERRADO) {
+                  <div class="text-center py-5">
+                    <div class="status-icon status-cerrado mx-auto mb-4">
+                      <i class="bi bi-check-circle"></i>
+                    </div>
+                    <h5 class="brand-title">CHAT <span class="brand-accent">CERRADO</span></h5>
+                    <p class="text-muted fw-bold small">Este chat ha sido resuelto y archivado.</p>
+                  </div>
+                }
+
+              </div>
+            }
+
+          </div>
+        </div>
+
+        <button class="btn btn-outline-secondary w-100 mt-4 fw-bold py-2" (click)="navigateToHome()">
+          VOLVER A HOME
+        </button>
+      }
+
+    </div>
+  </div>
+</div>

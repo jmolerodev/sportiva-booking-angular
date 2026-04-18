@@ -16,6 +16,8 @@ import { ProfesionalSessions } from './components/profesional-sessions/profesion
 import { MediaManagement } from './components/media-management/media-management';
 import { SportCentreDetail } from './components/sportcentredetail/sportcentredetail';
 import { MembershipPayment } from './components/membership-payment/membership-payment';
+import { SoporteAdmin } from './components/soporte-admin/soporte-admin';
+import { SoporteCliente } from './components/soporte-cliente/soporte-cliente';
 
 
 export const routes: Routes = [
@@ -34,6 +36,9 @@ export const routes: Routes = [
     { path: 'profesional-media', component: MediaManagement},
     { path: 'centre-detail/:centroId',      component: SportCentreDetail },
     { path: 'membership-payment/:centroId', component: MembershipPayment },
+    { path: 'soporte-admin', component: SoporteAdmin},
+    { path: 'soporte-cliente', component: SoporteCliente},
     { path: '', redirectTo: 'home', pathMatch: 'full' },
     { path: '**', component: NotFound }
 ];
+
