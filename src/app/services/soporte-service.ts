@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Database, equalTo, listVal, onValue, orderByChild, push, query, ref, set, update } from '@angular/fire/database';
+import { Database, equalTo, listVal, onValue, orderByChild, push, query, ref, remove, set, update } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 import { ISoporteChat } from '../interfaces/SoporteChar-Interface';
 import { IMensaje } from '../interfaces/Mensaje-Interface';
@@ -66,48 +66,48 @@ export class SoporteService {
   }
 
   /**
- * Crea una nueva solicitud de chat de soporte por parte del cliente.
- * El chat se inicializa en estado PENDIENTE hasta que el admin lo gestione.
- * Se separan las escrituras en dos operaciones para evitar el conflicto de
- * rutas ancestro/descendiente que Firebase no permite en un único update().
- * @param data Objeto con centroId, clienteId, adminId y el primer mensaje
- * @returns Promesa que se resuelve cuando el nodo queda creado en Firebase
- */
-async solicitarChat(data: {
-  centroId:      string;
-  clienteId:     string;
-  adminId:       string;
-  primerMensaje: string;
-}): Promise<void> {
-  const collectionRef = ref(this.database, `/${this.COLLECTION_NAME}`);
-  const newChatRef    = push(collectionRef);
-  const chatId        = newChatRef.key!;
-  const ahora         = Date.now();
+   * Crea una nueva solicitud de chat de soporte por parte del cliente.
+   * El chat se inicializa en estado PENDIENTE hasta que el admin lo gestione.
+   * Se separan las escrituras en dos operaciones para evitar el conflicto de
+   * rutas ancestro/descendiente que Firebase no permite en un único update().
+   * @param data Objeto con centroId, clienteId, adminId y el primer mensaje
+   * @returns Promesa que se resuelve cuando el nodo queda creado en Firebase
+   */
+  async solicitarChat(data: {
+    centroId:      string;
+    clienteId:     string;
+    adminId:       string;
+    primerMensaje: string;
+  }): Promise<void> {
+    const collectionRef = ref(this.database, `/${this.COLLECTION_NAME}`);
+    const newChatRef    = push(collectionRef);
+    const chatId        = newChatRef.key!;
+    const ahora         = Date.now();
 
-  const chatData: ISoporteChat = {
-    centroId:           data.centroId,
-    clienteId:          data.clienteId,
-    adminId:            data.adminId,
-    estado:             EstadoChat.PENDIENTE,
-    fechaCreacion:      ahora,
-    fechaUltimoMensaje: ahora,
-  };
+    const chatData: ISoporteChat = {
+      centroId:           data.centroId,
+      clienteId:          data.clienteId,
+      adminId:            data.adminId,
+      estado:             EstadoChat.PENDIENTE,
+      fechaCreacion:      ahora,
+      fechaUltimoMensaje: ahora,
+    };
 
-  /* 1.- Escribimos la cabecera del chat */
-  await set(newChatRef, chatData);
+    /* 1.- Escribimos la cabecera del chat */
+    await set(newChatRef, chatData);
 
-  /* 2.- Escribimos el primer mensaje como subárbol ya existente */
-  const mensajesRef       = ref(this.database, `/${this.COLLECTION_NAME}/${chatId}/mensajes`);
-  const primerMensajeRef  = push(mensajesRef);
+    /* 2.- Escribimos el primer mensaje como subárbol ya existente */
+    const mensajesRef       = ref(this.database, `/${this.COLLECTION_NAME}/${chatId}/mensajes`);
+    const primerMensajeRef  = push(mensajesRef);
 
-  const primerMensajeData: IMensaje = {
-    emisorId: data.clienteId,
-    texto:    data.primerMensaje,
-    fecha:    ahora,
-  };
+    const primerMensajeData: IMensaje = {
+      emisorId: data.clienteId,
+      texto:    data.primerMensaje,
+      fecha:    ahora,
+    };
 
-  return set(primerMensajeRef, primerMensajeData);
-}
+    return set(primerMensajeRef, primerMensajeData);
+  }
 
   /**
    * Envía un mensaje de texto dentro de un chat de soporte ya existente.
@@ -165,5 +165,16 @@ async solicitarChat(data: {
     const updates: Record<string, any> = {};
     updates[`/${this.COLLECTION_NAME}/${chatId}/estado`] = EstadoChat.CERRADO;
     return update(ref(this.database), updates);
+  }
+
+  /**
+   * Elimina permanentemente un nodo de chat de soporte y todos sus mensajes.
+   * Solo debe invocarse sobre chats en estado CERRADO para evitar pérdidas
+   * accidentales de conversaciones activas o pendientes de resolución.
+   * @param chatId UID del nodo SoporteChat a eliminar en Firebase
+   * @returns Promesa que se resuelve cuando el nodo queda borrado
+   */
+  async eliminarChat(chatId: string): Promise<void> {
+    return remove(ref(this.database, `/${this.COLLECTION_NAME}/${chatId}`));
   }
 }

@@ -88,6 +88,16 @@
                     </div>
                     <h5 class="brand-title">SOLICITUD <span class="brand-accent">PENDIENTE</span></h5>
                     <p class="text-muted fw-bold small">¿Deseas atender esta solicitud de soporte?</p>
+
+                    @if (mensajes.length > 0) {
+                      <div class="mensaje-previo mx-auto mt-3 mb-2 text-start">
+                        <small class="text-muted d-block mb-1 fw-bold text-uppercase" style="font-size: .7rem; letter-spacing: .05em;">
+                          <i class="bi bi-chat-quote me-1"></i>Mensaje del cliente
+                        </small>
+                        <p class="mb-0 small">{{ mensajes[0].texto }}</p>
+                      </div>
+                    }
+
                     <div class="d-flex justify-content-center gap-3 mt-4">
                       <button class="btn btn-success fw-bold px-5 py-2 shadow-sm"
                         (click)="aceptarChat(chatSeleccionado)">
@@ -144,6 +154,10 @@
                     </div>
                     <h5 class="brand-title">CHAT <span class="brand-accent">CERRADO</span></h5>
                     <p class="text-muted fw-bold small">Este chat ha sido resuelto y archivado.</p>
+                    <button class="btn btn-outline-danger fw-bold px-5 py-2 mt-3"
+                      (click)="eliminarChat(chatSeleccionado)">
+                      <i class="bi bi-trash me-2"></i>ELIMINAR CHAT
+                    </button>
                   </div>
                 }
 
