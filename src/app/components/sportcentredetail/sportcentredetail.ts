@@ -9,15 +9,18 @@ import { SessionService }       from '../../services/session-service';
 import { MediaService }         from '../../services/media-service';
 import { MembershipService }    from '../../services/membershipservice';
 import { SoporteService }       from '../../services/soporte-service';
+import { BookingService }       from '../../services/booking-service';
 import { SnackbarService }      from '../../services/snackbar';
 import { ISportCentre }         from '../../interfaces/Sport-Centre-Interface';
 import { ISession, ISlotHorario } from '../../interfaces/Sesion-Interface';
 import { IMedia }               from '../../interfaces/Media-Interface';
 import { IMembership }          from '../../interfaces/Membresia-Interface';
-import { ISoporteChat } from '../../interfaces/SoporteChar-Interface';
+import { IBooking } from '../../interfaces/Reserva-Interface';
+import { ISoporteChat }         from '../../interfaces/SoporteChar-Interface';
 import { EstadoSlot }           from '../../enums/EstadoSlot';
 import { EstadoSesion }         from '../../enums/EstadoSesion';
 import { EstadoChat }           from '../../enums/EstadoChat';
+import { EstadoReserva }        from '../../enums/EstadoReserva';
 import { Rol }                  from '../../enums/Rol';
 
 @Component({
@@ -60,7 +63,19 @@ export class SportCentreDetail implements OnInit, OnDestroy {
   public slotsDelDia: ISlotHorario[] = [];
 
   /* Sesión seleccionada para mostrar su detalle en el panel lateral */
-  public sesionSeleccionada: ISession | null = null;
+  public sesionSeleccionada: (ISession & { uid: string }) | null = null;
+
+  /* Reserva activa del cliente para la sesión seleccionada (null si no tiene) */
+  public reservaActual: IBooking | null = null;
+
+  /* Flag que indica si la sesión seleccionada tiene el aforo completo */
+  public sesionCompleta: boolean = false;
+
+  /* Flag de control para el spinner del botón de reserva durante la operación */
+  public loadingReserva: boolean = false;
+
+  /* Cache local de reservas confirmadas del cliente en este centro */
+  private reservasCliente: IBooking[] = [];
 
   /* Chat de soporte vigente del cliente con este centro (si existe) */
   public chatActual: (ISoporteChat & { uid: string }) | null = null;
@@ -105,6 +120,7 @@ export class SportCentreDetail implements OnInit, OnDestroy {
    * @param mediaService        Servicio para la gestión del contenido multimedia
    * @param membershipService   Servicio para la verificación y gestión de membresías
    * @param soporteService      Servicio para la gestión del sistema de soporte
+   * @param bookingService      Servicio para la gestión de reservas del cliente
    * @param snackbarService     Servicio para el despliegue de alertas y confirmaciones
    * @param router              Servicio para gestionar la navegación entre vistas
    * @param route               Servicio para capturar parámetros de la URL activa
@@ -118,6 +134,7 @@ export class SportCentreDetail implements OnInit, OnDestroy {
     private mediaService:         MediaService,
     private membershipService:    MembershipService,
     private soporteService:       SoporteService,
+    private bookingService:       BookingService,
     private snackbarService:      SnackbarService,
     private router:               Router,
     private route:                ActivatedRoute,
@@ -165,6 +182,7 @@ export class SportCentreDetail implements OnInit, OnDestroy {
         this.cargarCentro();
         this.cargarMedia();
         this.verificarMembresia();
+        this.escucharReservasCliente();
       })
     );
   }
@@ -237,10 +255,9 @@ export class SportCentreDetail implements OnInit, OnDestroy {
         this.centroId
       ).subscribe({
         next: membresia => {
-          this.membresiaActiva  = membresia;
-          this.puedeReservar    = membresia !== null;
+          this.membresiaActiva = membresia;
+          this.puedeReservar   = membresia !== null;
 
-          /* Solo cargamos el chat si el cliente tiene membresía activa en este centro */
           if (membresia) this.cargarChatSoporte();
 
           this.loadingMembresia = false;
@@ -254,6 +271,51 @@ export class SportCentreDetail implements OnInit, OnDestroy {
         }
       })
     );
+  }
+
+  /**
+   * Se suscribe en tiempo real a todas las reservas confirmadas del cliente
+   * para este centro. Mantiene la cache local actualizada y refresca el estado
+   * de la sesión seleccionada si estaba siendo visualizada cuando llegó el emit.
+   */
+  private escucharReservasCliente(): void {
+    if (!this.clienteUid) return;
+
+    this.subscription.add(
+      this.bookingService.getReservasByCliente(this.clienteUid).subscribe({
+        next: reservas => {
+          this.reservasCliente = reservas.filter(
+            r => r.centroId === this.centroId && r.estado === EstadoReserva.CONFIRMADA
+          );
+
+          /* Refrescamos el estado de reserva si hay sesión activa en el panel */
+          if (this.sesionSeleccionada) {
+            this.actualizarEstadoReservaActual();
+          }
+
+          this.cdr.detectChanges();
+        },
+        error: e => console.error('Error al cargar reservas del cliente:', e)
+      })
+    );
+  }
+
+  /**
+   * Actualiza reservaActual y sesionCompleta a partir de la cache local
+   * de reservas y el aforoActual de la sesión seleccionada.
+   * Se invoca tanto al seleccionar una sesión como al recibir nuevos datos
+   * de Firebase para mantener la vista siempre sincronizada.
+   */
+  private actualizarEstadoReservaActual(): void {
+    if (!this.sesionSeleccionada) return;
+
+    this.reservaActual = this.reservasCliente.find(
+      r => r.sesionId === this.sesionSeleccionada!.uid
+    ) ?? null;
+
+    this.sesionCompleta =
+      !this.reservaActual &&
+      this.sesionSeleccionada.aforoActual >= this.sesionSeleccionada.aforoMax;
   }
 
   /**
@@ -306,11 +368,11 @@ export class SportCentreDetail implements OnInit, OnDestroy {
       this.snackbarService.showSuccess('Solicitud enviada. El administrador la revisará en breve');
       this.solicitudForm.reset();
       this.isLoadingSoporte = false;
-    }).catch((e) => {
-  console.error('Error solicitarChat:', e);
-  this.snackbarService.showError('Error al enviar la solicitud de soporte');
-  this.isLoadingSoporte = false;
-});
+    }).catch(e => {
+      console.error('Error solicitarChat:', e);
+      this.snackbarService.showError('Error al enviar la solicitud de soporte');
+      this.isLoadingSoporte = false;
+    });
   }
 
   /**
@@ -382,6 +444,8 @@ export class SportCentreDetail implements OnInit, OnDestroy {
   seleccionarDia(dia: Date): void {
     this.fechaSeleccionada  = dia;
     this.sesionSeleccionada = null;
+    this.reservaActual      = null;
+    this.sesionCompleta     = false;
     this.cargarSesionesDelDia();
   }
 
@@ -407,6 +471,19 @@ export class SportCentreDetail implements OnInit, OnDestroy {
         next: sesiones => {
           this.sesionesDelDia = sesiones ?? [];
           this.slotsDelDia    = this.generarSlots();
+
+          /* Si hay sesión seleccionada la sincronizamos con los datos frescos */
+          if (this.sesionSeleccionada) {
+            const actualizada = this.sesionesDelDia.find(
+              s => (s as any).uid === this.sesionSeleccionada!.uid
+            ) as (ISession & { uid: string }) | undefined;
+
+            if (actualizada) {
+              this.sesionSeleccionada = actualizada;
+              this.actualizarEstadoReservaActual();
+            }
+          }
+
           this.cdr.detectChanges();
         },
         error: e => console.error('Error al cargar sesiones del día:', e)
@@ -456,7 +533,8 @@ export class SportCentreDetail implements OnInit, OnDestroy {
 
   /**
    * Gestiona el click sobre un slot con sesión disponible.
-   * Si el cliente tiene membresía activa muestra el detalle de la sesión.
+   * Si el cliente tiene membresía activa muestra el detalle de la sesión
+   * y calcula el estado de reserva en tiempo real.
    * Si no tiene membresía lo redirige al flujo de contratación.
    * @param slot Slot horario pulsado por el cliente
    */
@@ -472,7 +550,75 @@ export class SportCentreDetail implements OnInit, OnDestroy {
       return;
     }
 
-    this.sesionSeleccionada = slot.sesion;
+    this.sesionSeleccionada = slot.sesion as ISession & { uid: string };
+    this.actualizarEstadoReservaActual();
+  }
+
+  /**
+   * Reserva la sesión seleccionada para el cliente autenticado.
+   * Persiste un snapshot de los datos de la sesión para garantizar que el
+   * historial siempre muestre información completa aunque la sesión sea
+   * eliminada posteriormente de Firebase.
+   * Verifica que no haya reserva previa y que el aforo no esté completo.
+   */
+  reservarSesion(): void {
+    if (!this.clienteUid || !this.sesionSeleccionada || !this.centroId) return;
+    if (this.reservaActual || this.sesionCompleta || this.loadingReserva) return;
+
+    this.loadingReserva = true;
+
+    const reserva: IBooking = {
+      sesionId:  this.sesionSeleccionada.uid,
+      clienteId: this.clienteUid,
+      centroId:  this.centroId,
+      fecha:     this.sesionSeleccionada.fecha,
+      estado:    EstadoReserva.CONFIRMADA,
+      sesionSnapshot: {
+        titulo:     this.sesionSeleccionada.titulo,
+        horaInicio: this.sesionSeleccionada.horaInicio,
+        horaFin:    this.sesionSeleccionada.horaFin,
+        tipo:       this.sesionSeleccionada.tipo,
+        modalidad:  this.sesionSeleccionada.modalidad,
+        aforoMax:   this.sesionSeleccionada.aforoMax,
+      }
+    };
+
+    this.bookingService
+      .crearReserva(reserva, this.sesionSeleccionada.aforoActual + 1)
+      .then(() => {
+        this.snackbarService.showSuccess('¡Reserva confirmada correctamente!');
+        this.loadingReserva = false;
+      })
+      .catch(e => {
+        console.error('Error al reservar:', e);
+        this.snackbarService.showError('Error al realizar la reserva');
+        this.loadingReserva = false;
+      });
+  }
+
+  /**
+   * Cancela la reserva activa del cliente para la sesión seleccionada,
+   * con confirmación previa. Decrementa el aforo de forma atómica.
+   */
+  cancelarReserva(): void {
+    if (!this.reservaActual?.uid || !this.sesionSeleccionada) return;
+
+    this.snackbarService.showConfirm(
+      '¿Confirmas la cancelación de esta reserva? La plaza quedará libre para otros clientes.',
+      'CANCELAR RESERVA',
+      () => {
+        const aforoNuevo = Math.max(0, this.sesionSeleccionada!.aforoActual - 1);
+        this.bookingService
+          .cancelarReserva(this.reservaActual!.uid!, this.sesionSeleccionada!.uid, aforoNuevo)
+          .then(() => {
+            this.snackbarService.showSuccess('Reserva cancelada correctamente');
+          })
+          .catch(e => {
+            console.error('Error al cancelar la reserva:', e);
+            this.snackbarService.showError('Error al cancelar la reserva');
+          });
+      }
+    );
   }
 
   /**
@@ -480,6 +626,8 @@ export class SportCentreDetail implements OnInit, OnDestroy {
    */
   cerrarDetalleSesion(): void {
     this.sesionSeleccionada = null;
+    this.reservaActual      = null;
+    this.sesionCompleta     = false;
   }
 
   /**

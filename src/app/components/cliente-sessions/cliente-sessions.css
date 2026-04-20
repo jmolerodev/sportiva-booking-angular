@@ -1,0 +1,450 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap');
+
+.session-section {
+  min-height: 100vh;
+  background-color: #1e1e1e;
+  font-family: 'Nunito', sans-serif;
+}
+
+.spinner-overlay {
+  min-height: 100vh;
+  background-color: #1e1e1e;
+}
+
+.section-title-wrapper {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1rem;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 3rem;
+  color: #fff;
+}
+
+.section-title.sm { font-size: 2rem; }
+.section-title .highlight { color: #00e676; }
+
+.section-subtitle {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 0.3rem;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .content-grid { grid-template-columns: 1fr; }
+}
+
+
+
+
+.calendar-card {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.mes-label {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.4rem;
+  color: #1a1a1a;
+  letter-spacing: 0.05em;
+}
+
+.btn-nav {
+  width: 32px;
+  height: 32px;
+  background: #f5f5f5;
+  border: 2px solid #eee;
+  color: #057b2a;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-nav:hover {
+  background: #057b2a;
+  border-color: #057b2a;
+  color: #fff;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.day-name {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 6px;
+}
+
+.day-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  gap: 2px;
+}
+
+.day-cell:hover:not(.empty):not(.past) {
+  background: rgba(5, 123, 42, 0.1);
+  color: #057b2a;
+}
+
+.day-cell.empty { cursor: default; }
+
+.day-cell.past {
+  color: #ccc;
+  cursor: default;
+}
+
+.day-cell.today {
+  border: 2px solid #057b2a;
+  color: #057b2a;
+  font-weight: 800;
+}
+
+.day-cell.selected {
+  background: linear-gradient(135deg, #057b2a, #0a9e38);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(5, 123, 42, 0.35);
+}
+
+.day-cell.has-reserva {
+  background: rgba(5, 123, 42, 0.07);
+  border: 1px solid rgba(5, 123, 42, 0.2);
+}
+
+.reserva-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #057b2a;
+  flex-shrink: 0;
+}
+
+.day-cell.selected .reserva-dot { background: #fff; }
+
+.legend {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+}
+
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dot-reserva { background: #057b2a; }
+.dot-hoy     { border: 2px solid #057b2a; }
+
+
+
+
+.slots-card {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.slots-header {
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.slots-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.slots-list::-webkit-scrollbar       { width: 4px; }
+.slots-list::-webkit-scrollbar-track { background: transparent; }
+.slots-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+.slot-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.slot-reservada {
+  background: rgba(25, 118, 210, 0.05);
+  border-color: rgba(25, 118, 210, 0.25);
+}
+
+.slot-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 100px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  color: #1a1a1a;
+}
+
+.hora-sep { color: #bbb; }
+
+.slot-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slot-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.slot-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.slot-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 50px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-tipo      { background: #f0f0f0;                    color: #555; }
+.badge-modalidad { background: #f0f0f0;                    color: #555; }
+.badge-aforo     { background: rgba(25, 118, 210, 0.1);    color: #1565c0; }
+
+.slot-actions { margin-left: auto; flex-shrink: 0; }
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.btn-cancelar {
+  background: rgba(220, 53, 69, 0.08);
+  color: #dc3545;
+}
+
+.btn-cancelar:hover {
+  background: #dc3545;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.btn-cancelar-sm {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: rgba(220, 53, 69, 0.08);
+  color: #dc3545;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.btn-cancelar-sm:hover {
+  background: #dc3545;
+  color: #fff;
+  transform: scale(1.1);
+}
+
+
+.historial-card {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.admin-table {
+  font-family: 'Nunito', sans-serif;
+  border-collapse: collapse;
+}
+
+.admin-table thead tr {
+  background: linear-gradient(90deg, #057b2a 0%, #0a9e38 100%);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-table thead th {
+  padding: 14px 16px;
+  border: none;
+  white-space: nowrap;
+}
+
+.admin-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(5, 123, 42, 0.05);
+}
+
+.admin-table tbody td {
+  padding: 14px 16px;
+  vertical-align: middle;
+  color: #333;
+  font-size: 0.88rem;
+}
+
+.badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #057b2a, #00e676);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  border-radius: 50px;
+  padding: 2px 10px;
+  min-width: 28px;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(5, 123, 42, 0.1);
+  color: #057b2a;
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 50px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.estado-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 50px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-confirmada { background: rgba(5, 123, 42, 0.1);    color: #057b2a; }
+.badge-cancelada  { background: rgba(220, 53, 69, 0.1);   color: #dc3545; }
+
+
+.empty-state { color: #bbb; }
+.empty-icon  { font-size: 3.5rem; color: #ddd; }
+
+
+.btn-google-pro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+}
+
+.btn-outline-google-secondary {
+  border: 2px solid #6c757d;
+  background: white;
+  color: #6c757d;
+}
+
+.btn-outline-google-secondary:hover {
+  background: #6c757d;
+  color: #fff;
+  transform: translateY(-2px);
+}

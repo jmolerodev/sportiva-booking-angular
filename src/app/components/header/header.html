@@ -38,7 +38,7 @@
 
                 @if (esCliente) {
                 <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;" (click)="navigateToProfile()">Mi Perfil</a></li>
-                <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;">Mis Reservas</a></li>
+                <li><a class="text-success text-decoration-none" style="cursor: pointer; font-weight: bold;" (click)="navigateToClienteSessions()">Mis Reservas</a></li>
                 }
 
                 @if (esProfesional) {

@@ -18,6 +18,7 @@ import { SportCentreDetail } from './components/sportcentredetail/sportcentredet
 import { MembershipPayment } from './components/membership-payment/membership-payment';
 import { SoporteAdmin } from './components/soporte-admin/soporte-admin';
 import { SoporteCliente } from './components/soporte-cliente/soporte-cliente';
+import { ClienteSessions } from './components/cliente-sessions/cliente-sessions';
 
 
 export const routes: Routes = [
@@ -38,6 +39,7 @@ export const routes: Routes = [
     { path: 'membership-payment/:centroId', component: MembershipPayment },
     { path: 'soporte-admin', component: SoporteAdmin},
     { path: 'soporte-cliente', component: SoporteCliente},
+    { path:'cliente-sessions', component: ClienteSessions},
     { path: '', redirectTo: 'home', pathMatch: 'full' },
     { path: '**', component: NotFound }
 ];

@@ -138,6 +138,11 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['/soporte-admin']);
   }
 
+  navigateToClienteSessions() : void {
+    this.menuAbierto = false;
+    this.router.navigate(['/cliente-sessions']);
+  }
+
 
   logout(): void {
     this.menuAbierto = false;

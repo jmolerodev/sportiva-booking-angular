@@ -2,353 +2,381 @@
   <div class="detail-wrapper w-100">
 
     @if (loading) {
-      <div class="skeleton-wrapper px-3 px-md-5">
-        <div class="skeleton-hero mb-4"></div>
-        <div class="row g-4 mb-4">
-          <div class="col-lg-6"><div class="skeleton-card"></div></div>
-          <div class="col-lg-6"><div class="skeleton-card"></div></div>
+    <div class="skeleton-wrapper px-3 px-md-5">
+      <div class="skeleton-hero mb-4"></div>
+      <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+          <div class="skeleton-card"></div>
         </div>
-        <div class="skeleton-card-tall mb-4"></div>
-        <div class="skeleton-card mb-4"></div>
+        <div class="col-lg-6">
+          <div class="skeleton-card"></div>
+        </div>
       </div>
+      <div class="skeleton-card-tall mb-4"></div>
+      <div class="skeleton-card mb-4"></div>
+    </div>
     }
 
     @else if (!centro) {
-      <div class="text-center py-5">
-        <i class="bi bi-exclamation-triangle-fill text-warning display-3 mb-3 d-block"></i>
-        <h4 class="text-white fw-bold">Centro no encontrado</h4>
-        <button class="btn-back-standalone mt-4" (click)="navigateToHome()">
-          <i class="bi bi-arrow-left me-2"></i>Volver al inicio
-        </button>
-      </div>
+    <div class="text-center py-5">
+      <i class="bi bi-exclamation-triangle-fill text-warning display-3 mb-3 d-block"></i>
+      <h4 class="text-white fw-bold">Centro no encontrado</h4>
+      <button class="btn-back-standalone mt-4" (click)="navigateToHome()">
+        <i class="bi bi-arrow-left me-2"></i>Volver al inicio
+      </button>
+    </div>
     }
 
     @else {
 
-      <div class="top-nav px-3 px-md-5 mb-3">
-        <button class="btn-back-standalone" (click)="navigateToHome()">
-          <i class="bi bi-arrow-left me-2"></i>Volver al inicio
-        </button>
-      </div>
+    <div class="top-nav px-3 px-md-5 mb-3">
+      <button class="btn-back-standalone" (click)="navigateToHome()">
+        <i class="bi bi-arrow-left me-2"></i>Volver al inicio
+      </button>
+    </div>
 
-      <div class="hero-banner position-relative mb-5 mx-3 mx-md-5">
-        @if (!imagenHeroCargada) {
-          <div class="hero-skeleton"></div>
-        }
-        <img [src]="getFoto(centro.foto)"
-             [alt]="centro.nombre"
-             class="hero-img"
-             [class.hero-img-visible]="imagenHeroCargada"
-             (load)="imagenHeroCargada = true">
-        <div class="hero-overlay d-flex flex-column justify-content-end p-4 p-md-5"
-             [class.d-none]="!imagenHeroCargada">
-          <h1 class="hero-title">{{ centro.nombre }}</h1>
-          <div class="d-flex flex-wrap gap-3 mt-2">
-            <span class="hero-badge"><i class="bi bi-geo-alt-fill me-1"></i>{{ centro.direccion }}</span>
-            <span class="hero-badge"><i class="bi bi-telephone-fill me-1"></i>{{ centro.telefono }}</span>
-          </div>
+    <div class="hero-banner position-relative mb-5 mx-3 mx-md-5">
+      @if (!imagenHeroCargada) {
+      <div class="hero-skeleton"></div>
+      }
+      <img [src]="getFoto(centro.foto)" [alt]="centro.nombre" class="hero-img"
+        [class.hero-img-visible]="imagenHeroCargada" (load)="imagenHeroCargada = true">
+      <div class="hero-overlay d-flex flex-column justify-content-end p-4 p-md-5" [class.d-none]="!imagenHeroCargada">
+        <h1 class="hero-title">{{ centro.nombre }}</h1>
+        <div class="d-flex flex-wrap gap-3 mt-2">
+          <span class="hero-badge"><i class="bi bi-geo-alt-fill me-1"></i>{{ centro.direccion }}</span>
+          <span class="hero-badge"><i class="bi bi-telephone-fill me-1"></i>{{ centro.telefono }}</span>
         </div>
       </div>
+    </div>
 
-      <div class="content-grid px-3 px-md-5">
+    <div class="content-grid px-3 px-md-5">
 
-        <div class="row g-4 mb-4">
-          <div class="col-lg-6">
-            <div class="info-card h-100">
-              <h5 class="card-section-title"><i class="bi bi-clock-history me-2"></i>Horario de Apertura</h5>
-              @if (centro.horario) {
-                <div class="horario-tabla mt-3">
-                  @for (dia of getDias(centro.horario); track dia) {
-                    <div class="horario-fila d-flex justify-content-between align-items-center">
-                      <span class="dia-nombre fw-bold">{{ dia }}</span>
-                      @if (centro.horario[dia].abierto) {
-                        <span class="horario-open">{{ centro.horario[dia].apertura }} - {{ centro.horario[dia].cierre }}</span>
-                      } @else {
-                        <span class="horario-closed">Cerrado</span>
-                      }
-                    </div>
-                  }
+      <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+          <div class="info-card h-100">
+            <h5 class="card-section-title"><i class="bi bi-clock-history me-2"></i>Horario de Apertura</h5>
+            @if (centro.horario) {
+            <div class="horario-tabla mt-3">
+              @for (dia of getDias(centro.horario); track dia) {
+              <div class="horario-fila d-flex justify-content-between align-items-center">
+                <span class="dia-nombre fw-bold">{{ dia }}</span>
+                @if (centro.horario[dia].abierto) {
+                <span class="horario-open">{{ centro.horario[dia].apertura }} - {{ centro.horario[dia].cierre }}</span>
+                } @else {
+                <span class="horario-closed">Cerrado</span>
+                }
+              </div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="info-card h-100 d-flex flex-column justify-content-between">
+            <div>
+              <h5 class="card-section-title"><i class="bi bi-credit-card-fill me-2"></i>Tu Membresía</h5>
+              @if (membresiaActiva) {
+              <div class="membresia-activa mt-3">
+                <div class="membresia-badge mb-3">
+                  <i class="bi bi-patch-check-fill me-2"></i>MEMBRESÍA ACTIVA
                 </div>
+                <div class="d-flex flex-column gap-2">
+                  <p class="mb-0 small"><span class="fw-bold text-success">Tipo:</span> {{ membresiaActiva.tipo }}</p>
+                  <p class="mb-0 small"><span class="fw-bold text-success">Válida hasta:</span> {{
+                    membresiaActiva.fechaFin | date:'dd/MM/yyyy' }}</p>
+                  <p class="mb-0 small"><span class="fw-bold text-success">Importe:</span> {{ membresiaActiva.importe |
+                    currency:'EUR' }}</p>
+                </div>
+              </div>
+              } @else {
+              <div class="membresia-inactiva mt-3">
+                <div class="membresia-lock-icon mb-3">
+                  <i class="bi bi-lock-fill"></i>
+                </div>
+                <p class="text-muted small mb-3 text-center">No tienes membresía activa en este centro. Contrátala para
+                  poder reservar sesiones.</p>
+                <button class="btn-contratar w-100" (click)="irAContratarMembresia()">
+                  <i class="bi bi-bag-plus-fill me-2"></i>CONTRATAR MEMBRESÍA
+                </button>
+              </div>
               }
             </div>
           </div>
-
-          <div class="col-lg-6">
-            <div class="info-card h-100 d-flex flex-column justify-content-between">
-              <div>
-                <h5 class="card-section-title"><i class="bi bi-credit-card-fill me-2"></i>Tu Membresía</h5>
-                @if (membresiaActiva) {
-                  <div class="membresia-activa mt-3">
-                    <div class="membresia-badge mb-3">
-                      <i class="bi bi-patch-check-fill me-2"></i>MEMBRESÍA ACTIVA
-                    </div>
-                    <div class="d-flex flex-column gap-2">
-                      <p class="mb-0 small"><span class="fw-bold text-success">Tipo:</span> {{ membresiaActiva.tipo }}</p>
-                      <p class="mb-0 small"><span class="fw-bold text-success">Válida hasta:</span> {{ membresiaActiva.fechaFin | date:'dd/MM/yyyy' }}</p>
-                      <p class="mb-0 small"><span class="fw-bold text-success">Importe:</span> {{ membresiaActiva.importe | currency:'EUR' }}</p>
-                    </div>
-                  </div>
-                } @else {
-                  <div class="membresia-inactiva mt-3">
-                    <div class="membresia-lock-icon mb-3">
-                      <i class="bi bi-lock-fill"></i>
-                    </div>
-                    <p class="text-muted small mb-3 text-center">No tienes membresía activa en este centro. Contrátala para poder reservar sesiones.</p>
-                    <button class="btn-contratar w-100" (click)="irAContratarMembresia()">
-                      <i class="bi bi-bag-plus-fill me-2"></i>CONTRATAR MEMBRESÍA
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
         </div>
+      </div>
 
-        <div class="section-block mb-4">
-          <div class="section-block-header mb-4">
-            <h4 class="section-block-title"><i class="bi bi-calendar3 me-2"></i>Sesiones Disponibles</h4>
-            @if (!puedeReservar) {
-              <span class="lock-badge"><i class="bi bi-lock-fill me-1"></i>Requiere membresía</span>
-            } @else {
-              <span class="active-badge"><i class="bi bi-check-circle-fill me-1"></i>Acceso activo</span>
-            }
-          </div>
-
-          <div class="row g-4">
-            <div class="col-lg-5">
-              <div class="calendar-card">
-                <div class="calendar-header d-flex justify-content-between align-items-center mb-3">
-                  <button class="cal-nav-btn" (click)="mesAnterior()"><i class="bi bi-chevron-left"></i></button>
-                  <span class="cal-month-label text-capitalize">{{ getNombreMes(mesActual) }}</span>
-                  <button class="cal-nav-btn" (click)="mesSiguiente()"><i class="bi bi-chevron-right"></i></button>
-                </div>
-                <div class="calendar-grid">
-                  @for (dia of diasSemana; track dia) {
-                    <div class="cal-day-header">{{ dia }}</div>
-                  }
-                  @for (semana of semanas; track $index) {
-                    @for (dia of semana; track $index) {
-                      @if (dia === null) {
-                        <div class="cal-cell empty"></div>
-                      } @else {
-                        <div class="cal-cell"
-                             [class.today]="esHoy(dia)"
-                             [class.selected]="esSeleccionado(dia)"
-                             [class.past]="esPasado(dia)"
-                             (click)="!esPasado(dia) && seleccionarDia(dia)">
-                          {{ dia.getDate() }}
-                        </div>
-                      }
-                    }
-                  }
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-7">
-              <div class="slots-card">
-                <h6 class="slots-title mb-3">
-                  <i class="bi bi-list-ul me-2"></i>{{ parsearFecha(fechaSeleccionada.getTime()) }}
-                </h6>
-
-                @if (slotsDelDia.length === 0) {
-                  <div class="empty-slots">
-                    <i class="bi bi-calendar-x empty-slots-icon"></i>
-                    <p class="empty-slots-title">SIN SESIONES DISPONIBLES</p>
-                    <p class="empty-slots-sub">El centro está cerrado o no hay sesiones programadas para este día</p>
-                  </div>
-                } @else {
-                  <div class="slots-list">
-                    @for (slot of slotsDelDia; track slot.horaInicio) {
-                      <div class="slot-item"
-                           [class.slot-ocupado]="slot.estado === 'OCUPADO'"
-                           [class.slot-libre]="slot.estado === 'LIBRE'"
-                           [class.slot-selected]="sesionSeleccionada?.horaInicio === slot.horaInicio"
-                           (click)="seleccionarSlot(slot)">
-                        <div class="slot-hora">
-                          <span class="slot-time-start">{{ slot.horaInicio }}</span>
-                          <span class="slot-separator">→</span>
-                          <span class="slot-time-end">{{ slot.horaFin }}</span>
-                        </div>
-                        <div class="slot-info flex-grow-1">
-                          @if (slot.sesion) {
-                            <p class="slot-nombre mb-0">{{ slot.sesion.titulo }}</p>
-                            <small class="slot-meta">
-                              {{ slot.sesion.tipo }} · {{ slot.sesion.modalidad }}
-                              @if (slot.sesion.modalidad === 'GRUPAL') {
-                                · {{ slot.sesion.aforoActual }}/{{ slot.sesion.aforoMax }} plazas
-                              }
-                            </small>
-                          } @else {
-                            <p class="slot-libre-label mb-0">Franja libre</p>
-                          }
-                        </div>
-                        <div class="slot-badge-wrapper">
-                          @if (slot.estado === 'OCUPADO') {
-                            <span class="slot-badge badge-session"><i class="bi bi-person-fill me-1"></i>Sesión</span>
-                          } @else {
-                            <span class="slot-badge badge-free">Libre</span>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                }
-
-                @if (sesionSeleccionada) {
-                  <div class="session-detail-panel mt-4">
-                    <div class="session-detail-header d-flex justify-content-between align-items-start">
-                      <h6 class="session-detail-title">{{ sesionSeleccionada.titulo }}</h6>
-                      <button class="btn-close-detail" (click)="cerrarDetalleSesion()">
-                        <i class="bi bi-x-lg"></i>
-                      </button>
-                    </div>
-                    <p class="session-detail-desc">{{ sesionSeleccionada.descripcion }}</p>
-                    <div class="session-detail-meta d-flex flex-wrap gap-3">
-                      <span><i class="bi bi-tag-fill me-1 text-success"></i>{{ sesionSeleccionada.tipo }}</span>
-                      <span><i class="bi bi-people-fill me-1 text-success"></i>{{ sesionSeleccionada.modalidad }}</span>
-                      <span><i class="bi bi-clock me-1 text-success"></i>{{ sesionSeleccionada.horaInicio }} - {{ sesionSeleccionada.horaFin }}</span>
-                      @if (sesionSeleccionada.modalidad === 'GRUPAL') {
-                        <span><i class="bi bi-person-lines-fill me-1 text-success"></i>{{ sesionSeleccionada.aforoActual }}/{{ sesionSeleccionada.aforoMax }} plazas</span>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-block mb-4">
-          <div class="section-block-header mb-4">
-            <h4 class="section-block-title"><i class="bi bi-camera-video me-2"></i>Multimedia del Centro</h4>
-            <span class="badge-count">{{ videos.length }}</span>
-          </div>
-
-          @if (videos.length === 0) {
-            <div class="empty-media">
-              <i class="bi bi-camera-video empty-media-icon"></i>
-              <p class="empty-media-title">SIN CONTENIDO PUBLICADO</p>
-              <p class="empty-media-sub">Este centro aún no ha publicado contenido multimedia</p>
-            </div>
+      <div class="section-block mb-4">
+        <div class="section-block-header mb-4">
+          <h4 class="section-block-title"><i class="bi bi-calendar3 me-2"></i>Sesiones Disponibles</h4>
+          @if (!puedeReservar) {
+          <span class="lock-badge"><i class="bi bi-lock-fill me-1"></i>Requiere membresía</span>
           } @else {
-            <div class="video-grid">
-              @for (video of videos; track video.url) {
-                <div class="video-card" (click)="abrirReproductor(video)">
-                  <div class="video-thumb">
-                    <i class="bi bi-play-circle-fill video-play-icon"></i>
-                  </div>
-                  <div class="video-card-body">
-                    <p class="video-card-title">{{ video.nombre }}</p>
-                    <small class="video-card-date">{{ video.fecha_subida | date:'dd/MM/yyyy' }}</small>
-                    <p class="video-card-desc text-truncate">{{ video.descripcion }}</p>
-                  </div>
-                </div>
-              }
-            </div>
+          <span class="active-badge"><i class="bi bi-check-circle-fill me-1"></i>Acceso activo</span>
           }
         </div>
 
-        <div class="section-block mb-5">
-          <div class="section-block-header mb-4">
-            <h4 class="section-block-title"><i class="bi bi-headset me-2"></i>Soporte</h4>
-            @if (!membresiaActiva) {
-              <span class="lock-badge"><i class="bi bi-lock-fill me-1"></i>Requiere membresía</span>
-            } @else if (chatActual?.estado === EstadoChat.PENDIENTE) {
-              <span class="lock-badge" style="background:rgba(255,193,7,0.1);color:#b38600;"><i class="bi bi-hourglass-split me-1"></i>Pendiente</span>
-            } @else if (chatActual?.estado === EstadoChat.ACTIVO) {
-              <span class="active-badge"><i class="bi bi-chat-dots-fill me-1"></i>Chat activo</span>
-            } @else {
-              <span class="active-badge"><i class="bi bi-check-circle-fill me-1"></i>Disponible</span>
-            }
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="calendar-card">
+              <div class="calendar-header d-flex justify-content-between align-items-center mb-3">
+                <button class="cal-nav-btn" (click)="mesAnterior()"><i class="bi bi-chevron-left"></i></button>
+                <span class="cal-month-label text-capitalize">{{ getNombreMes(mesActual) }}</span>
+                <button class="cal-nav-btn" (click)="mesSiguiente()"><i class="bi bi-chevron-right"></i></button>
+              </div>
+              <div class="calendar-grid">
+                @for (dia of diasSemana; track dia) {
+                <div class="cal-day-header">{{ dia }}</div>
+                }
+                @for (semana of semanas; track $index) {
+                @for (dia of semana; track $index) {
+                @if (dia === null) {
+                <div class="cal-cell empty"></div>
+                } @else {
+                <div class="cal-cell" [class.today]="esHoy(dia)" [class.selected]="esSeleccionado(dia)"
+                  [class.past]="esPasado(dia)" (click)="!esPasado(dia) && seleccionarDia(dia)">
+                  {{ dia.getDate() }}
+                </div>
+                }
+                }
+                }
+              </div>
+            </div>
           </div>
 
-          @if (!membresiaActiva) {
-            <div class="empty-media">
-              <i class="bi bi-lock-fill empty-media-icon text-danger"></i>
-              <p class="empty-media-title">ACCESO RESTRINGIDO</p>
-              <p class="empty-media-sub">Necesitas una membresía activa en este centro para contactar con soporte</p>
-            </div>
-          }
+          <div class="col-lg-7">
+            <div class="slots-card">
+              <h6 class="slots-title mb-3">
+                <i class="bi bi-list-ul me-2"></i>{{ parsearFecha(fechaSeleccionada.getTime()) }}
+              </h6>
 
-          @else if (!chatActual || chatActual.estado === EstadoChat.CERRADO) {
-            <div class="row justify-content-center">
-              <div class="col-lg-6">
-                @if (chatActual?.estado === EstadoChat.CERRADO) {
-                  <div class="soporte-alert soporte-alert-cerrado mb-4">
-                    <i class="bi bi-check-circle-fill me-2"></i>
-                    Tu última solicitud fue cerrada. Puedes abrir una nueva si lo necesitas.
+              @if (slotsDelDia.length === 0) {
+              <div class="empty-slots">
+                <i class="bi bi-calendar-x empty-slots-icon"></i>
+                <p class="empty-slots-title">SIN SESIONES DISPONIBLES</p>
+                <p class="empty-slots-sub">El centro está cerrado o no hay sesiones programadas para este día</p>
+              </div>
+              } @else {
+              <div class="slots-list">
+                @for (slot of slotsDelDia; track slot.horaInicio) {
+                <div class="slot-item" [class.slot-ocupado]="slot.estado === 'OCUPADO'"
+                  [class.slot-libre]="slot.estado === 'LIBRE'"
+                  [class.slot-selected]="sesionSeleccionada?.horaInicio === slot.horaInicio"
+                  (click)="seleccionarSlot(slot)">
+                  <div class="slot-hora">
+                    <span class="slot-time-start">{{ slot.horaInicio }}</span>
+                    <span class="slot-separator">→</span>
+                    <span class="slot-time-end">{{ slot.horaFin }}</span>
                   </div>
-                }
-                <form [formGroup]="solicitudForm" (ngSubmit)="solicitarChat()">
-                  <div class="mb-3">
-                    <label class="form-label text-success fw-bold small">DESCRIBE TU CONSULTA</label>
-                    <textarea class="form-control soporte-textarea" formControlName="primerMensaje" rows="4"
-                      [class.is-invalid]="solicitudForm.get('primerMensaje')?.invalid && solicitudForm.get('primerMensaje')?.touched"
-                      placeholder="Explica tu consulta o incidencia al administrador del centro..."></textarea>
-                    <div class="invalid-feedback">La descripción de la consulta es obligatoria</div>
-                  </div>
-                  <button type="submit" class="btn-contratar w-100" [disabled]="isLoadingSoporte">
-                    @if (isLoadingSoporte) {
-                      <span class="spinner-border spinner-border-sm me-2"></span>ENVIANDO...
+                  <div class="slot-info flex-grow-1">
+                    @if (slot.sesion) {
+                    <p class="slot-nombre mb-0">{{ slot.sesion.titulo }}</p>
+                    <small class="slot-meta">
+                      {{ slot.sesion.tipo }} · {{ slot.sesion.modalidad }}
+                      @if (slot.sesion.modalidad === 'GRUPAL') {
+                      · {{ slot.sesion.aforoActual }}/{{ slot.sesion.aforoMax }} plazas
+                      }
+                    </small>
                     } @else {
-                      <i class="bi bi-send me-2"></i>ENVIAR SOLICITUD
+                    <p class="slot-libre-label mb-0">Franja libre</p>
+                    }
+                  </div>
+                  <div class="slot-badge-wrapper">
+                    @if (slot.estado === 'OCUPADO') {
+                    <span class="slot-badge badge-session"><i class="bi bi-person-fill me-1"></i>Sesión</span>
+                    } @else {
+                    <span class="slot-badge badge-free">Libre</span>
+                    }
+                  </div>
+                </div>
+                }
+              </div>
+              }
+
+              @if (sesionSeleccionada) {
+              <div class="session-detail-panel mt-4">
+                <div class="session-detail-header d-flex justify-content-between align-items-start">
+                  <h6 class="session-detail-title">{{ sesionSeleccionada.titulo }}</h6>
+                  <button class="btn-close-detail" (click)="cerrarDetalleSesion()">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+                <p class="session-detail-desc">{{ sesionSeleccionada.descripcion }}</p>
+                <div class="session-detail-meta d-flex flex-wrap gap-3 mb-3">
+                  <span><i class="bi bi-tag-fill me-1 text-success"></i>{{ sesionSeleccionada.tipo }}</span>
+                  <span><i class="bi bi-people-fill me-1 text-success"></i>{{ sesionSeleccionada.modalidad }}</span>
+                  <span><i class="bi bi-clock me-1 text-success"></i>{{ sesionSeleccionada.horaInicio }} - {{
+                    sesionSeleccionada.horaFin }}</span>
+                  @if (sesionSeleccionada.modalidad === 'GRUPAL') {
+                  <span><i class="bi bi-person-lines-fill me-1 text-success"></i>{{ sesionSeleccionada.aforoActual }}/{{
+                    sesionSeleccionada.aforoMax }} plazas</span>
+                  }
+                </div>
+
+                @if (puedeReservar) {
+                <div class="session-booking-actions">
+                  @if (reservaActual) {
+                  <div class="booking-confirmada mb-2">
+                    <i class="bi bi-patch-check-fill me-2"></i>Ya tienes plaza reservada
+                  </div>
+                  <button class="btn-cancelar-reserva w-100" (click)="cancelarReserva()">
+                    <i class="bi bi-x-circle me-2"></i>CANCELAR RESERVA
+                  </button>
+                  } @else if (sesionCompleta) {
+                  <div class="booking-completo">
+                    <i class="bi bi-lock-fill me-2"></i>Sesión completa — sin plazas disponibles
+                  </div>
+                  } @else {
+                  <button class="btn-contratar w-100" (click)="reservarSesion()" [disabled]="loadingReserva">
+                    @if (loadingReserva) {
+                    <span class="spinner-border spinner-border-sm me-2"></span>RESERVANDO...
+                    } @else {
+                    <i class="bi bi-check-circle me-2"></i>RESERVAR SESIÓN
                     }
                   </button>
-                </form>
+                  }
+                </div>
+                }
               </div>
+              }
             </div>
-          }
+          </div>
+        </div>
+      </div>
 
-          @else if (chatActual.estado === EstadoChat.PENDIENTE) {
-            <div class="text-center py-4">
-              <div class="soporte-status-icon soporte-status-pending mx-auto mb-3">
-                <i class="bi bi-hourglass-split"></i>
-              </div>
-              <p class="fw-bold mb-1">Solicitud enviada</p>
-              <p class="text-muted small">Tu solicitud está pendiente de revisión por el administrador del centro.</p>
-            </div>
-          }
-
-          @else if (chatActual.estado === EstadoChat.ACTIVO) {
-            <div class="text-center py-4">
-              <div class="soporte-status-icon soporte-status-activo mx-auto mb-3">
-                <i class="bi bi-chat-dots-fill"></i>
-              </div>
-              <p class="fw-bold mb-1">Chat aceptado</p>
-              <p class="text-muted small mb-4">El administrador ha aceptado tu solicitud. Accede al chat para continuar la conversación.</p>
-              <button class="btn-contratar" (click)="navigateToSoporte()">
-                <i class="bi bi-arrow-right me-2"></i>IR AL CHAT
-              </button>
-            </div>
-          }
-
+      <div class="section-block mb-4">
+        <div class="section-block-header mb-4">
+          <h4 class="section-block-title"><i class="bi bi-camera-video me-2"></i>Multimedia del Centro</h4>
+          <span class="badge-count">{{ videos.length }}</span>
         </div>
 
+        @if (videos.length === 0) {
+        <div class="empty-media">
+          <i class="bi bi-camera-video empty-media-icon"></i>
+          <p class="empty-media-title">SIN CONTENIDO PUBLICADO</p>
+          <p class="empty-media-sub">Este centro aún no ha publicado contenido multimedia</p>
+        </div>
+        } @else {
+        <div class="video-grid">
+          @for (video of videos; track video.url) {
+          <div class="video-card" (click)="abrirReproductor(video)">
+            <div class="video-thumb">
+              <i class="bi bi-play-circle-fill video-play-icon"></i>
+            </div>
+            <div class="video-card-body">
+              <p class="video-card-title">{{ video.nombre }}</p>
+              <small class="video-card-date">{{ video.fecha_subida | date:'dd/MM/yyyy' }}</small>
+              <p class="video-card-desc text-truncate">{{ video.descripcion }}</p>
+            </div>
+          </div>
+          }
+        </div>
+        }
       </div>
+
+      <div class="section-block mb-5">
+        <div class="section-block-header mb-4">
+          <h4 class="section-block-title"><i class="bi bi-headset me-2"></i>Soporte</h4>
+          @if (!membresiaActiva) {
+          <span class="lock-badge"><i class="bi bi-lock-fill me-1"></i>Requiere membresía</span>
+          } @else if (chatActual?.estado === EstadoChat.PENDIENTE) {
+          <span class="lock-badge" style="background:rgba(255,193,7,0.1);color:#b38600;"><i
+              class="bi bi-hourglass-split me-1"></i>Pendiente</span>
+          } @else if (chatActual?.estado === EstadoChat.ACTIVO) {
+          <span class="active-badge"><i class="bi bi-chat-dots-fill me-1"></i>Chat activo</span>
+          } @else {
+          <span class="active-badge"><i class="bi bi-check-circle-fill me-1"></i>Disponible</span>
+          }
+        </div>
+
+        @if (!membresiaActiva) {
+        <div class="empty-media">
+          <i class="bi bi-lock-fill empty-media-icon text-danger"></i>
+          <p class="empty-media-title">ACCESO RESTRINGIDO</p>
+          <p class="empty-media-sub">Necesitas una membresía activa en este centro para contactar con soporte</p>
+        </div>
+        }
+
+        @else if (!chatActual || chatActual.estado === EstadoChat.CERRADO) {
+        <div class="row justify-content-center">
+          <div class="col-lg-6">
+            @if (chatActual?.estado === EstadoChat.CERRADO) {
+            <div class="soporte-alert soporte-alert-cerrado mb-4">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              Tu última solicitud fue cerrada. Puedes abrir una nueva si lo necesitas.
+            </div>
+            }
+            <form [formGroup]="solicitudForm" (ngSubmit)="solicitarChat()">
+              <div class="mb-3">
+                <label class="form-label text-success fw-bold small">DESCRIBE TU CONSULTA</label>
+                <textarea class="form-control soporte-textarea" formControlName="primerMensaje" rows="4"
+                  [class.is-invalid]="solicitudForm.get('primerMensaje')?.invalid && solicitudForm.get('primerMensaje')?.touched"
+                  placeholder="Explica tu consulta o incidencia al administrador del centro..."></textarea>
+                <div class="invalid-feedback">La descripción de la consulta es obligatoria</div>
+              </div>
+              <button type="submit" class="btn-contratar w-100" [disabled]="isLoadingSoporte">
+                @if (isLoadingSoporte) {
+                <span class="spinner-border spinner-border-sm me-2"></span>ENVIANDO...
+                } @else {
+                <i class="bi bi-send me-2"></i>ENVIAR SOLICITUD
+                }
+              </button>
+            </form>
+          </div>
+        </div>
+        }
+
+        @else if (chatActual.estado === EstadoChat.PENDIENTE) {
+        <div class="text-center py-4">
+          <div class="soporte-status-icon soporte-status-pending mx-auto mb-3">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <p class="fw-bold mb-1">Solicitud enviada</p>
+          <p class="text-muted small">Tu solicitud está pendiente de revisión por el administrador del centro.</p>
+        </div>
+        }
+
+        @else if (chatActual.estado === EstadoChat.ACTIVO) {
+        <div class="text-center py-4">
+          <div class="soporte-status-icon soporte-status-activo mx-auto mb-3">
+            <i class="bi bi-chat-dots-fill"></i>
+          </div>
+          <p class="fw-bold mb-1">Chat aceptado</p>
+          <p class="text-muted small mb-4">El administrador ha aceptado tu solicitud. Accede al chat para continuar la
+            conversación.</p>
+          <button class="btn-contratar" (click)="navigateToSoporte()">
+            <i class="bi bi-arrow-right me-2"></i>IR AL CHAT
+          </button>
+        </div>
+        }
+
+      </div>
+
+    </div>
     }
   </div>
 </div>
 
 @if (videoReproduciendo) {
-  <div class="modal-overlay" (click)="cerrarReproductor()">
-    <div class="modal-player" (click)="$event.stopPropagation()">
-      <div class="modal-player-header">
-        <div>
-          <p class="modal-player-title">{{ videoReproduciendo.nombre }}</p>
-          <small class="modal-player-desc">{{ videoReproduciendo.descripcion }}</small>
-        </div>
-        <button class="btn-close-modal" (click)="cerrarReproductor()">
-          <i class="bi bi-x-lg"></i>
-        </button>
+<div class="modal-overlay" (click)="cerrarReproductor()">
+  <div class="modal-player" (click)="$event.stopPropagation()">
+    <div class="modal-player-header">
+      <div>
+        <p class="modal-player-title">{{ videoReproduciendo.nombre }}</p>
+        <small class="modal-player-desc">{{ videoReproduciendo.descripcion }}</small>
       </div>
-      <video class="modal-video" [src]="videoReproduciendo.url" controls autoplay playsinline></video>
-      <div class="modal-player-footer">
-        <small class="text-muted">
-          <i class="bi bi-calendar3 me-1"></i>
-          Subido el {{ videoReproduciendo.fecha_subida | date:"dd/MM/yyyy 'a las' HH:mm" }}
-        </small>
-      </div>
+      <button class="btn-close-modal" (click)="cerrarReproductor()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <video class="modal-video" [src]="videoReproduciendo.url" controls autoplay playsinline></video>
+    <div class="modal-player-footer">
+      <small class="text-muted">
+        <i class="bi bi-calendar3 me-1"></i>
+        Subido el {{ videoReproduciendo.fecha_subida | date:"dd/MM/yyyy 'a las' HH:mm" }}
+      </small>
     </div>
   </div>
+</div>
 }

@@ -12,15 +12,22 @@ export class SessionService {
   private database        = inject(Database);
   private injector        = inject(Injector);
 
-  /*Obtiene todas las sesiones de un centro en una fecha concreta (timestamp epoch del día)*/
+  /**
+   * Obtiene todas las sesiones de un centro en una fecha concreta (timestamp epoch del día).
+   * Filtra por centroId, rango de fechas y estado ACTIVA.
+   * @param centroId    UID del centro deportivo
+   * @param fechaInicio Timestamp epoch del inicio del día (00:00:00)
+   * @param fechaFin    Timestamp epoch del fin del día (23:59:59)
+   * @returns Observable con la lista de sesiones activas del centro en esa fecha
+   */
   getSessionsByCentroAndFecha(centroId: string, fechaInicio: number, fechaFin: number): Observable<ISession[]> {
     return runInInjectionContext(this.injector, () =>
       listVal<ISession>(ref(this.database, `/${this.COLLECTION_NAME}`), { keyField: 'uid' })
     ).pipe(
       map(sesiones => (sesiones ?? []).filter(s =>
         s.centroId === centroId &&
-        s.fecha    >= fechaInicio  &&
-        s.fecha    <= fechaFin     &&
+        s.fecha    >= fechaInicio &&
+        s.fecha    <= fechaFin    &&
         s.estado   === EstadoSesion.ACTIVA
       )),
       catchError(() => of([]))
@@ -28,7 +35,7 @@ export class SessionService {
   }
 
   /**
-   * Obtiene todas las sesiones creadas por un profesional concreto
+   * Obtiene todas las sesiones creadas por un profesional concreto.
    * @param profesionalUid UID del profesional propietario de las sesiones
    * @returns Observable con el listado completo de sesiones del profesional
    */
@@ -44,7 +51,23 @@ export class SessionService {
   }
 
   /**
-   * Persiste una nueva sesión en Firebase generando un ID automático con push()
+   * Obtiene la lista completa de sesiones sin filtros adicionales.
+   * Se usa como cache reactiva en componentes que necesitan enriquecer reservas
+   * con datos de sesión. Mantener el listener activo garantiza que los cambios
+   * de aforoActual se propaguen a la vista en tiempo real.
+   * @returns Observable con todas las sesiones existentes en Firebase
+   */
+  getAllSessions(): Observable<(ISession & { uid: string })[]> {
+    return runInInjectionContext(this.injector, () =>
+      listVal<ISession>(ref(this.database, `/${this.COLLECTION_NAME}`), { keyField: 'uid' })
+    ).pipe(
+      map(sesiones  => (sesiones ?? []) as (ISession & { uid: string })[]),
+      catchError(() => of([]))
+    );
+  }
+
+  /**
+   * Persiste una nueva sesión en Firebase generando un ID automático con push().
    * @param sesion Objeto sesión completo listo para persistir
    * @returns Observable que se completa al finalizar la escritura
    */
@@ -57,8 +80,8 @@ export class SessionService {
   }
 
   /**
-   * Actualización parcial de una sesión existente
-   * @param uid Clave del nodo de la sesión en Firebase
+   * Actualización parcial de una sesión existente.
+   * @param uid  Clave del nodo de la sesión en Firebase
    * @param data Campos a actualizar
    * @returns Promesa que se resuelve al completar la escritura
    */
@@ -68,7 +91,7 @@ export class SessionService {
   }
 
   /**
-   * Cancelación lógica de una sesión: actualiza el estado a CANCELADA sin eliminar el nodo
+   * Cancelación lógica de una sesión: actualiza el estado a CANCELADA sin eliminar el nodo.
    * @param uid Clave del nodo de la sesión en Firebase
    * @returns Promesa que se resuelve al completar la escritura
    */
@@ -77,7 +100,11 @@ export class SessionService {
     return update(sessionRef, { estado: EstadoSesion.CANCELADA });
   }
 
-  /*Eliminación física del nodo de sesión en Firebase*/
+  /**
+   * Eliminación física del nodo de sesión en Firebase.
+   * @param uid Clave del nodo de la sesión en Firebase
+   * @returns Observable que se completa al finalizar el borrado
+   */
   deleteSession(uid: string): Observable<void> {
     const sessionRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return from(remove(sessionRef)).pipe(
