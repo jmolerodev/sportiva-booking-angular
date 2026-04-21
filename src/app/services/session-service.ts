@@ -1,9 +1,10 @@
 import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { child, Database, listVal, ref, remove, push, update, query, orderByChild, equalTo } from '@angular/fire/database';
 import { map, Observable, from, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, switchMap }     from 'rxjs/operators';
 import { ISession } from '../interfaces/Sesion-Interface';
 import { EstadoSesion } from '../enums/EstadoSesion';
+import { BookingService } from './booking-service';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -11,6 +12,7 @@ export class SessionService {
   private COLLECTION_NAME = 'Sessions';
   private database        = inject(Database);
   private injector        = inject(Injector);
+  private bookingService  = inject(BookingService);
 
   /**
    * Obtiene todas las sesiones de un centro en una fecha concreta (timestamp epoch del día).
@@ -101,13 +103,16 @@ export class SessionService {
   }
 
   /**
-   * Eliminación física del nodo de sesión en Firebase.
+   * Eliminación física del nodo de sesión en Firebase junto con todas las
+   * reservas asociadas a ella. Primero elimina las Bookings vinculadas al
+   * sesionId para no dejar nodos huérfanos y a continuación borra la sesión.
    * @param uid Clave del nodo de la sesión en Firebase
-   * @returns Observable que se completa al finalizar el borrado
+   * @returns Observable que se completa al finalizar ambos borrados
    */
   deleteSession(uid: string): Observable<void> {
     const sessionRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return from(remove(sessionRef)).pipe(
+    return from(this.bookingService.eliminarReservasBySesion(uid)).pipe(
+      switchMap(() => from(remove(sessionRef))),
       catchError(() => of(void 0))
     );
   }

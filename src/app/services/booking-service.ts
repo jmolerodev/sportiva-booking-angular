@@ -48,6 +48,22 @@ export class BookingService {
   }
 
   /**
+   * Obtiene todas las reservas vinculadas a una sesión concreta
+   * independientemente de su estado. Se usa como paso previo al borrado
+   * físico de la sesión para asegurar que no queden huérfanas en Firebase.
+   * @param sesionId UID de la sesión a consultar
+   * @returns Observable con el listado completo de reservas de la sesión
+   */
+  getReservasBySesionId(sesionId: string): Observable<IBooking[]> {
+    return runInInjectionContext(this.injector, () =>
+      listVal<IBooking>(ref(this.database, `/${this.COLLECTION_NAME}`), { keyField: 'uid' })
+    ).pipe(
+      map(reservas => (reservas ?? []).filter(r => r.sesionId === sesionId)),
+      catchError(() => of([]))
+    );
+  }
+
+  /**
    * Persiste una nueva reserva en Firebase incluyendo un snapshot con los datos
    * clave de la sesión para garantizar la integridad del historial aunque la sesión
    * sea eliminada posteriormente. Actualiza de forma atómica el aforoActual.
@@ -107,6 +123,27 @@ export class BookingService {
   async eliminarReservasByCliente(clienteId: string): Promise<void> {
     const reservas = await new Promise<IBooking[]>((resolve, reject) => {
       this.getReservasByCliente(clienteId).pipe(
+        /* Tomamos solo la primera emisión para no mantener el stream abierto */
+        map(r => r ?? [])
+      ).subscribe({ next: resolve, error: reject });
+    });
+
+    /* Eliminamos todos los nodos en paralelo */
+    await Promise.all(
+      reservas.map(r => remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${r.uid}`)))
+    );
+  }
+
+  /**
+   * Elimina permanentemente todas las reservas asociadas a una sesión concreta,
+   * independientemente de su estado. Se invoca antes del borrado físico de la
+   * sesión para evitar que queden nodos huérfanos de Bookings en Firebase.
+   * @param sesionId UID de la sesión cuyas reservas se van a eliminar
+   * @returns Promesa que se resuelve cuando todos los nodos han sido borrados
+   */
+  async eliminarReservasBySesion(sesionId: string): Promise<void> {
+    const reservas = await new Promise<IBooking[]>((resolve, reject) => {
+      this.getReservasBySesionId(sesionId).pipe(
         /* Tomamos solo la primera emisión para no mantener el stream abierto */
         map(r => r ?? [])
       ).subscribe({ next: resolve, error: reject });
