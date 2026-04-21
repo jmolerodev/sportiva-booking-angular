@@ -7,6 +7,7 @@ import { Administrador } from '../../models/Administrador';
 
 @Component({
   selector: 'app-admin-list',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './admin-list.html',
   styleUrl: './admin-list.css',
@@ -28,6 +29,9 @@ export class AdminList implements OnInit {
     private router: Router
   ) { }
 
+  /**
+   * Gancho de ciclo de vida que inicializa el componente cargando los administradores.
+   */
   ngOnInit(): void {
     this.cargarAdministradores();
   }
@@ -50,39 +54,38 @@ export class AdminList implements OnInit {
     });
   }
 
-/**
- * Método que gestiona la eliminación de un Administrador tras confirmación del usuario.
- * Utiliza el SnackbarService para mostrar una confirmación visual antes de proceder.
- * Muestra un spinner individual en la fila afectada durante el proceso
- * y actualiza el array local eliminando el registro una vez completada la operación
- * @param uid UID del Administrador que se desea eliminar
- */
-eliminarAdministrador(uid: string): void {
-  this.snackbar.showConfirm(
-    '¿Eliminar este administrador? Esta acción no se puede deshacer.',
-    'ELIMINAR',
-    () => {
-      this.deletingUid = uid;
-      this.adminService.deleteAdministrador(uid)
-        .then(() => {
-          this.snackbar.showSuccess('Administrador eliminado correctamente');
-          this.administradores = this.administradores.filter(a => a.uid !== uid);
-        })
-        .catch(() => {
-          this.snackbar.showError('Error al eliminar el administrador');
-        })
-        .finally(() => {
-          this.deletingUid = null;
-        });
-    }
-  );
-}
+  /**
+   * Gestiona el proceso de eliminación de un administrador y su centro asociado.
+   * Lanza un diálogo de confirmación y, en caso positivo, procede al borrado atómico
+   * a través del servicio, actualizando la interfaz tras el éxito.
+   * @param uid Identificador único del administrador a eliminar.
+   */
+  eliminarAdministrador(uid: string): void {
+    this.snackbar.showConfirm(
+      '¿Deseas eliminar este administrador y su centro deportivo? Los cambios serán permanentes.',
+      'ELIMINAR',
+      () => {
+        this.deletingUid = uid;
+        this.adminService.deleteAdministrador(uid)
+          .then(() => {
+            this.snackbar.showSuccess('Administrador y Centro deportivo eliminados');
+            this.administradores = this.administradores.filter(a => a.uid !== uid);
+          })
+          .catch(() => {
+            this.snackbar.showError('Error al procesar la eliminación en la base de datos');
+          })
+          .finally(() => {
+            this.deletingUid = null;
+          });
+      }
+    );
+  }
+
   /**
    * Redirige al usuario a la vista principal del Panel
    */
   navigateToHome(): void {
     this.router.navigate(['/home']);
   }
-
 
 }

@@ -12,15 +12,18 @@ import { IProfesional } from '../interfaces/Profesional-Interface';
 })
 export class AdminService {
 
-  /* Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol */
+  /* Nombre de la Colección Principal donde almacenamos a todos los usuarios */
   private COLLECTION_NAME = 'Persons';
+
+  /* Nombre de la Colección donde se almacenan los centros deportivos */
+  private CENTRES_COLLECTION = 'Sports-Centre';
 
   private database = inject(Database);
 
   /**
    * Método mediante el cual obtenemos los datos de un administrador a través de su UID
    * @param uid UID del Administrador
-   * @returns Observable con los datos del Administrador (o null en caso de no encontrarlo mediante el identificador)
+   * @returns Observable con los datos del Administrador (o null si no existe)
    */
   getAdministradorByUid(uid: string): Observable<Administrador | null> {
     const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
@@ -28,9 +31,9 @@ export class AdminService {
   }
 
   /**
-   * Método mediante el cual obtenemos la lista completa de Administradores registrados en el sistema,
-   * filtrando del nodo 'Persons' únicamente aquellos cuyo rol sea ADMINISTRADOR
-   * @returns Observable con un array de objetos que contienen el UID y los datos de cada Administrador
+   * Método mediante el cual obtenemos la lista completa de Administradores registrados,
+   * filtrando del nodo 'Persons' únicamente aquellos con rol ADMINISTRADOR
+   * @returns Observable con un array de objetos (UID y datos) de cada Administrador
    */
   getAllAdministradores(): Observable<{ uid: string; data: Administrador }[]> {
     const personsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
@@ -45,10 +48,10 @@ export class AdminService {
   }
 
   /**
-   * Método mediante el que podremos actualizar la información de un Administrador utilizando la interfaz IAdministrador
+   * Método para actualizar la información de un Administrador
    * @param uid UID del Administrador que deseamos modificar
-   * @param data Objeto parcial con los campos de IAdministrador a modificar
-   * @returns Promesa que se resuelve una vez que los datos sean actualizados
+   * @param data Objeto parcial con los campos a modificar
+   * @returns Promesa que se resuelve tras la actualización
    */
   updateAdministrador(uid: string, data: Partial<IAdministrador>): Promise<void> {
     const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
@@ -56,9 +59,9 @@ export class AdminService {
   }
 
   /**
-   * Filtra del nodo 'Persons' aquellos cuyo rol sea PROFESIONAL y su adminId coincida con el proporcionado
-   * @param adminUid UID del administrador propietario de los profesionales
-   * @returns Observable con un array de objetos que contienen el UID y los datos (IProfesional) de cada registro
+   * Obtiene los profesionales vinculados a un administrador específico
+   * @param adminUid UID del administrador propietario
+   * @returns Observable con el listado de profesionales (UID y datos)
    */
   getProfesionalesByAdmin(adminUid: string): Observable<{ uid: string; data: IProfesional }[]> {
     const personsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
@@ -73,20 +76,28 @@ export class AdminService {
   }
 
   /**
-   * Método mediante el cual podremos eliminar a un Administrador de nuestra Base de Datos
-   * @param uid UID del Administrador que deseamos eliminar
-   * @returns Promesa que se resuelve una vez que se complete la operación
+   * Elimina de forma atómica tanto el perfil del administrador como su centro deportivo asociado.
+   * Se utiliza update en la raíz para garantizar que ambas eliminaciones se procesen como una sola transacción.
+   * @param uid UID del Administrador y clave del Centro Deportivo a eliminar
+   * @returns Promesa que se completa al finalizar la operación en ambos nodos
    */
   deleteAdministrador(uid: string): Promise<void> {
-    const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return remove(adminRef);
+    // Definimos las rutas exactas de los nodos a eliminar
+    const adminPath = `/${this.COLLECTION_NAME}/${uid}`;
+    const centrePath = `/${this.CENTRES_COLLECTION}/${uid}`;
+
+    // Ejecutamos la actualización atómica pasando null a ambas rutas para borrarlas
+    return update(ref(this.database), {
+      [adminPath]: null,
+      [centrePath]: null
+    });
   }
 
   /**
-   * Método mediante el cual podremos guardar a un Administrador dentro de nuestra Base de Datos
-   * @param uid UID del Administrador que deseamos guardar en nuestra colección 'Persons'
-   * @param administrador Objeto con los datos del administrador (puede estar tipado o no)
-   * @returns Promesa que se resuelve una vez que se haya finalizado el guardado
+   * Método mediante el cual podremos guardar a un Administrador en la colección 'Persons'
+   * @param uid UID del Administrador
+   * @param administrador Objeto con los datos del administrador
+   * @returns Promesa que se resuelve tras el guardado
    */
   saveAdministrador(uid: string, administrador: any): Promise<void> {
     const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
