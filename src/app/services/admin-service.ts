@@ -3,9 +3,9 @@ import { child, Database, listVal, objectVal, ref, remove, set, update } from '@
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Administrador } from '../models/Administrador';
+import { IAdministrador } from '../interfaces/Administrador-Interface';
 import { Rol } from '../enums/Rol';
 import { IProfesional } from '../interfaces/Profesional-Interface';
-
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +17,6 @@ export class AdminService {
 
   private database = inject(Database);
 
-
   /**
    * Método mediante el cual obtenemos los datos de un administrador a través de su UID
    * @param uid UID del Administrador
@@ -28,34 +27,36 @@ export class AdminService {
     return objectVal(adminRef);
   }
 
- /**
- * Método mediante el cual obtenemos la lista completa de Administradores registrados en el sistema,
- * filtrando del nodo 'Persons' únicamente aquellos cuyo rol sea ADMINISTRADOR
- * @returns Observable con un array de objetos que contienen el UID y los datos de cada Administrador
- */
-getAllAdministradores(): Observable<{ uid: string; data: Administrador }[]> {
-  const personsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
-
-  return listVal<Administrador & { uid: string }>(personsRef, { keyField: 'uid' }).pipe(
-    map(persons =>
-      (persons ?? [])
-        .filter(p => p.rol == Rol.ADMINISTRADOR)
-        .map(({ uid, ...data }) => ({ uid, data: data as Administrador }))
-    )
-  );
-}
   /**
-   * Método mediante el que podremos actualizar la información de un Administrador ya existente
+   * Método mediante el cual obtenemos la lista completa de Administradores registrados en el sistema,
+   * filtrando del nodo 'Persons' únicamente aquellos cuyo rol sea ADMINISTRADOR
+   * @returns Observable con un array de objetos que contienen el UID y los datos de cada Administrador
+   */
+  getAllAdministradores(): Observable<{ uid: string; data: Administrador }[]> {
+    const personsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
+
+    return listVal<Administrador & { uid: string }>(personsRef, { keyField: 'uid' }).pipe(
+      map(persons =>
+        (persons ?? [])
+          .filter(p => p.rol == Rol.ADMINISTRADOR)
+          .map(({ uid, ...data }) => ({ uid, data: data as Administrador }))
+      )
+    );
+  }
+
+  /**
+   * Método mediante el que podremos actualizar la información de un Administrador utilizando la interfaz IAdministrador
    * @param uid UID del Administrador que deseamos modificar
-   * @param data Objeto Parcial con los datos del administrador a modificar
+   * @param data Objeto parcial con los campos de IAdministrador a modificar
    * @returns Promesa que se resuelve una vez que los datos sean actualizados
    */
-  updateAdministrador(uid: string, data: Partial<Administrador>): Promise<void> {
+  updateAdministrador(uid: string, data: Partial<IAdministrador>): Promise<void> {
     const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return update(adminRef, data);
   }
 
-  /* Filtra del nodo 'Persons' aquellos cuyo rol sea PROFESIONAL y su adminId coincida con el proporcionado.
+  /**
+   * Filtra del nodo 'Persons' aquellos cuyo rol sea PROFESIONAL y su adminId coincida con el proporcionado
    * @param adminUid UID del administrador propietario de los profesionales
    * @returns Observable con un array de objetos que contienen el UID y los datos (IProfesional) de cada registro
    */
@@ -66,15 +67,10 @@ getAllAdministradores(): Observable<{ uid: string; data: Administrador }[]> {
       map(persons =>
         (persons ?? [])
           .filter(p => p.rol === Rol.PROFESIONAL && p.adminId === adminUid)
-          .map(({ uid, ...data }) => ({ 
-            uid, 
-            data: data as IProfesional 
-          }))
+          .map(({ uid, ...data }) => ({ uid, data: data as IProfesional }))
       )
     );
   }
-
-
 
   /**
    * Método mediante el cual podremos eliminar a un Administrador de nuestra Base de Datos

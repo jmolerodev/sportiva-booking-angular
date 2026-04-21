@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { child, Database, equalTo, listVal, objectVal, orderByChild, query, ref, remove, set, update } from '@angular/fire/database';
 import { map, Observable, take } from 'rxjs';
 import { Cliente } from '../models/Cliente';
+import { ICliente } from '../interfaces/Cliente-Interface';
 
 @Injectable({
   providedIn: 'root',
@@ -38,7 +39,6 @@ export class ClienteService {
    * @returns Observable booleano: true si el DNI ya existe, false si está disponible
    */
   isDniAlreadyRegistered(dni: string): Observable<boolean> {
-
     const dniQuery = query(
       ref(this.database, `/${this.COLLECTION_NAME}`),
       orderByChild('dni'),
@@ -46,7 +46,7 @@ export class ClienteService {
     );
 
     return listVal(dniQuery).pipe(
-      take(1), 
+      take(1),
       map((results) => results.length > 0)
     );
   }
@@ -84,12 +84,12 @@ export class ClienteService {
   }
 
   /**
-   * Actualizar la información de un cliente ya existente
+   * Actualizar la información de un cliente utilizando la interfaz ICliente
    * @param uid UID del cliente
-   * @param data Objeto parcial con los campos del cliente a modificar
+   * @param data Objeto parcial con los campos de ICliente a modificar
    * @returns Promesa que se resuelve una vez se actualicen los datos
    */
-  updateCliente(uid: string, data: Partial<Cliente>): Promise<void> {
+  updateCliente(uid: string, data: Partial<ICliente>): Promise<void> {
     const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return update(clienteRef, data);
   }
@@ -114,5 +114,4 @@ export class ClienteService {
     const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return set(clienteRef, cliente);
   }
-
 }

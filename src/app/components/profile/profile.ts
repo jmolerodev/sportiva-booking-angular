@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Subscription, switchMap, of, from } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { SnackbarService } from '../../services/snackbar';
-import { Database, ref, child, update, objectVal } from '@angular/fire/database';
+import { ClienteService } from '../../services/cliente-service';
+import { ProfesionalService } from '../../services/profesional-service';
+import { AdminService } from '../../services/admin-service';
 import { Storage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 import { FormsModule } from '@angular/forms';
 import { Rol } from '../../enums/Rol';
@@ -56,33 +58,44 @@ export class Profile implements OnInit, OnDestroy {
 
   private subscription: Subscription = new Subscription();
 
-  /*Constructor del componente*/
+  /* Getters para simplificar la plantilla y asegurar el tipado sin usar $any */
+  get asCliente() { return this.perfil as ICliente; }
+  get asProfesional() { return this.perfil as IProfesional; }
+  get asAdmin() { return this.perfil as IAdministrador; }
+
+  /* Constructor del componente */
   constructor(
     private authService: AuthService,
     private snackbarService: SnackbarService,
-    private db: Database,
-    private storage: Storage, /*Inyectamos Storage para gestionar la foto de perfil*/
+    private clienteService: ClienteService,
+    private profesionalService: ProfesionalService,
+    private adminService: AdminService,
+    private storage: Storage,
     private cdr: ChangeDetectorRef,
-    private router : Router
+    private router: Router
   ) { }
 
   /**
    * Inicialización: Recuperamos usuario de Auth y luego sus datos tipados de RTDB
+   * delegando en el servicio correspondiente según el rol detectado en el primer snapshot
    */
   ngOnInit(): void {
     this.subscription.add(
       this.authService.getCurrentUser().pipe(
         switchMap(user => {
           if (!user) return of(null);
-          this.uid = user.uid;
+          this.uid          = user.uid;
           this.emailUsuario = user.email;
-          const userRef = child(ref(this.db), `/Persons/${user.uid}`);
-          return objectVal<ICliente | IProfesional | IAdministrador>(userRef);
+
+          /*Usamos ClienteService como punto de entrada genérico — todos los perfiles
+            comparten el mismo nodo /Persons/:uid independientemente del rol*/
+          return this.clienteService.getClienteByUid(user.uid);
         })
       ).subscribe({
         next: (data) => {
           if (data) {
-            this.perfil = data;
+            /*Casteamos al tipo correcto según el discriminante rol*/
+            this.perfil = data as unknown as ICliente | IProfesional | IAdministrador;
 
             /*Sincronizamos la preview y guardamos la URL original para gestionar borrados*/
             if (data.foto) {
@@ -173,7 +186,7 @@ export class Profile implements OnInit, OnDestroy {
         this.urlImagenOriginal  = url;
         this.imagenSeleccionada = null;
 
-        /*Reseteamos el flag de carga para que al cambiar la URL en el HTML aparezca el spinner 
+        /*Reseteamos el flag de carga para que al cambiar la URL en el HTML aparezca el spinner
           mientras el navegador descarga la nueva imagen de Storage*/
         this.fotoPerfilCargada = false;
 
@@ -187,34 +200,42 @@ export class Profile implements OnInit, OnDestroy {
   }
 
   /**
-   * Mapea y persiste los cambios según el rol activo para no corromper el nodo.
-   * Es el método interno que escribe directamente en RTDB.
+   * Mapea y persiste los cambios según el rol activo delegando en el servicio correspondiente.
+   * Evita construir el objeto de update a mano y aprovecha los métodos tipados de cada servicio.
    */
   private persistirCambios(): void {
     if (!this.uid || !this.perfil) return;
 
-    const userRef = ref(this.db, `/Persons/${this.uid}`);
-
-    /*Construimos el objeto de actualización común*/
-    let updates: any = {
+    /*Campos comunes a todos los roles*/
+    const baseData = {
       nombre:    this.perfil.nombre,
       apellidos: this.perfil.apellidos,
       foto:      this.perfil.foto
     };
 
-    /*Añadimos campos específicos por interfaz*/
+    let promesa: Promise<void>;
+
     if (this.perfil.rol === Rol.CLIENTE) {
-      const p = this.perfil as ICliente;
-      updates.dni       = p.dni;
-      updates.direccion = p.direccion;
+      const p = this.asCliente;
+      promesa = this.clienteService.updateCliente(this.uid, {
+        ...baseData,
+        dni:       p.dni,
+        direccion: p.direccion
+      });
     } else if (this.perfil.rol === Rol.PROFESIONAL) {
-      const p = this.perfil as IProfesional;
-      updates.descripcion        = p.descripcion;
-      updates.annos_experiencia  = p.annos_experiencia;
+      const p = this.asProfesional;
+      promesa = this.profesionalService.updateProfesional(this.uid, {
+        ...baseData,
+        descripcion:       p.descripcion,
+        annos_experiencia: p.annos_experiencia
+      });
+    } else {
+      /*ADMINISTRADOR — solo campos base*/
+      promesa = this.adminService.updateAdministrador(this.uid, baseData);
     }
 
     this.subscription.add(
-      from(update(userRef, updates)).subscribe({
+      from(promesa).subscribe({
         next: () => {
           this.snackbarService.showSuccess('Información actualizada correctamente');
           this.modoEdicion = false;
@@ -280,7 +301,6 @@ export class Profile implements OnInit, OnDestroy {
 
       this.modoEdicion = false;
       this.cdr.detectChanges();
-
     }
   }
 
@@ -288,8 +308,7 @@ export class Profile implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
   }
 
-  navigateToHome() : void {
+  navigateToHome(): void {
     this.router.navigate(['/home']);
   }
-
 }
