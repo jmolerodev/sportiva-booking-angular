@@ -1,5 +1,5 @@
 import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
-import { Database, listVal, push, ref} from '@angular/fire/database';
+import { child, Database, listVal, push, ref, remove } from '@angular/fire/database';
 import { map, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { IMembership } from '../interfaces/Membresia-Interface';
@@ -39,6 +39,28 @@ export class MembershipService {
   }
 
   /**
+   * Obtiene todas las membresías activas y vigentes asociadas a un centro deportivo concreto.
+   * Filtra por centroId, estado ACTIVA y que la fecha de fin no haya expirado.
+   * @param centroId UID del centro deportivo
+   * @returns Observable con el listado de membresías activas del centro
+   */
+  getMembresiasByCentro(centroId: string): Observable<IMembership[]> {
+    return runInInjectionContext(this.injector, () =>
+      listVal<IMembership>(ref(this.database, `/${this.COLLECTION_NAME}`), { keyField: 'uid' })
+    ).pipe(
+      map(membresias => {
+        const ahora = Date.now();
+        return (membresias ?? []).filter(m =>
+          m.centroId === centroId &&
+          m.estado   === EstadoMembresia.ACTIVA &&
+          m.fechaFin >  ahora
+        );
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  /**
    * Persiste una nueva membresía en Firebase tras la confirmación del pago por PayPal.
    * Calcula automáticamente la fechaFin a partir del tipo de membresía seleccionado.
    * @param membresia Objeto IMembership completo listo para persistir
@@ -50,6 +72,17 @@ export class MembershipService {
     return import('@angular/fire/database').then(({ set }) =>
       set(newNodeRef, membresia)
     );
+  }
+
+  /**
+   * Elimina permanentemente el nodo de una membresía de Firebase.
+   * Se invoca como parte del proceso de baja del cliente para limpiar
+   * su membresía activa antes de eliminar su nodo de Persons.
+   * @param membresiaUid UID de la membresía a eliminar
+   * @returns Promesa que se resuelve cuando el nodo queda borrado
+   */
+  eliminarMembresia(membresiaUid: string): Promise<void> {
+    return remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${membresiaUid}`));
   }
 
   /**

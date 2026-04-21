@@ -5,10 +5,12 @@ import { Router } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
 import { SportCentreService } from '../../services/sport-centre-service';
 import { ClienteService } from '../../services/cliente-service';
+import { MembershipService } from '../../services/membershipservice';
+import { BookingService } from '../../services/booking-service';
 import { AuthService } from '../../services/auth';
 import { SnackbarService } from '../../services/snackbar';
 import { ISportCentre } from '../../interfaces/Sport-Centre-Interface';
-
+import { IMembership } from '../../interfaces/Membresia-Interface';
 
 @Component({
   selector: 'app-management-clients',
@@ -18,7 +20,7 @@ import { ISportCentre } from '../../interfaces/Sport-Centre-Interface';
 })
 export class ManagementClients implements OnInit, OnDestroy {
 
-  /*Listado de clientes que pertenecen al centro actual*/
+  /*Listado de clientes que tienen membresía activa en el centro actual*/
   public misClientes: any[] = [];
 
   /*Información del centro deportivo gestionado por el administrador*/
@@ -30,12 +32,17 @@ export class ManagementClients implements OnInit, OnDestroy {
   /*UID del administrador autenticado*/
   private adminUid: string | null = null;
 
+  /*Caché de membresías activas del centro, usada en el proceso de baja*/
+  private membresiasCentro: IMembership[] = [];
+
   /*Suscripción para gestionar la liberación de memoria*/
   private subscription: Subscription = new Subscription();
 
   constructor(
     private sportCentreService: SportCentreService,
     private clienteService: ClienteService,
+    private membershipService: MembershipService,
+    private bookingService: BookingService,
     private authService: AuthService,
     private snackbar: SnackbarService,
     private router: Router,
@@ -57,7 +64,10 @@ export class ManagementClients implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga reactiva de datos: obtiene el centro del admin y todos los clientes en paralelo
+   * Carga reactiva de datos: obtiene el centro del admin, sus membresías activas
+   * y cruza con Persons para obtener los datos completos de cada cliente.
+   * El filtrado se realiza a través de Memberships (centroId) → Persons (uid),
+   * ya que los clientes no almacenan centroId directamente en su nodo de Persons.
    */
   private loadData(): void {
     if (!this.adminUid) return;
@@ -65,13 +75,21 @@ export class ManagementClients implements OnInit, OnDestroy {
     this.subscription.add(
       combineLatest([
         this.sportCentreService.getSportCentreByAdminUid(this.adminUid),
+        this.membershipService.getMembresiasByCentro(this.adminUid),
         this.clienteService.getAllClientes()
       ]).subscribe({
-        next: ([centro, todos]) => {
-          this.centroAdmin = centro;
+        next: ([centro, membresias, todosLosClientes]) => {
+          this.centroAdmin      = centro;
+          this.membresiasCentro = membresias;
 
-          /* Filtramos los clientes que ya pertenecen a nuestro centro */
-          this.misClientes = (todos ?? []).filter(c => (c as any).centroId === this.adminUid);
+          /* Extraemos los UIDs únicos de clientes con membresía activa en este centro */
+          const uidsConMembresia = new Set(membresias.map(m => m.clienteId));
+
+          /* Cruzamos con Persons para obtener los datos completos de cada cliente */
+          this.misClientes = (todosLosClientes ?? []).filter(c =>
+            uidsConMembresia.has((c as any).uid)
+          );
+
           this.loading = false;
           this.cdr.detectChanges();
         },
@@ -84,33 +102,34 @@ export class ManagementClients implements OnInit, OnDestroy {
   }
 
   /**
-   * Método para dar de baja a un cliente desvinculándolo del centro
-   * @param clienteUid UID del cliente a desvincular
-   */
-  darDeBaja(clienteUid: string): void {
-    this.snackbar.showConfirm('¿Estás seguro de que deseas dar de baja a este cliente?', 'Confirmar Baja', async () => {
-      try {
-        await this.clienteService.desvincularClienteDeCentro(clienteUid);
-        this.snackbar.showSuccess('Cliente dado de baja correctamente');
-      } catch (e) {
-        this.snackbar.showError('Error al procesar la baja');
-      }
-    });
-  }
-
-  /**
-   * Método para activar o desactivar manualmente la suscripción de un cliente
-   * @param clienteUid UID del cliente
-   * @param isActive Estado actual del switch
-   */
-  async toggleSuscripcion(clienteUid: string, isActive: boolean): Promise<void> {
+ * Proceso completo de baja de un cliente:
+ * 1. Elimina todas sus reservas (Bookings) vinculadas al centro
+ * 2. Elimina su membresía activa en el centro (Memberships)
+ * 3. Elimina su nodo de Persons de Firebase
+ * @param clienteUid UID del cliente a dar de baja
+ */
+darDeBaja(clienteUid: string): void {
+  this.snackbar.showConfirm('¿Estás seguro de que deseas dar de baja a este cliente? Esta acción no se puede deshacer.', 'Confirmar Baja', async () => {
     try {
-      await this.clienteService.toggleIsActive(clienteUid, isActive);
-      this.snackbar.showSuccess(isActive ? 'Suscripción activada' : 'Suscripción desactivada');
+      /* Paso 1: eliminamos todas sus reservas */
+      await this.bookingService.eliminarReservasByCliente(clienteUid);
+
+      /* Paso 2: buscamos la membresía en caché y accedemos al uid inyectado por keyField en runtime */
+      const membresia = this.membresiasCentro.find(m => m.clienteId === clienteUid);
+      const membresiaUid = membresia ? (membresia as any)['uid'] : null;
+      if (membresiaUid) {
+        await this.membershipService.eliminarMembresia(membresiaUid);
+      }
+
+      /* Paso 3: eliminamos el nodo Persons del cliente */
+      await this.clienteService.deleteCliente(clienteUid);
+
+      this.snackbar.showSuccess('Cliente dado de baja correctamente');
     } catch (e) {
-      this.snackbar.showError('Error al actualizar la suscripción');
+      this.snackbar.showError('Error al procesar la baja del cliente');
     }
-  }
+  });
+}
 
   /**
    * Navega de vuelta al panel principal

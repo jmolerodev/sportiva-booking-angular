@@ -96,4 +96,25 @@ export class BookingService {
   async eliminarReserva(bookingUid: string): Promise<void> {
     return remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${bookingUid}`));
   }
+
+  /**
+   * Elimina permanentemente todas las reservas asociadas a un cliente concreto.
+   * Se invoca como parte del proceso de baja del cliente para limpiar todos
+   * sus nodos de Bookings antes de eliminar su nodo de Persons.
+   * @param clienteId UID del cliente cuyas reservas se van a eliminar
+   * @returns Promesa que se resuelve cuando todos los nodos han sido borrados
+   */
+  async eliminarReservasByCliente(clienteId: string): Promise<void> {
+    const reservas = await new Promise<IBooking[]>((resolve, reject) => {
+      this.getReservasByCliente(clienteId).pipe(
+        /* Tomamos solo la primera emisión para no mantener el stream abierto */
+        map(r => r ?? [])
+      ).subscribe({ next: resolve, error: reject });
+    });
+
+    /* Eliminamos todos los nodos en paralelo */
+    await Promise.all(
+      reservas.map(r => remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${r.uid}`)))
+    );
+  }
 }

@@ -44,7 +44,6 @@
             <th scope="col" class="text-center fw-bold"><i class="bi bi-person me-2"></i>Nombre</th>
             <th scope="col" class="text-center fw-bold"><i class="bi bi-card-text me-2"></i>Apellidos</th>
             <th scope="col" class="text-center fw-bold"><i class="bi bi-credit-card me-2"></i>DNI</th>
-            <th scope="col" class="text-center fw-bold"><i class="bi bi-toggle-on me-2"></i>Suscripción</th>
             <th scope="col" class="text-center fw-bold"><i class="bi bi-gear me-2"></i>Acción</th>
           </tr>
         </thead>
@@ -54,15 +53,6 @@
             <td class="text-center fw-bold">{{ cliente.nombre }}</td>
             <td class="text-center fw-bold">{{ cliente.apellidos }}</td>
             <td class="text-center text-muted">{{ cliente.dni }}</td>
-            <td class="text-center">
-              <div class="form-check form-switch d-flex justify-content-center mb-0">
-                <input class="form-check-input"
-                       type="checkbox"
-                       role="switch"
-                       [checked]="cliente.is_active"
-                       (change)="toggleSuscripcion(cliente.uid, !cliente.is_active)">
-              </div>
-            </td>
             <td class="text-center">
               <button class="btn-action btn-delete" (click)="darDeBaja(cliente.uid)" title="Dar de baja al cliente">
                 <i class="bi bi-person-dash-fill"></i>
