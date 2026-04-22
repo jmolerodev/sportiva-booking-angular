@@ -1,18 +1,20 @@
 import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { child, Database, objectVal, ref, remove, set, update } from '@angular/fire/database';
-import { map, Observable, of } from 'rxjs';
+import { map, Observable, of, firstValueFrom } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Profesional } from '../models/Profesional';
 import { IProfesional } from '../interfaces/Profesional-Interface';
+import { SessionService } from './session-service';
 
 @Injectable({ providedIn: 'root' })
 export class ProfesionalService {
 
-  /*Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol*/
+  /* Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol */
   private COLLECTION_NAME = 'Persons';
 
-  private database = inject(Database);
-  private injector = inject(Injector);
+  private database       = inject(Database);
+  private injector       = inject(Injector);
+  private sessionService = inject(SessionService);
 
   /**
    * Método para obtener los datos de un profesional a través de su UID
@@ -33,7 +35,7 @@ export class ProfesionalService {
     return runInInjectionContext(this.injector, () => {
       const especialidadRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}/especialidad`);
       return objectVal<string>(especialidadRef).pipe(
-        map(especialidad  => especialidad ?? null),
+        map(especialidad => especialidad ?? null),
         catchError(() => of(null))
       );
     });
@@ -50,13 +52,33 @@ export class ProfesionalService {
   }
 
   /**
-   * Método para eliminar completamente a un profesional de la base de datos
-   * @param uid UID del profesional que vamos a eliminar
-   * @returns Promesa que se resuelve al completar la operación
+   * Elimina completamente a un profesional del sistema en cascada:
+   *   1. Recupera todas las sesiones creadas por el profesional.
+   *   2. Por cada sesión invoca {@link SessionService.deleteSession} que a su vez
+   *      elimina todas las Bookings vinculadas antes de borrar el nodo de sesión.
+   *   3. Una vez limpios los nodos dependientes, elimina el nodo del profesional en Persons.
+   * @param uid UID del profesional a eliminar junto con todos sus datos asociados
+   * @returns Promesa que se resuelve cuando la eliminación en cascada ha finalizado
    */
-  deleteProfesional(uid: string): Promise<void> {
+  async deleteProfesionalCompleto(uid: string): Promise<void> {
+
+    /* Paso 1: obtenemos la lista de sesiones del profesional (primera emisión) */
+    const sesiones = await firstValueFrom(
+      this.sessionService.getSessionsByProfesional(uid).pipe(catchError(() => of([])))
+    );
+
+    /* Paso 2: eliminamos cada sesión junto con sus reservas en paralelo */
+    await Promise.all(
+      sesiones.map(sesion =>
+        firstValueFrom(
+          this.sessionService.deleteSession((sesion as any).uid).pipe(catchError(() => of(void 0)))
+        )
+      )
+    );
+
+    /* Paso 3: eliminamos el nodo del profesional en Persons */
     const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return remove(profesionalRef);
+    await remove(profesionalRef);
   }
 
   /**

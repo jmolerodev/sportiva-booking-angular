@@ -141,18 +141,20 @@ export class ProfesionalList implements OnInit {
   }
 
   /**
-   * Elimina un profesional
+   * Elimina un profesional junto con todas sus sesiones y reservas asociadas.
+   * La eliminación se delega en {@link ProfesionalService.deleteProfesionalCompleto}
+   * que orquesta el borrado en cascada: sesiones → reservas → nodo del profesional.
    */
   eliminarProfesional(uid: string): void {
 
     this.snackbar.showConfirm(
-      '¿Deseas eliminar a este profesional? Se borrarán todos sus datos del sistema.',
+      '¿Deseas eliminar a este profesional? Se borrarán todas sus sesiones, reservas y datos del sistema.',
       'ELIMINAR',
       () => {
 
         this.deletingUid = uid;
 
-        this.profesionalService.deleteProfesional(uid)
+        this.profesionalService.deleteProfesionalCompleto(uid)
           .then(() => {
             this.snackbar.showSuccess('Profesional eliminado correctamente');
             this.profesionales = this.profesionales.filter(p => p.uid !== uid);
