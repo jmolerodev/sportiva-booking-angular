@@ -7,6 +7,7 @@ import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
 import { getDatabase, provideDatabase } from '@angular/fire/database';
 import { getStorage, provideStorage } from '@angular/fire/storage';
+import { getFunctions, provideFunctions } from '@angular/fire/functions'; 
 
 import { environment } from '../environments/environment';
 
@@ -19,5 +20,6 @@ export const appConfig: ApplicationConfig = {
     provideAuth(() => getAuth()),
     provideDatabase(() => getDatabase(undefined, environment.firebaseConfig.databaseURL)),
     provideStorage(() => getStorage()),
+    provideFunctions(() => getFunctions()),              
   ]
 };

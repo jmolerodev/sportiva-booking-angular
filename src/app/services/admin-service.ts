@@ -6,6 +6,7 @@ import { Administrador } from '../models/Administrador';
 import { IAdministrador } from '../interfaces/Administrador-Interface';
 import { Rol } from '../enums/Rol';
 import { IProfesional } from '../interfaces/Profesional-Interface';
+import { FunctionsService } from './functions-service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +20,7 @@ export class AdminService {
   private CENTRES_COLLECTION = 'Sports-Centre';
 
   private database = inject(Database);
+  private functionsService = inject(FunctionsService);
 
   /**
    * Método mediante el cual obtenemos los datos de un administrador a través de su UID
@@ -77,20 +79,24 @@ export class AdminService {
 
   /**
    * Elimina de forma atómica tanto el perfil del administrador como su centro deportivo asociado.
+   * Adicionalmente invoca la Cloud Function para eliminarlo también de Firebase Authentication.
    * Se utiliza update en la raíz para garantizar que ambas eliminaciones se procesen como una sola transacción.
    * @param uid UID del Administrador y clave del Centro Deportivo a eliminar
-   * @returns Promesa que se completa al finalizar la operación en ambos nodos
+   * @returns Promesa que se completa al finalizar la operación en ambos nodos y en Auth
    */
   deleteAdministrador(uid: string): Promise<void> {
     // Definimos las rutas exactas de los nodos a eliminar
     const adminPath = `/${this.COLLECTION_NAME}/${uid}`;
     const centrePath = `/${this.CENTRES_COLLECTION}/${uid}`;
 
-    // Ejecutamos la actualización atómica pasando null a ambas rutas para borrarlas
-    return update(ref(this.database), {
-      [adminPath]: null,
-      [centrePath]: null
-    });
+    // Ejecutamos el borrado atómico en Realtime Database y simultáneamente en Auth
+    return Promise.all([
+      update(ref(this.database), {
+        [adminPath]: null,
+        [centrePath]: null
+      }),
+      this.functionsService.deleteUserFromAuth(uid)
+    ]).then(() => void 0);
   }
 
   /**
