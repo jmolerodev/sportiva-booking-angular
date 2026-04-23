@@ -102,7 +102,6 @@ export class SignUp implements OnInit {
               dni,
               direccion,
               fecha_alta: new Date().getTime(),
-              is_active: false,
             };
 
             this.clienteService.saveCliente(uid, nuevoCliente).then(() => {

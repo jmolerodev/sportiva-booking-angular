@@ -10,6 +10,5 @@ export interface ICliente {
   dni:        string;
   direccion:  string;
   fecha_alta: number;
-  is_active:  boolean;
   centroId?:  string;
 }
