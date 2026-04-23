@@ -5,6 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { Profesional } from '../models/Profesional';
 import { IProfesional } from '../interfaces/Profesional-Interface';
 import { SessionService } from './session-service';
+import { FunctionsService } from './functions-service';
 
 @Injectable({ providedIn: 'root' })
 export class ProfesionalService {
@@ -12,9 +13,10 @@ export class ProfesionalService {
   /* Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol */
   private COLLECTION_NAME = 'Persons';
 
-  private database       = inject(Database);
-  private injector       = inject(Injector);
-  private sessionService = inject(SessionService);
+  private database        = inject(Database);
+  private injector        = inject(Injector);
+  private sessionService  = inject(SessionService);
+  private functionsService = inject(FunctionsService);
 
   /**
    * Método para obtener los datos de un profesional a través de su UID
@@ -57,6 +59,7 @@ export class ProfesionalService {
    *   2. Por cada sesión invoca {@link SessionService.deleteSession} que a su vez
    *      elimina todas las Bookings vinculadas antes de borrar el nodo de sesión.
    *   3. Una vez limpios los nodos dependientes, elimina el nodo del profesional en Persons.
+   *   4. Elimina al profesional de Firebase Authentication.
    * @param uid UID del profesional a eliminar junto con todos sus datos asociados
    * @returns Promesa que se resuelve cuando la eliminación en cascada ha finalizado
    */
@@ -79,6 +82,9 @@ export class ProfesionalService {
     /* Paso 3: eliminamos el nodo del profesional en Persons */
     const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     await remove(profesionalRef);
+
+    /* Paso 4: eliminamos al profesional de Firebase Authentication */
+    await this.functionsService.deleteUserFromAuth(uid);
   }
 
   /**

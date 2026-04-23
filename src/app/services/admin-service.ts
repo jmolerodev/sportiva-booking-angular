@@ -85,11 +85,11 @@ export class AdminService {
    * @returns Promesa que se completa al finalizar la operación en ambos nodos y en Auth
    */
   deleteAdministrador(uid: string): Promise<void> {
-    // Definimos las rutas exactas de los nodos a eliminar
+    /*Definimos las rutas exactas de los nodos a eliminar*/
     const adminPath = `/${this.COLLECTION_NAME}/${uid}`;
     const centrePath = `/${this.CENTRES_COLLECTION}/${uid}`;
 
-    // Ejecutamos el borrado atómico en Realtime Database y simultáneamente en Auth
+    /*Ejecutamos el borrado atómico en Realtime Database y simultáneamente en Auth*/
     return Promise.all([
       update(ref(this.database), {
         [adminPath]: null,
