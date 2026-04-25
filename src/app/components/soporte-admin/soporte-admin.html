@@ -31,7 +31,7 @@
                   <div class="d-flex align-items-center gap-3">
                     <div class="avatar-circle avatar-sm"><i class="bi bi-person-fill"></i></div>
                     <div class="flex-grow-1 overflow-hidden">
-                      <p class="mb-0 fw-bold small text-truncate">{{ chat.clienteId }}</p>
+                      <p class="mb-0 fw-bold small text-truncate">{{ getNombreCliente(chat.clienteId) }}</p>
                       <small class="text-muted">{{ chat.fechaCreacion | date:'dd/MM/yyyy · HH:mm' }}</small>
                     </div>
                     <span class="estado-badge" [ngClass]="{
@@ -69,7 +69,7 @@
                     <div class="d-flex align-items-center gap-3">
                       <div class="avatar-circle"><i class="bi bi-person-fill"></i></div>
                       <div>
-                        <p class="chat-title mb-0">{{ chatSeleccionado.clienteId }}</p>
+                        <p class="chat-title mb-0">{{ getNombreCliente(chatSeleccionado.clienteId) }}</p>
                         <small class="text-muted">Desde {{ chatSeleccionado.fechaCreacion | date:'dd/MM/yyyy' }}</small>
                       </div>
                     </div>

@@ -18,6 +18,7 @@ import { SoporteAdmin }        from './components/soporte-admin/soporte-admin';
 import { ClienteSessions }     from './components/cliente-sessions/cliente-sessions';
 import { roleGuard } from './guards/role.guard';
 import { Rol } from './enums/Rol';
+import { SoporteCliente } from './components/soporte-cliente/soporte-cliente';
 
 export const routes: Routes = [
 
@@ -48,6 +49,11 @@ export const routes: Routes = [
   {
     path: 'membership-payment/:centroId',
     component: MembershipPayment,
+    canActivate: [roleGuard([Rol.CLIENTE])]
+  },
+  {
+    path: 'soporte-cliente',
+    component: SoporteCliente,
     canActivate: [roleGuard([Rol.CLIENTE])]
   },
 

@@ -1,0 +1,124 @@
+<div class="management-section d-flex justify-content-center align-items-center py-5">
+  <div class="info-card shadow border-0 overflow-hidden">
+
+    <div class="p-4 border-bottom bg-white text-center">
+      <h2 class="brand-title m-0">SOPORTE <span class="brand-accent">AL CLIENTE</span></h2>
+      <div class="brand-divider mx-auto mt-2"></div>
+    </div>
+
+    <div class="card-body p-4 p-md-5">
+
+      @if (isLoadingProfile) {
+        <div class="text-center py-5">
+          <div class="spinner-grow text-success mb-3" role="status"></div>
+          <p class="text-muted fw-bold small text-uppercase">Cargando perfil...</p>
+        </div>
+      }
+
+      @else if (!centroId) {
+        <div class="text-center py-5">
+          <i class="bi bi-shield-lock-fill empty-icon text-danger mb-3 d-block"></i>
+          <h4 class="brand-title">SIN MEMBRESÍA <span class="brand-accent">ACTIVA</span></h4>
+          <p class="text-muted fw-bold">Necesitas una membresía activa para contactar con soporte.</p>
+          <div class="brand-divider mx-auto my-3"></div>
+          <button class="btn-google-pro btn-outline-google-secondary px-5 py-2 mt-4 shadow-sm" (click)="navigateToHome()">
+            VOLVER AL PANEL PRINCIPAL
+          </button>
+        </div>
+      }
+
+      @else {
+
+        @if (!chatActual || chatActual.estado === EstadoChat.CERRADO) {
+          <div class="row justify-content-center">
+            <div class="col-lg-6">
+
+              @if (chatActual?.estado === EstadoChat.CERRADO) {
+                <div class="alert-soporte alert-cerrado mb-4">
+                  <i class="bi bi-check-circle-fill me-2"></i>
+                  Tu última solicitud fue cerrada. Puedes abrir una nueva si lo necesitas.
+                </div>
+              }
+
+              <h5 class="section-heading mb-4">Nueva Solicitud de Soporte</h5>
+              <form [formGroup]="solicitudForm" (ngSubmit)="solicitarChat()">
+                <div class="mb-3">
+                  <label class="form-label text-success fw-bold small">DESCRIBE TU CONSULTA</label>
+                  <textarea class="form-control" formControlName="primerMensaje" rows="5"
+                    [class.is-invalid]="solicitudForm.get('primerMensaje')?.invalid && solicitudForm.get('primerMensaje')?.touched"
+                    placeholder="Explica tu consulta o incidencia al administrador del centro..."></textarea>
+                  <div class="invalid-feedback">La descripción de la consulta es obligatoria</div>
+                </div>
+                <button type="submit" class="btn btn-success fw-bold w-100 py-3 shadow-sm text-uppercase" [disabled]="isLoading">
+                  @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm me-2"></span>ENVIANDO...
+                  } @else {
+                    <i class="bi bi-send me-2"></i>ENVIAR SOLICITUD
+                  }
+                </button>
+              </form>
+            </div>
+          </div>
+        }
+
+        @else if (chatActual.estado === EstadoChat.PENDIENTE) {
+          <div class="text-center py-5">
+            <div class="status-icon status-pending mx-auto mb-4">
+              <i class="bi bi-hourglass-split"></i>
+            </div>
+            <h4 class="brand-title">SOLICITUD <span class="brand-accent">PENDIENTE</span></h4>
+            <p class="text-muted fw-bold">Tu solicitud ha sido enviada y está esperando respuesta del administrador.</p>
+            <div class="brand-divider mx-auto my-3"></div>
+            <p class="small text-uppercase text-muted">Te avisaremos en cuanto sea atendida</p>
+          </div>
+        }
+
+        @else if (chatActual.estado === EstadoChat.ACTIVO) {
+          <div class="chat-wrapper">
+            <div class="chat-header">
+              <div class="d-flex align-items-center gap-3">
+                <div class="avatar-circle"><i class="bi bi-headset"></i></div>
+                <div>
+                  <p class="chat-title mb-0">{{ nombreAdmin }}</p>
+                  <small class="text-success fw-bold small">● EN LÍNEA</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-messages">
+              @for (msg of mensajes; track msg.fecha) {
+                <div class="message-wrapper" [class.message-own]="msg.emisorId === clienteUid">
+                  <div class="message-bubble" [class.bubble-own]="msg.emisorId === clienteUid">
+                    <p class="mb-1">{{ msg.texto }}</p>
+                    <small class="msg-time">{{ msg.fecha | date:'HH:mm' }}</small>
+                  </div>
+                </div>
+              } @empty {
+                <div class="text-center py-4">
+                  <p class="text-muted small">El chat está activo. ¡Escribe tu primer mensaje!</p>
+                </div>
+              }
+            </div>
+
+            <div class="chat-input-area">
+              <form [formGroup]="mensajeForm" (ngSubmit)="enviarMensaje(chatActual.uid)">
+                <div class="d-flex gap-2">
+                  <input type="text" class="form-control" formControlName="texto"
+                    placeholder="Escribe un mensaje..." autocomplete="off">
+                  <button type="submit" class="btn btn-success btn-send" [disabled]="mensajeForm.invalid">
+                    <i class="bi bi-send-fill"></i>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        }
+
+        <button class="btn btn-outline-secondary w-100 mt-4 fw-bold py-2" (click)="navigateToHome()">
+          VOLVER A HOME
+        </button>
+      }
+
+    </div>
+  </div>
+</div>
