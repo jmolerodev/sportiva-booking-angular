@@ -233,20 +233,20 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    */
   mesAnterior(): void {
     this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() - 1, 1);
-    this.fechaSeleccionada = new Date(this.mesActual); 
+    this.fechaSeleccionada = new Date(this.mesActual);
     this.generarCalendario();
-    this.cargarSesionesDelDia(); 
+    this.cargarSesionesDelDia();
   }
 
   /**
    * Avanza al mes siguiente en el calendario y regenera la cuadrícula
    */
   mesSiguiente(): void {
-  this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() + 1, 1);
-  this.fechaSeleccionada = new Date(this.mesActual); 
-  this.generarCalendario();
-  this.cargarSesionesDelDia(); 
-}
+    this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() + 1, 1);
+    this.fechaSeleccionada = new Date(this.mesActual);
+    this.generarCalendario();
+    this.cargarSesionesDelDia();
+  }
 
   /**
    * Gestiona la selección de un día en el calendario: actualiza la fecha
@@ -295,7 +295,6 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   private generarSlots(): ISlotHorario[] {
     if (!this.centro?.horario) return [];
 
-
     if (this.esPasado(this.fechaSeleccionada)) return [];
 
     const nombreDia = this.getNombreDia(this.fechaSeleccionada);
@@ -308,16 +307,16 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
     const [hApertura] = horarioDia.apertura.split(':').map(Number);
     const [hCierre] = horarioDia.cierre.split(':').map(Number);
 
-    /* Referencia temporal para validar horas pasadas */
+    /*Referencia temporal para validar horas pasadas*/
     const ahora = new Date();
     const esHoySeleccionado = this.esHoy(this.fechaSeleccionada);
 
-    /* 🔥 NUEVO: si es hoy pero el centro ya ha cerrado no mostramos slots */
+    /*Si es hoy pero el centro ya ha cerrado no mostramos slots*/
     if (esHoySeleccionado && ahora.getHours() >= hCierre) return [];
 
     for (let h = hApertura; h < hCierre; h++) {
 
-      /* Si es hoy, ignoramos horas que ya han pasado */
+      /*Si es hoy, ignoramos horas que ya han pasado*/
       if (esHoySeleccionado && h <= ahora.getHours()) {
         continue;
       }
@@ -388,11 +387,15 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   /**
    * Persiste la nueva sesión en Firebase con estado ACTIVA usando los datos
    * del formulario y el slot horario seleccionado.
+   * Si hay campos inválidos cierra el modal primero para que el snackbar sea visible.
    * Aplica las restricciones de especialidad como capa de seguridad adicional
    */
   guardarSesion(): void {
     if (!this.slotSeleccionado || !this.centro || !this.profesionalUid) return;
-    if (!this.formSesion.titulo || !this.formSesion.tipo || !this.formSesion.modalidad) {
+
+    /*Si faltan campos obligatorios cerramos el modal antes de mostrar el snackbar*/
+    if (!this.formSesion.titulo || !this.formSesion.descripcion || !this.formSesion.tipo || !this.formSesion.modalidad) {
+      this.cerrarModal();
       this.snackbarService.showError('Por favor, completa todos los campos obligatorios');
       return;
     }
@@ -403,12 +406,14 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
       (this.especialidad == 'FISIOTERAPEUTA' && this.formSesion.tipo == TipoSesion.FISIOTERAPIA);
 
     if (!tipoValido) {
+      this.cerrarModal();
       this.snackbarService.showError('El tipo de sesión no corresponde con tu especialidad');
       return;
     }
 
     /*Los fisioterapeutas solo pueden crear sesiones individuales*/
     if (this.especialidad == 'FISIOTERAPEUTA' && this.formSesion.modalidad !== ModalidadSesion.INDIVIDUAL) {
+      this.cerrarModal();
       this.snackbarService.showError('Las sesiones de fisioterapia deben ser individuales');
       return;
     }

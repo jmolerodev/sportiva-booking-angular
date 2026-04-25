@@ -219,19 +219,46 @@
 
     <div class="form-group">
       <label class="form-label-custom">Título <span class="required">*</span></label>
-      <input type="text" class="form-control-custom" [(ngModel)]="formSesion.titulo" placeholder="Ej: Sesión de fuerza">
+      <input
+        type="text"
+        name="titulo"
+        class="form-control-custom"
+        [(ngModel)]="formSesion.titulo"
+        #tituloRef="ngModel"
+        required
+        placeholder="Ej: Sesión de fuerza"
+        [class.field-invalid]="tituloRef.invalid && tituloRef.touched">
+      @if (tituloRef.invalid && tituloRef.touched) {
+      <small class="field-error">El título es obligatorio.</small>
+      }
     </div>
 
     <div class="form-group">
-      <label class="form-label-custom">Descripción</label>
-      <textarea class="form-control-custom" [(ngModel)]="formSesion.descripcion" rows="3"
-        placeholder="Descripción opcional de la sesión"></textarea>
+      <label class="form-label-custom">Descripción <span class="required">*</span></label>
+      <textarea
+        class="form-control-custom"
+        name="descripcion"
+        [(ngModel)]="formSesion.descripcion"
+        #descripcionRef="ngModel"
+        required
+        rows="3"
+        placeholder="Descripción de la sesión"
+        [class.field-invalid]="descripcionRef.invalid && descripcionRef.touched"></textarea>
+      @if (descripcionRef.invalid && descripcionRef.touched) {
+      <small class="field-error">La descripción es obligatoria.</small>
+      }
     </div>
 
     <div class="form-row">
       <div class="form-group">
         <label class="form-label-custom">Tipo <span class="required">*</span></label>
-        <select class="form-control-custom" [(ngModel)]="formSesion.tipo" [disabled]="!!especialidad">
+        <select
+          class="form-control-custom"
+          name="tipo"
+          [(ngModel)]="formSesion.tipo"
+          #tipoRef="ngModel"
+          [disabled]="!!especialidad"
+          [class.field-invalid]="tipoRef.touched && !formSesion.tipo">
           <option [ngValue]="null" disabled>Selecciona tipo</option>
           @if (especialidad === 'ENTRENADOR') {
           <option [ngValue]="TipoSesion.ENTRENAMIENTO">Entrenamiento</option>
@@ -244,25 +271,36 @@
           <option [ngValue]="TipoSesion.FISIOTERAPIA">Fisioterapia</option>
           }
         </select>
+        @if (tipoRef.touched && !formSesion.tipo) {
+        <small class="field-error">El tipo es obligatorio.</small>
+        }
       </div>
 
       <div class="form-group">
         <label class="form-label-custom">Modalidad <span class="required">*</span></label>
-        <select class="form-control-custom" [(ngModel)]="formSesion.modalidad"
-          [disabled]="especialidad === 'FISIOTERAPEUTA'">
+        <select
+          class="form-control-custom"
+          name="modalidad"
+          [(ngModel)]="formSesion.modalidad"
+          #modalidadRef="ngModel"
+          [disabled]="especialidad === 'FISIOTERAPEUTA'"
+          [class.field-invalid]="modalidadRef.touched && !formSesion.modalidad">
           <option [ngValue]="null" disabled>Selecciona modalidad</option>
           <option [ngValue]="ModalidadSesion.INDIVIDUAL">Individual</option>
           @if (especialidad !== 'FISIOTERAPEUTA') {
           <option [ngValue]="ModalidadSesion.GRUPAL">Grupal</option>
           }
         </select>
+        @if (modalidadRef.touched && !formSesion.modalidad) {
+        <small class="field-error">La modalidad es obligatoria.</small>
+        }
       </div>
     </div>
 
     @if (formSesion.modalidad === ModalidadSesion.GRUPAL) {
     <div class="form-group">
       <label class="form-label-custom">Aforo máximo <span class="required">*</span></label>
-      <input type="number" class="form-control-custom" [(ngModel)]="formSesion.aforoMax" min="2" max="50">
+      <input type="number" class="form-control-custom" name="aforoMax" [(ngModel)]="formSesion.aforoMax" min="2" max="50">
     </div>
     }
 

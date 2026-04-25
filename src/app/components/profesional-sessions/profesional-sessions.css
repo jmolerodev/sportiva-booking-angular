@@ -392,7 +392,7 @@
 .btn-delete:hover {
   background-color: #dc3545;
   color: #fff;
-  transform: scale(1.1);
+  transform: scale(1. 1);
 }
 
 .empty-state { color: rgba(255, 255, 255, 0.3); }
@@ -541,7 +541,7 @@
   font-family: 'Nunito', sans-serif;
   font-size: 0.9rem;
   padding: 10px 14px;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
   width: 100%;
   resize: none;
 }
@@ -555,6 +555,25 @@
 .form-control-custom option {
   background-color: #2a2a2a;
   color: #fff;
+}
+
+/* Estado de campo inválido tras salir sin rellenar (touched + invalid) */
+.form-control-custom.field-invalid {
+  border-color: #f21313;
+  background-color: rgba(242, 19, 19, 0.05);
+}
+
+.form-control-custom.field-invalid:focus {
+  border-color: #f21313;
+  background-color: rgba(242, 19, 19, 0.08);
+}
+
+/* Mensaje de error bajo el campo */
+.field-error {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f21313;
+  margin-top: 2px;
 }
 
 .modal-footer-custom {
