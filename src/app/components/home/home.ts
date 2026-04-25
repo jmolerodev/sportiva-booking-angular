@@ -320,12 +320,25 @@ export class Home implements OnInit, OnDestroy {
   }
 
   /**
- * Navega al detalle del centro deportivo seleccionado en el carrusel.
- * Disponible tanto para clientes autenticados como para visitantes sin sesión.
- * @param adminUid UID del administrador del centro, usado como centroId en la ruta
- */
-navigateToCentroDetail(adminUid: string): void {
-  this.router.navigate(['/centre-detail', adminUid]);
-}
- 
+   * Navega al detalle del centro deportivo seleccionado en el carrusel.
+   * Si el usuario no tiene sesión iniciada muestra un snackbar informativo
+   * y redirige al login en lugar de intentar acceder a la ruta protegida.
+   * Si tiene sesión pero no es cliente, informa de que la sección es exclusiva
+   * para clientes y no realiza la navegación.
+   * @param adminUid UID del administrador del centro, usado como centroId en la ruta
+   */
+  navigateToCentroDetail(adminUid: string): void {
+    if (!this.sesionIniciada) {
+      this.snackbarService.showError('Por favor, inicia sesión para ver los detalles del centro deportivo');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    if (!this.esCliente) {
+      this.snackbarService.showError('Esta sección es exclusiva para clientes');
+      return;
+    }
+
+    this.router.navigate(['/centre-detail', adminUid]);
+  }
 }

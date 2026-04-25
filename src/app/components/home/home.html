@@ -1,44 +1,46 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-<div class="about-section d-flex flex-column justify-content-center align-items-center">
-  <div class="section-title-wrapper text-center mb-4" [class.visible]="showHeader" style="user-select: none; border-bottom-color: rgba(255,255,255,0.2);">
-    <h3 class="section-title"> El Cambio <span class="text-dark">Comienza Ahora:</span></h3>
-  </div>
+@if (!sesionIniciada) {
+  <div class="about-section d-flex flex-column justify-content-center align-items-center">
+    <div class="section-title-wrapper text-center mb-4" [class.visible]="showHeader" style="user-select: none; border-bottom-color: rgba(255,255,255,0.2);">
+      <h3 class="section-title"> El Cambio <span class="text-dark">Comienza Ahora:</span></h3>
+    </div>
 
-  <div class="info-card shadow-lg p-4 p-lg-5 rounded-4">
-    <div class="about-grid">
-      <div class="brand-column d-flex flex-column justify-content-center align-items-center text-center" [class.visible]="showHeader">
-        <div class="logo-wrapper mb-3">
-          <img src="logo-app.png" alt="Logo Sportiva Booking" class="logo" />
+    <div class="info-card shadow-lg p-4 p-lg-5 rounded-4">
+      <div class="about-grid">
+        <div class="brand-column d-flex flex-column justify-content-center align-items-center text-center" [class.visible]="showHeader">
+          <div class="logo-wrapper mb-3">
+            <img src="logo-app.png" alt="Logo Sportiva Booking" class="logo" />
+          </div>
+          <h1 class="brand-title mb-2">Sportiva<br><span class="brand-accent">Booking</span></h1>
+          <p class="text-dark fw-bold">Tu plataforma de gestión deportiva</p>
+          <div class="brand-divider"></div>
         </div>
-        <h1 class="brand-title mb-2">Sportiva<br><span class="brand-accent">Booking</span></h1>
-        <p class="text-dark fw-bold">Tu plataforma de gestión deportiva</p>
-        <div class="brand-divider"></div>
-      </div>
 
-      <div class="steps-column">
-        <h2 class="section-heading fw-bold mb-4" [class.visible]="showHeader">¿Qué ofrecemos?</h2>
-        <div class="steps-wrapper">
-          @for (step of steps; track step) {
-            <div class="info-item d-flex align-start" [class.visible]="step.visible">
-              <div class="icon-circle bg-success text-white me-3 flex-shrink-0">
-                <i class="bi" [ngClass]="step.icon"></i>
+        <div class="steps-column">
+          <h2 class="section-heading fw-bold mb-4" [class.visible]="showHeader">¿Qué ofrecemos?</h2>
+          <div class="steps-wrapper">
+            @for (step of steps; track step) {
+              <div class="info-item d-flex align-start" [class.visible]="step.visible">
+                <div class="icon-circle bg-success text-white me-3 flex-shrink-0">
+                  <i class="bi" [ngClass]="step.icon"></i>
+                </div>
+                <p class="mb-0">{{ step.text }}</p>
               </div>
-              <p class="mb-0">{{ step.text }}</p>
-            </div>
-          }
+            }
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="scroll-hint text-center mt-5" [class.visible]="showFooter">
-      <p class="fw-bold mb-1">Descubre los centros disponibles</p>
-      <a href="#centros" class="scroll-arrow">
-        <i class="bi bi-chevron-double-down"></i>
-      </a>
+      <div class="scroll-hint text-center mt-5" [class.visible]="showFooter">
+        <p class="fw-bold mb-1">Descubre los centros disponibles</p>
+        <a href="#centros" class="scroll-arrow">
+          <i class="bi bi-chevron-double-down"></i>
+        </a>
+      </div>
     </div>
   </div>
-</div>
+}
 
 <div id="centros" class="centros-section d-flex flex-column justify-content-center align-items-center py-5">
   @if (loading) {
