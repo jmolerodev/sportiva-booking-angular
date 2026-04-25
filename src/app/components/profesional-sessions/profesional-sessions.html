@@ -1,318 +1,366 @@
 <section class="session-section">
 
   @if (loading) {
-  <div class="spinner-overlay d-flex align-items-center justify-content-center">
-    <div class="spinner-border text-success" role="status">
-      <span class="visually-hidden">Cargando...</span>
+    <div class="spinner-overlay d-flex align-items-center justify-content-center">
+      <div class="spinner-border text-success" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
     </div>
-  </div>
   }
 
   @if (!loading) {
-  <div class="container py-5">
+    <div class="container py-5">
 
-    <div class="section-title-wrapper mb-4">
-      <h1 class="section-title">MIS <span class="highlight">SESIONES</span></h1>
-      @if (centro) {
-      <p class="section-subtitle">{{ centro.nombre }} &mdash; {{ centro.direccion }}</p>
-      }
-      @if (!centro) {
-      <p class="section-subtitle no-centre">No tienes ningún centro deportivo asignado</p>
-      }
-    </div>
-
-    @if (centro) {
-    <div class="content-grid">
-
-      <div class="calendar-card">
-        <div class="calendar-header">
-          <button class="btn-nav" (click)="mesAnterior()">
-            <i class="bi bi-chevron-left"></i>
-          </button>
-          <span class="mes-label">{{ getNombreMes(mesActual) | titlecase }}</span>
-          <button class="btn-nav" (click)="mesSiguiente()">
-            <i class="bi bi-chevron-right"></i>
-          </button>
-        </div>
-
-        <div class="calendar-grid">
-          @for (d of diasSemana; track d) {
-          <div class="day-name">{{ d }}</div>
-          }
-          @for (semana of semanas; track $index) {
-          @for (dia of semana; track $index) {
-          <div class="day-cell" [class.empty]="!dia" [class.today]="dia && esHoy(dia)"
-            [class.selected]="dia && esSeleccionado(dia)" [class.past]="dia && esPasado(dia)"
-            (click)="dia && seleccionarDia(dia)">
-            @if (dia) {
-            <span>{{ dia.getDate() }}</span>
-            }
-          </div>
-          }
-          }
-        </div>
-
-        <div class="legend">
-          <span class="legend-item"><span class="dot dot-libre"></span>Libre</span>
-          <span class="legend-item"><span class="dot dot-propio"></span>Tuyo</span>
-          <span class="legend-item"><span class="dot dot-ocupado"></span>Ocupado</span>
-        </div>
+      <div class="section-title-wrapper mb-4">
+        <h1 class="section-title">MIS <span class="highlight">SESIONES</span></h1>
+        @if (centro) {
+          <p class="section-subtitle">{{ centro.nombre }} &mdash; {{ centro.direccion }}</p>
+        }
+        @if (!centro) {
+          <p class="section-subtitle no-centre">No tienes ningún centro deportivo asignado</p>
+        }
       </div>
 
-      <div class="slots-card">
-        <div class="slots-header">
-          <h2 class="slots-title">
-            <i class="bi bi-clock me-2"></i>
-            {{ fechaSeleccionada | date:'EEEE d \'de\' MMMM':'':'es' | titlecase }}
-          </h2>
-        </div>
+      @if (centro) {
+        <div class="content-grid">
 
-        @if (slotsDelDia.length === 0) {
-        <div class="empty-state text-center py-5">
-          <i class="bi bi-calendar-x empty-icon d-block mb-3"></i>
-
-          @if (esPasado(fechaSeleccionada)) {
-          <p>No se pueden gestionar sesiones de días pasados</p>
-          } @else if (esHoy(fechaSeleccionada)) {
-          <p>El horario del centro ya ha finalizado para hoy</p>
-          } @else {
-          <p>No hay horarios disponibles o el centro está cerrado</p>
-          }
-
-        </div>
-        }
-
-        @if (slotsDelDia.length > 0) {
-        <div class="slots-list">
-          @for (slot of slotsDelDia; track slot.horaInicio) {
-          <div class="slot-item" [class.slot-libre]="slot.estado === 'LIBRE'"
-            [class.slot-propio]="slot.estado === 'PROPIO'" [class.slot-ocupado]="slot.estado === 'OCUPADO'"
-            (click)="slot.estado === 'LIBRE' && abrirModal(slot)">
-
-            <div class="slot-time">
-              <span class="hora-inicio">{{ slot.horaInicio }}</span>
-              <span class="hora-sep">–</span>
-              <span class="hora-fin">{{ slot.horaFin }}</span>
-            </div>
-
-            @if (slot.estado === 'LIBRE') {
-            <div class="slot-info">
-              <span class="slot-badge badge-libre">
-                <i class="bi bi-plus-circle me-1"></i>Disponible
-              </span>
-            </div>
-            }
-
-            @if (slot.estado === 'PROPIO' && slot.sesion) {
-            <div class="slot-info">
-              <span class="slot-title">{{ slot.sesion.titulo }}</span>
-              <div class="slot-meta">
-                <span class="slot-badge badge-tipo">{{ slot.sesion.tipo }}</span>
-                <span class="slot-badge badge-modalidad">{{ slot.sesion.modalidad }}</span>
-                <span class="slot-badge badge-aforo">
-                  <i class="bi bi-people me-1"></i>{{ slot.sesion.aforoActual }}/{{ slot.sesion.aforoMax }}
-                </span>
-              </div>
-            </div>
-            }
-
-            @if (slot.estado === 'OCUPADO' && slot.sesion) {
-            <div class="slot-info">
-              <span class="slot-title muted">{{ slot.sesion.titulo }}</span>
-              <span class="slot-badge badge-ocupado">
-                <i class="bi bi-lock me-1"></i>Ocupado
-              </span>
-            </div>
-            }
-
-            @if (slot.estado === 'PROPIO' && slot.sesion) {
-            <div class="slot-actions">
-              <button class="btn-action btn-delete" (click)="$event.stopPropagation(); eliminarSesion(slot.sesion)"
-                title="Eliminar sesión">
-                <i class="bi bi-trash"></i>
+          <div class="calendar-card">
+            <div class="calendar-header">
+              <button class="btn-nav" (click)="mesAnterior()">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <span class="mes-label">{{ getNombreMes(mesActual) | titlecase }}</span>
+              <button class="btn-nav" (click)="mesSiguiente()">
+                <i class="bi bi-chevron-right"></i>
               </button>
             </div>
+
+            <div class="calendar-grid">
+              @for (d of diasSemana; track d) {
+                <div class="day-name">{{ d }}</div>
+              }
+              @for (semana of semanas; track $index) {
+                @for (dia of semana; track $index) {
+                  <div class="day-cell"
+                    [class.empty]="!dia"
+                    [class.today]="dia && esHoy(dia)"
+                    [class.selected]="dia && esSeleccionado(dia)"
+                    [class.past]="dia && esPasado(dia)"
+                    [class.has-sesion]="dia && tieneSesion(dia)"
+                    (click)="dia && seleccionarDia(dia)">
+                    @if (dia) {
+                      <span>{{ dia.getDate() }}</span>
+                      @if (tieneSesion(dia)) {
+                        <span class="sesion-dot"></span>
+                      }
+                    }
+                  </div>
+                }
+              }
+            </div>
+
+            <div class="legend">
+              <span class="legend-item"><span class="dot dot-sesion"></span>Con sesión</span>
+              <span class="legend-item"><span class="dot dot-hoy"></span>Hoy</span>
+            </div>
+          </div>
+
+          <div class="slots-card">
+            <div class="slots-header">
+              <h2 class="slots-title">
+                <i class="bi bi-clock me-2"></i>
+                {{ fechaSeleccionada | date:"EEEE d 'de' MMMM":undefined:'es' | titlecase }}
+              </h2>
+            </div>
+
+            @if (slotsDelDia.length === 0) {
+              <div class="empty-state text-center py-5">
+                <i class="bi bi-calendar-x empty-icon d-block mb-3"></i>
+                @if (esPasado(fechaSeleccionada)) {
+                  <p>No se pueden gestionar sesiones de días pasados</p>
+                } @else if (esHoy(fechaSeleccionada)) {
+                  <p>El horario del centro ya ha finalizado para hoy</p>
+                } @else {
+                  <p>No hay horarios disponibles o el centro está cerrado</p>
+                }
+              </div>
             }
 
+            @if (slotsDelDia.length > 0) {
+              <div class="slots-list">
+                @for (slot of slotsDelDia; track slot.horaInicio) {
+                  <div class="slot-item"
+                    [class.slot-libre]="slot.estado === 'LIBRE'"
+                    [class.slot-propio]="slot.estado === 'PROPIO'"
+                    [class.slot-ocupado]="slot.estado === 'OCUPADO'"
+                    (click)="slot.estado === 'LIBRE' && abrirModal(slot)">
+
+                    <div class="slot-time">
+                      <span class="hora-inicio">{{ slot.horaInicio }}</span>
+                      <span class="hora-sep">–</span>
+                      <span class="hora-fin">{{ slot.horaFin }}</span>
+                    </div>
+
+                    @if (slot.estado === 'LIBRE') {
+                      <div class="slot-info">
+                        <span class="slot-badge badge-libre">
+                          <i class="bi bi-plus-circle me-1"></i>Disponible
+                        </span>
+                      </div>
+                    }
+
+                    @if (slot.estado === 'PROPIO' && slot.sesion) {
+                      <div class="slot-info">
+                        <span class="slot-title">{{ slot.sesion.titulo }}</span>
+                        <div class="slot-meta">
+                          <span class="slot-badge badge-tipo">{{ slot.sesion.tipo }}</span>
+                          <span class="slot-badge badge-modalidad">{{ slot.sesion.modalidad }}</span>
+                          <span class="slot-badge badge-aforo">
+                            <i class="bi bi-people me-1"></i>
+                            {{ slot.sesion.aforoActual }}/{{ slot.sesion.aforoMax }}
+                          </span>
+                        </div>
+                      </div>
+                    }
+
+                    @if (slot.estado === 'OCUPADO' && slot.sesion) {
+                      <div class="slot-info">
+                        <span class="slot-title muted">{{ slot.sesion.titulo }}</span>
+                        <span class="slot-badge badge-ocupado">
+                          <i class="bi bi-lock me-1"></i>Ocupado
+                        </span>
+                      </div>
+                    }
+
+                    @if (slot.estado === 'PROPIO' && slot.sesion) {
+                      <div class="slot-actions">
+                        <button class="btn-action btn-delete"
+                          (click)="$event.stopPropagation(); eliminarSesion(slot.sesion)"
+                          title="Eliminar sesión">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    }
+
+                  </div>
+                }
+              </div>
+            }
           </div>
+
+        </div>
+
+        <div class="historial-card mt-5">
+          <div class="section-title-wrapper mb-4">
+            <h2 class="section-title sm">RESERVAS <span class="highlight">PENDIENTES</span></h2>
+            <p class="section-subtitle">Clientes con plaza confirmada en tus sesiones futuras</p>
+          </div>
+
+          @if (reservasPendientes.length === 0) {
+            <div class="empty-state text-center py-4">
+              <i class="bi bi-calendar2-check empty-icon d-block mb-3"></i>
+              <p>No hay reservas pendientes en tus sesiones</p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="admin-table w-100">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Horario</th>
+                    <th>Sesión</th>
+                    <th>Tipo</th>
+                    <th>Aforo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (reserva of reservasPendientes; track reserva.uid) {
+                    <tr>
+                      <td>{{ parsearFecha(reserva.fecha) }}</td>
+                      <td>
+                        @if (reserva.sesion) {
+                          {{ reserva.sesion.horaInicio }} – {{ reserva.sesion.horaFin }}
+                        } @else { — }
+                      </td>
+                      <td>{{ reserva.sesion?.titulo ?? '—' }}</td>
+                      <td>
+                        @if (reserva.sesion) {
+                          <span class="role-badge">{{ reserva.sesion.tipo }}</span>
+                        }
+                      </td>
+                      <td>
+                        @if (reserva.sesion) {
+                          <span class="badge-count">
+                            {{ reserva.sesion.aforoActual }}/{{ reserva.sesion.aforoMax }}
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           }
         </div>
-        }
-      </div>
 
-    </div>
+        <div class="historial-card mt-4">
+          <div class="section-title-wrapper mb-4">
+            <h2 class="section-title sm">HISTORIAL DE <span class="highlight">SESIONES</span></h2>
+            <p class="section-subtitle">Sesiones pasadas registradas en tu cuenta</p>
+          </div>
 
-    <div class="historial-card mt-5">
-      <div class="section-title-wrapper mb-4">
-        <h2 class="section-title sm">HISTORIAL DE <span class="highlight">SESIONES</span></h2>
-        <p class="section-subtitle">Sesiones pasadas registradas en tu cuenta</p>
-      </div>
+          @if (sesionesHistorial.length === 0) {
+            <div class="empty-state text-center py-4">
+              <i class="bi bi-journal-x empty-icon d-block mb-3"></i>
+              <p>Aún no tienes sesiones pasadas registradas</p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="admin-table w-100">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Horario</th>
+                    <th>Título</th>
+                    <th>Tipo</th>
+                    <th>Modalidad</th>
+                    <th>Aforo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (sesion of sesionesHistorial; track sesion.profesionalId) {
+                    <tr>
+                      <td>{{ parsearFecha(sesion.fecha) }}</td>
+                      <td>{{ sesion.horaInicio }} – {{ sesion.horaFin }}</td>
+                      <td>{{ sesion.titulo }}</td>
+                      <td><span class="role-badge">{{ sesion.tipo }}</span></td>
+                      <td><span class="role-badge">{{ sesion.modalidad }}</span></td>
+                      <td><span class="badge-count">{{ sesion.aforoActual }}/{{ sesion.aforoMax }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
 
-      @if (sesionesHistorial.length === 0) {
-      <div class="empty-state text-center py-4">
-        <i class="bi bi-journal-x empty-icon d-block mb-3"></i>
-        <p>Aún no tienes sesiones pasadas registradas</p>
-      </div>
+        <button class="btn-google-pro btn-outline-google-secondary w-100 mt-4"
+          (click)="navigateToHome()">
+          VOLVER A HOME
+        </button>
       }
 
-      @if (sesionesHistorial.length > 0) {
-      <div class="table-responsive">
-        <table class="admin-table w-100">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Horario</th>
-              <th>Título</th>
-              <th>Tipo</th>
-              <th>Modalidad</th>
-              <th>Aforo</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (sesion of sesionesHistorial; track sesion.profesionalId) {
-            <tr>
-              <td>{{ parsearFecha(sesion.fecha) }}</td>
-              <td>{{ sesion.horaInicio }} – {{ sesion.horaFin }}</td>
-              <td>{{ sesion.titulo }}</td>
-              <td><span class="role-badge">{{ sesion.tipo }}</span></td>
-              <td><span class="role-badge">{{ sesion.modalidad }}</span></td>
-              <td><span class="badge-count">{{ sesion.aforoActual }}/{{ sesion.aforoMax }}</span></td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      }
     </div>
-    }
-
-  </div>
   }
 
 </section>
 
 @if (modalVisible) {
-<div class="modal-backdrop" (click)="cerrarModal()"></div>
+  <div class="modal-backdrop" (click)="cerrarModal()"></div>
 }
 
 @if (modalVisible) {
-<div class="modal-panel">
-  <div class="modal-header-custom">
-    <h3 class="modal-title-custom">
-      <i class="bi bi-plus-circle me-2"></i>Nueva Sesión
-    </h3>
-    <button class="btn-close-modal" (click)="cerrarModal()">
-      <i class="bi bi-x-lg"></i>
-    </button>
-  </div>
-
-  @if (slotSeleccionado) {
-  <div class="modal-slot-info">
-    <i class="bi bi-clock me-2"></i>
-    {{ slotSeleccionado.horaInicio }} – {{ slotSeleccionado.horaFin }}
-    &nbsp;·&nbsp;
-    {{ fechaSeleccionada | date:'d \'de\' MMMM':'':'es' | titlecase }}
-  </div>
-  }
-
-  <div class="modal-body-custom">
-
-    <div class="form-group">
-      <label class="form-label-custom">Título <span class="required">*</span></label>
-      <input
-        type="text"
-        name="titulo"
-        class="form-control-custom"
-        [(ngModel)]="formSesion.titulo"
-        #tituloRef="ngModel"
-        required
-        placeholder="Ej: Sesión de fuerza"
-        [class.field-invalid]="tituloRef.invalid && tituloRef.touched">
-      @if (tituloRef.invalid && tituloRef.touched) {
-      <small class="field-error">El título es obligatorio.</small>
-      }
+  <div class="modal-panel">
+    <div class="modal-header-custom">
+      <h3 class="modal-title-custom">
+        <i class="bi bi-plus-circle me-2"></i>Nueva Sesión
+      </h3>
+      <button class="btn-close-modal" (click)="cerrarModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
 
-    <div class="form-group">
-      <label class="form-label-custom">Descripción <span class="required">*</span></label>
-      <textarea
-        class="form-control-custom"
-        name="descripcion"
-        [(ngModel)]="formSesion.descripcion"
-        #descripcionRef="ngModel"
-        required
-        rows="3"
-        placeholder="Descripción de la sesión"
-        [class.field-invalid]="descripcionRef.invalid && descripcionRef.touched"></textarea>
-      @if (descripcionRef.invalid && descripcionRef.touched) {
-      <small class="field-error">La descripción es obligatoria.</small>
-      }
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label-custom">Tipo <span class="required">*</span></label>
-        <select
-          class="form-control-custom"
-          name="tipo"
-          [(ngModel)]="formSesion.tipo"
-          #tipoRef="ngModel"
-          [disabled]="!!especialidad"
-          [class.field-invalid]="tipoRef.touched && !formSesion.tipo">
-          <option [ngValue]="null" disabled>Selecciona tipo</option>
-          @if (especialidad === 'ENTRENADOR') {
-          <option [ngValue]="TipoSesion.ENTRENAMIENTO">Entrenamiento</option>
-          }
-          @if (especialidad === 'FISIOTERAPEUTA') {
-          <option [ngValue]="TipoSesion.FISIOTERAPIA">Fisioterapia</option>
-          }
-          @if (!especialidad) {
-          <option [ngValue]="TipoSesion.ENTRENAMIENTO">Entrenamiento</option>
-          <option [ngValue]="TipoSesion.FISIOTERAPIA">Fisioterapia</option>
-          }
-        </select>
-        @if (tipoRef.touched && !formSesion.tipo) {
-        <small class="field-error">El tipo es obligatorio.</small>
-        }
+    @if (slotSeleccionado) {
+      <div class="modal-slot-info">
+        <i class="bi bi-clock me-2"></i>
+        {{ slotSeleccionado.horaInicio }} – {{ slotSeleccionado.horaFin }}
+        &nbsp;·&nbsp;
+        {{ fechaSeleccionada | date:"d 'de' MMMM":undefined:'es' | titlecase }}
       </div>
-
-      <div class="form-group">
-        <label class="form-label-custom">Modalidad <span class="required">*</span></label>
-        <select
-          class="form-control-custom"
-          name="modalidad"
-          [(ngModel)]="formSesion.modalidad"
-          #modalidadRef="ngModel"
-          [disabled]="especialidad === 'FISIOTERAPEUTA'"
-          [class.field-invalid]="modalidadRef.touched && !formSesion.modalidad">
-          <option [ngValue]="null" disabled>Selecciona modalidad</option>
-          <option [ngValue]="ModalidadSesion.INDIVIDUAL">Individual</option>
-          @if (especialidad !== 'FISIOTERAPEUTA') {
-          <option [ngValue]="ModalidadSesion.GRUPAL">Grupal</option>
-          }
-        </select>
-        @if (modalidadRef.touched && !formSesion.modalidad) {
-        <small class="field-error">La modalidad es obligatoria.</small>
-        }
-      </div>
-    </div>
-
-    @if (formSesion.modalidad === ModalidadSesion.GRUPAL) {
-    <div class="form-group">
-      <label class="form-label-custom">Aforo máximo <span class="required">*</span></label>
-      <input type="number" class="form-control-custom" name="aforoMax" [(ngModel)]="formSesion.aforoMax" min="2" max="50">
-    </div>
     }
 
-  </div>
+    <div class="modal-body-custom">
 
-  <div class="modal-footer-custom">
-    <button class="btn-google-pro btn-outline-google-secondary" (click)="cerrarModal()">
-      Cancelar
-    </button>
-    <button class="btn-google-pro btn-outline-google-success" (click)="guardarSesion()">
-      <i class="bi bi-check-lg me-1"></i>Guardar sesión
-    </button>
+      <div class="form-group">
+        <label class="form-label-custom">Título <span class="required">*</span></label>
+        <input type="text" name="titulo" class="form-control-custom"
+          [(ngModel)]="formSesion.titulo" #tituloRef="ngModel" required
+          placeholder="Ej: Sesión de fuerza"
+          [class.field-invalid]="tituloRef.invalid && tituloRef.touched">
+        @if (tituloRef.invalid && tituloRef.touched) {
+          <small class="field-error">El título es obligatorio.</small>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label-custom">Descripción <span class="required">*</span></label>
+        <textarea class="form-control-custom" name="descripcion"
+          [(ngModel)]="formSesion.descripcion" #descripcionRef="ngModel" required rows="3"
+          placeholder="Descripción de la sesión"
+          [class.field-invalid]="descripcionRef.invalid && descripcionRef.touched"></textarea>
+        @if (descripcionRef.invalid && descripcionRef.touched) {
+          <small class="field-error">La descripción es obligatoria.</small>
+        }
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label-custom">Tipo <span class="required">*</span></label>
+          <select class="form-control-custom" name="tipo" [(ngModel)]="formSesion.tipo"
+            #tipoRef="ngModel" [disabled]="!!especialidad"
+            [class.field-invalid]="tipoRef.touched && !formSesion.tipo">
+            <option [ngValue]="null" disabled>Selecciona tipo</option>
+            @if (especialidad === 'ENTRENADOR') {
+              <option [ngValue]="TipoSesion.ENTRENAMIENTO">Entrenamiento</option>
+            }
+            @if (especialidad === 'FISIOTERAPEUTA') {
+              <option [ngValue]="TipoSesion.FISIOTERAPIA">Fisioterapia</option>
+            }
+            @if (!especialidad) {
+              <option [ngValue]="TipoSesion.ENTRENAMIENTO">Entrenamiento</option>
+              <option [ngValue]="TipoSesion.FISIOTERAPIA">Fisioterapia</option>
+            }
+          </select>
+          @if (tipoRef.touched && !formSesion.tipo) {
+            <small class="field-error">El tipo es obligatorio.</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label-custom">Modalidad <span class="required">*</span></label>
+          <select class="form-control-custom" name="modalidad"
+            [(ngModel)]="formSesion.modalidad" #modalidadRef="ngModel"
+            [disabled]="especialidad === 'FISIOTERAPEUTA'"
+            [class.field-invalid]="modalidadRef.touched && !formSesion.modalidad">
+            <option [ngValue]="null" disabled>Selecciona modalidad</option>
+            <option [ngValue]="ModalidadSesion.INDIVIDUAL">Individual</option>
+            @if (especialidad !== 'FISIOTERAPEUTA') {
+              <option [ngValue]="ModalidadSesion.GRUPAL">Grupal</option>
+            }
+          </select>
+          @if (modalidadRef.touched && !formSesion.modalidad) {
+            <small class="field-error">La modalidad es obligatoria.</small>
+          }
+        </div>
+      </div>
+
+      @if (formSesion.modalidad === ModalidadSesion.GRUPAL) {
+        <div class="form-group">
+          <label class="form-label-custom">Aforo máximo <span class="required">*</span></label>
+          <input type="number" class="form-control-custom" name="aforoMax"
+            [(ngModel)]="formSesion.aforoMax" min="2" max="50">
+        </div>
+      }
+
+    </div>
+
+    <div class="modal-footer-custom">
+      <button class="btn-google-pro btn-outline-google-secondary" (click)="cerrarModal()">
+        Cancelar
+      </button>
+      <button class="btn-google-pro btn-outline-google-success" (click)="guardarSesion()">
+        <i class="bi bi-check-lg me-1"></i>Guardar sesión
+      </button>
+    </div>
   </div>
-</div>
 }
