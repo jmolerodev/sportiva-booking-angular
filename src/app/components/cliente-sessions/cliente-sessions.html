@@ -1,244 +1,248 @@
 <section class="session-section">
 
   @if (loading) {
-  <div class="spinner-overlay d-flex align-items-center justify-content-center">
-    <div class="spinner-border text-success" role="status">
-      <span class="visually-hidden">Cargando...</span>
+    <div class="spinner-overlay d-flex align-items-center justify-content-center">
+      <div class="spinner-border text-success" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
     </div>
-  </div>
   }
 
   @if (!loading) {
-  <div class="container py-5">
+    <div class="container py-5">
 
-    <div class="section-title-wrapper mb-4">
-      <h1 class="section-title">MIS <span class="highlight">RESERVAS</span></h1>
-      <p class="section-subtitle">Consulta tus sesiones reservadas y gestiona tu historial</p>
-    </div>
+      <div class="section-title-wrapper mb-4">
+        <h1 class="section-title">MIS <span class="highlight">RESERVAS</span></h1>
+        <p class="section-subtitle">Consulta tus sesiones reservadas y gestiona tu historial</p>
+      </div>
 
-    <div class="content-grid">
+      <div class="content-grid">
 
-      <div class="calendar-card">
-        <div class="calendar-header">
-          <button class="btn-nav" (click)="mesAnterior()">
-            <i class="bi bi-chevron-left"></i>
-          </button>
-          <span class="mes-label">{{ getNombreMes(mesActual) | titlecase }}</span>
-          <button class="btn-nav" (click)="mesSiguiente()">
-            <i class="bi bi-chevron-right"></i>
-          </button>
-        </div>
+        <div class="calendar-card">
+          <div class="calendar-header">
+            <button class="btn-nav" (click)="mesAnterior()">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="mes-label">{{ getNombreMes(mesActual) | titlecase }}</span>
+            <button class="btn-nav" (click)="mesSiguiente()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
 
-        <div class="calendar-grid">
-          @for (d of diasSemana; track d) {
-          <div class="day-name">{{ d }}</div>
-          }
-          @for (semana of semanas; track $index) {
-          @for (dia of semana; track $index) {
-          <div class="day-cell"
-            [class.empty]="!dia"
-            [class.today]="dia && esHoy(dia)"
-            [class.selected]="dia && esSeleccionado(dia)"
-            [class.past]="dia && esPasado(dia)"
-            [class.has-reserva]="dia && tieneReserva(dia)"
-            (click)="dia && seleccionarDia(dia)">
-            @if (dia) {
-              <span>{{ dia.getDate() }}</span>
-              @if (tieneReserva(dia)) {
-                <span class="reserva-dot"></span>
+          <div class="calendar-grid">
+            @for (d of diasSemana; track d) {
+              <div class="day-name">{{ d }}</div>
+            }
+            @for (semana of semanas; track $index) {
+              @for (dia of semana; track $index) {
+                <div class="day-cell"
+                  [class.empty]="!dia"
+                  [class.today]="dia && esHoy(dia)"
+                  [class.selected]="dia && esSeleccionado(dia)"
+                  [class.past]="dia && esPasado(dia)"
+                  [class.has-reserva]="dia && tieneReserva(dia)"
+                  (click)="dia && seleccionarDia(dia)">
+                  @if (dia) {
+                    <span>{{ dia.getDate() }}</span>
+                    @if (tieneReserva(dia)) {
+                      <span class="reserva-dot"></span>
+                    }
+                  }
+                </div>
               }
             }
           </div>
-          }
-          }
+
+          <div class="legend">
+            <span class="legend-item"><span class="dot dot-reserva"></span>Con reserva</span>
+            <span class="legend-item"><span class="dot dot-hoy"></span>Hoy</span>
+          </div>
         </div>
 
-        <div class="legend">
-          <span class="legend-item"><span class="dot dot-reserva"></span>Con reserva</span>
-          <span class="legend-item"><span class="dot dot-hoy"></span>Hoy</span>
-        </div>
-      </div>
+        <div class="slots-card">
+          <div class="slots-header">
+            <h2 class="slots-title">
+              <i class="bi bi-clock me-2"></i>
+              {{ fechaSeleccionada | date:"EEEE d 'de' MMMM":undefined:'es' | titlecase }}
+            </h2>
+          </div>
 
-      <div class="slots-card">
-        <div class="slots-header">
-          <h2 class="slots-title">
-            <i class="bi bi-clock me-2"></i>
-            {{ fechaSeleccionada | date:"EEEE d 'de' MMMM":undefined:'es' | titlecase }}
-          </h2>
-        </div>
-
-        @if (reservasDelDia.length === 0) {
-        <div class="empty-state text-center py-5">
-          <i class="bi bi-calendar-check empty-icon d-block mb-3"></i>
-          <p>No tienes sesiones reservadas para este día</p>
-        </div>
-        } @else {
-        <div class="slots-list">
-          @for (reserva of reservasDelDia; track reserva.uid) {
-          <div class="slot-item slot-reservada">
-            <div class="slot-time">
-              <span class="hora-inicio">{{ reserva.sesion?.horaInicio ?? '—' }}</span>
-              <span class="hora-sep">–</span>
-              <span class="hora-fin">{{ reserva.sesion?.horaFin ?? '—' }}</span>
+          @if (reservasDelDia.length === 0) {
+            <div class="empty-state text-center py-5">
+              <i class="bi bi-calendar-check empty-icon d-block mb-3"></i>
+              <p>No tienes sesiones reservadas para este día</p>
             </div>
-            <div class="slot-info">
-              <span class="slot-title">{{ reserva.sesion?.titulo ?? '—' }}</span>
-              <div class="slot-meta">
-                @if (reserva.sesion) {
-                <span class="slot-badge badge-tipo">{{ reserva.sesion.tipo }}</span>
-                <span class="slot-badge badge-modalidad">{{ reserva.sesion.modalidad }}</span>
-                <span class="slot-badge badge-aforo">
-                  <i class="bi bi-people me-1"></i>
-                  {{ reserva.sesion.aforoActual }}/{{ reserva.sesion.aforoMax }}
-                </span>
-                }
-              </div>
-            </div>
-            <div class="slot-actions">
-              @if (!esPasado(fechaSeleccionada)) {
-              <button class="btn-action btn-cancelar"
-                (click)="cancelarReserva(reserva)"
-                title="Cancelar reserva">
-                <i class="bi bi-x-circle me-1"></i>Cancelar
-              </button>
+          } @else {
+            <div class="slots-list">
+              @for (reserva of reservasDelDia; track reserva.uid) {
+                <div class="slot-item slot-reservada">
+                  <div class="slot-time">
+                    <span class="hora-inicio">{{ reserva.sesion?.horaInicio ?? '—' }}</span>
+                    <span class="hora-sep">–</span>
+                    <span class="hora-fin">{{ reserva.sesion?.horaFin ?? '—' }}</span>
+                  </div>
+                  <div class="slot-info">
+                    <span class="slot-title">{{ reserva.sesion?.titulo ?? '—' }}</span>
+                    <div class="slot-meta">
+                      @if (reserva.sesion) {
+                        <span class="slot-badge badge-info">{{ reserva.sesion.tipo }}</span>
+                        <span class="slot-badge badge-info">{{ reserva.sesion.modalidad }}</span>
+                        <span class="slot-badge badge-aforo">
+                          <i class="bi bi-people me-1"></i>
+                          {{ reserva.sesion.aforoActual }}/{{ reserva.sesion.aforoMax }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+                  <div class="slot-actions">
+                    @if (!reserva.yaFinalizada) {
+                      <button class="btn-action btn-cancelar"
+                        (click)="cancelarReserva(reserva)"
+                        title="Cancelar reserva">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                      </button>
+                    }
+                  </div>
+                </div>
               }
             </div>
-          </div>
           }
         </div>
+
+      </div>
+
+      <!-- RESERVAS PENDIENTES -->
+      <div class="historial-card mt-5">
+        <div class="section-title-wrapper mb-4">
+          <h2 class="section-title text-dark">RESERVAS <span class="highlight">PENDIENTES</span></h2>
+          <p class="section-subtitle">Sesiones futuras confirmadas — cancélalas si no puedes asistir</p>
+        </div>
+
+        @if (reservasPendientes.length === 0) {
+          <div class="empty-state text-center py-4">
+            <i class="bi bi-calendar2-check empty-icon d-block mb-3"></i>
+            <p>No tienes ninguna reserva pendiente</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="admin-table w-100">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Horario</th>
+                  <th>Sesión</th>
+                  <th>Tipo</th>
+                  <th>Modalidad</th>
+                  <th>Centro</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (reserva of reservasPendientes; track reserva.uid) {
+                  <tr>
+                    <td><span class="cell-badge">{{ parsearFecha(reserva.fecha) }}</span></td>
+                    <td><span class="cell-badge">{{ reserva.sesion?.horaInicio ?? '—' }} – {{ reserva.sesion?.horaFin ?? '—' }}</span></td>
+                    <td><span class="cell-badge">{{ reserva.sesion?.titulo ?? '—' }}</span></td>
+                    <td>
+                      @if (reserva.sesion) {
+                        <span class="cell-badge">{{ reserva.sesion.tipo }}</span>
+                      }
+                    </td>
+                    <td>
+                      @if (reserva.sesion) {
+                        <span class="cell-badge">{{ reserva.sesion.modalidad }}</span>
+                      }
+                    </td>
+                    <td><span class="cell-badge">{{ getNombreCentro(reserva.centroId) }}</span></td>
+                    <td>
+                      <span class="estado-badge badge-confirmada">{{ reserva.estado }}</span>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn-cancelar-sm" (click)="cancelarReserva(reserva)"
+                        title="Cancelar reserva">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         }
       </div>
 
+      <!-- HISTORIAL -->
+      <div class="historial-card mt-4">
+        <div class="section-title-wrapper mb-4">
+          <h2 class="section-title text-dark">HISTORIAL DE <span class="highlight">SESIONES</span></h2>
+          <p class="section-subtitle">Sesiones pasadas y reservas canceladas</p>
+        </div>
+
+        @if (reservasHistorial.length === 0) {
+          <div class="empty-state text-center py-4">
+            <i class="bi bi-journal-x empty-icon d-block mb-3"></i>
+            <p>Aún no tienes actividad registrada</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="admin-table w-100">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Horario</th>
+                  <th>Sesión</th>
+                  <th>Tipo</th>
+                  <th>Modalidad</th>
+                  <th>Centro</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (reserva of reservasHistorial; track reserva.uid) {
+                  <tr>
+                    <td><span class="cell-badge">{{ parsearFecha(reserva.fecha) }}</span></td>
+                    <td><span class="cell-badge">{{ reserva.sesion?.horaInicio ?? '—' }} – {{ reserva.sesion?.horaFin ?? '—' }}</span></td>
+                    <td><span class="cell-badge">{{ reserva.sesion?.titulo ?? '—' }}</span></td>
+                    <td>
+                      @if (reserva.sesion) {
+                        <span class="cell-badge">{{ reserva.sesion.tipo }}</span>
+                      }
+                    </td>
+                    <td>
+                      @if (reserva.sesion) {
+                        <span class="cell-badge">{{ reserva.sesion.modalidad }}</span>
+                      }
+                    </td>
+                    <td><span class="cell-badge">{{ getNombreCentro(reserva.centroId) }}</span></td>
+                    <td>
+                      <span class="estado-badge"
+                        [class.badge-finalizada]="reserva.estado === EstadoReserva.FINALIZADA"
+                        [class.badge-cancelada]="reserva.estado === EstadoReserva.CANCELADA">
+                        {{ reserva.estado }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn-cancelar-sm" (click)="eliminarReserva(reserva)"
+                        title="Eliminar registro">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <button class="btn-google-pro btn-outline-google-secondary w-100 mt-4"
+        (click)="navigateToHome()">
+        VOLVER A HOME
+      </button>
+
     </div>
-
-    <div class="historial-card mt-5">
-      <div class="section-title-wrapper mb-4">
-        <h2 class="section-title text-dark">RESERVAS <span class="highlight">PENDIENTES</span></h2>
-        <p class="section-subtitle">Sesiones futuras confirmadas — cancélalas si no puedes asistir</p>
-      </div>
-
-      @if (reservasPendientes.length === 0) {
-      <div class="empty-state text-center py-4">
-        <i class="bi bi-calendar2-check empty-icon d-block mb-3"></i>
-        <p>No tienes ninguna reserva pendiente</p>
-      </div>
-      } @else {
-      <div class="table-responsive">
-        <table class="admin-table w-100">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Horario</th>
-              <th>Sesión</th>
-              <th>Tipo</th>
-              <th>Aforo</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (reserva of reservasPendientes; track reserva.uid) {
-            <tr>
-              <td>{{ parsearFecha(reserva.fecha) }}</td>
-              <td>
-                @if (reserva.sesion) {
-                  {{ reserva.sesion.horaInicio }} – {{ reserva.sesion.horaFin }}
-                } @else { — }
-              </td>
-              <td>{{ reserva.sesion?.titulo ?? '—' }}</td>
-              <td>
-                @if (reserva.sesion) {
-                <span class="role-badge">{{ reserva.sesion.tipo }}</span>
-                }
-              </td>
-              <td>
-                @if (reserva.sesion) {
-                <span class="badge-count">
-                  {{ reserva.sesion.aforoActual }}/{{ reserva.sesion.aforoMax }}
-                </span>
-                }
-              </td>
-              <td>
-                <button class="btn-cancelar-sm" (click)="cancelarReserva(reserva)"
-                  title="Cancelar reserva">
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              </td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      }
-    </div>
-
-    <div class="historial-card mt-4">
-      <div class="section-title-wrapper mb-4">
-        <h2 class="section-title text-dark">HISTORIAL DE <span class="highlight">SESIONES</span></h2>
-        <p class="section-subtitle">Sesiones pasadas y reservas canceladas</p>
-      </div>
-
-      @if (reservasHistorial.length === 0) {
-      <div class="empty-state text-center py-4">
-        <i class="bi bi-journal-x empty-icon d-block mb-3"></i>
-        <p>Aún no tienes actividad registrada</p>
-      </div>
-      } @else {
-      <div class="table-responsive">
-        <table class="admin-table w-100">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Horario</th>
-              <th>Sesión</th>
-              <th>Tipo</th>
-              <th>Estado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (reserva of reservasHistorial; track reserva.uid) {
-            <tr>
-              <td>{{ parsearFecha(reserva.fecha) }}</td>
-              <td>
-                @if (reserva.sesion) {
-                  {{ reserva.sesion.horaInicio }} – {{ reserva.sesion.horaFin }}
-                } @else { — }
-              </td>
-              <td>{{ reserva.sesion?.titulo ?? '—' }}</td>
-              <td>
-                @if (reserva.sesion) {
-                <span class="role-badge">{{ reserva.sesion.tipo }}</span>
-                }
-              </td>
-              <td>
-                <span class="estado-badge"
-                  [class.badge-confirmada]="reserva.estado === EstadoReserva.CONFIRMADA"
-                  [class.badge-cancelada]="reserva.estado === EstadoReserva.CANCELADA">
-                  {{ reserva.estado }}
-                </span>
-              </td>
-              <td>
-                @if (reserva.estado === EstadoReserva.CANCELADA) {
-                <button class="btn-cancelar-sm" (click)="eliminarReserva(reserva)"
-                  title="Eliminar registro">
-                  <i class="bi bi-trash"></i>
-                </button>
-                }
-              </td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      }
-    </div>
-
-    <button class="btn-google-pro btn-outline-google-secondary w-100 mt-4"
-      (click)="navigateToHome()">
-      VOLVER A HOME
-    </button>
-
-  </div>
   }
 
 </section>

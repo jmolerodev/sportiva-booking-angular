@@ -53,10 +53,11 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   /* Slots horarios generados a partir del horario del centro para el día seleccionado */
   public slotsDelDia: ISlotHorario[] = [];
 
-  /* Historial de sesiones pasadas del profesional ordenadas de más reciente a más antigua */
-  public sesionesHistorial: ISession[] = [];
+  /* Historial de sesiones pasadas O canceladas del profesional, de más reciente a más antigua.
+   * Incluye estadoVista para mostrar FINALIZADA o CANCELADA según corresponda. */
+  public sesionesHistorial: (ISession & { uid: string; estadoVista: EstadoSesion })[] = [];
 
-  /* Reservas futuras confirmadas en sesiones del profesional ordenadas por fecha ascendente */
+  /* Reservas futuras confirmadas en sesiones activas del profesional, por fecha ascendente */
   public reservasPendientes: (IBooking & { sesion?: ISession & { uid: string } })[] = [];
 
   /* Flag de control para la gestión del estado de carga global (Spinner) */
@@ -121,7 +122,7 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
 
   /**
    * Inicialización del componente: carga del profesional autenticado, su especialidad,
-   * su centro vinculado, el historial de sesiones pasadas y las reservas pendientes en paralelo.
+   * su centro vinculado, el historial de sesiones y las reservas pendientes en paralelo.
    */
   ngOnInit(): void {
     this.generarCalendario();
@@ -174,7 +175,7 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
       })
     );
 
-    /* Flujo paralelo: historial de sesiones pasadas y cache para reservas pendientes */
+    /* Flujo paralelo: historial (sesiones pasadas + canceladas) y cache para reservas pendientes */
     this.subscription.add(
       this.authService.getCurrentUser().pipe(
         switchMap(user => {
@@ -188,20 +189,33 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
 
           this.todasLasSesiones = (sesiones ?? []) as (ISession & { uid: string })[];
 
-          /* Reconstruimos el Set de días con sesión propia para los indicadores del calendario */
+          /* Reconstruimos el Set de días con sesión propia activa para los indicadores del calendario */
           this.diasConSesion = new Set(
             this.todasLasSesiones
               .filter(s => s.estado === EstadoSesion.ACTIVA)
               .map(s => this.claveDia(new Date(s.fecha)))
           );
 
+          /*
+           * Historial: sesiones CANCELADAS (a cualquier fecha) +
+           * sesiones ACTIVAS cuya hora de fin ya ha pasado (finalizadas).
+           * Equivalente al historial del cliente: canceladas por acción explícita
+           * o finalizadas por el paso del tiempo.
+           */
           this.sesionesHistorial = this.todasLasSesiones
             .filter(s => {
+              if (s.estado === EstadoSesion.CANCELADA) return true;
               const [hFin, mFin] = s.horaFin.split(':').map(Number);
               const fechaFin     = new Date(s.fecha);
               fechaFin.setHours(hFin, mFin, 0, 0);
               return fechaFin.getTime() < ahora;
             })
+            .map(s => ({
+              ...s,
+              estadoVista: s.estado === EstadoSesion.CANCELADA
+                ? EstadoSesion.CANCELADA
+                : EstadoSesion.FINALIZADA
+            }))
             .sort((a, b) => b.fecha - a.fecha);
 
           this.loadingHistorial = false;
@@ -252,12 +266,14 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
 
   /**
    * Reconstruye la lista de reservas pendientes del profesional cruzando
-   * las sesiones futuras activas con las reservas confirmadas de cada una.
+   * las sesiones futuras ACTIVAS con las reservas confirmadas de cada una.
+   * Las sesiones canceladas quedan excluidas: no generan reservas pendientes.
    * Se invoca cada vez que Firebase emite nuevos datos de sesiones o reservas.
    */
   private reconstruirReservasPendientes(): void {
     const ahora = Date.now();
 
+    /* Solo sesiones ACTIVAS con hora de fin futura */
     const sesionesVigentes = this.todasLasSesiones.filter(s => {
       const [hFin, mFin] = s.horaFin.split(':').map(Number);
       const fechaFin     = new Date(s.fecha);
@@ -300,6 +316,60 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
         })
       );
     });
+  }
+
+  /**
+   * Cancelación lógica de una sesión activa: actualiza su estado a CANCELADA sin
+   * borrarla de Firebase, de modo que caiga al historial exactamente igual que
+   * las sesiones finalizadas por el paso del tiempo.
+   * El borrado físico queda exclusivamente en manos del profesional desde el historial.
+   * Disponible tanto desde los slots del calendario como desde la tabla de pendientes.
+   * @param sesion Sesión a cancelar, debe incluir el uid del nodo de Firebase
+   */
+  cancelarSesion(sesion: ISession & { uid?: string }): void {
+    if (!sesion?.uid) return;
+
+    this.snackbarService.showConfirm(
+      '¿Cancelar esta sesión? Pasará al historial y podrás eliminarla posteriormente.',
+      'CANCELAR',
+      () => {
+        this.sessionService.cancelSession(sesion.uid!).then(() => {
+          this.snackbarService.showSuccess('Sesión cancelada correctamente');
+          this.cargarSesionesDelDia();
+        }).catch(e => {
+          console.error('Error al cancelar la sesión:', e);
+          this.snackbarService.showError('Error al cancelar la sesión');
+        });
+      }
+    );
+  }
+
+  /**
+   * Proceso de eliminación física de una sesión del historial con confirmación previa.
+   * Invoca el borrado en cascada que elimina también todas las reservas asociadas.
+   * Solo disponible para sesiones ya finalizadas o canceladas en el historial.
+   * @param sesion Sesión a eliminar, debe incluir el uid del nodo de Firebase
+   */
+  eliminarSesionHistorial(sesion: ISession & { uid: string }): void {
+    if (!sesion?.uid) return;
+
+    this.snackbarService.showConfirm(
+      '¿Eliminar este registro del historial permanentemente?',
+      'ELIMINAR',
+      () => {
+        this.subscription.add(
+          this.sessionService.deleteSession(sesion.uid).pipe(
+            takeUntil(this.destroy$)
+          ).subscribe({
+            next: () => this.snackbarService.showSuccess('Registro eliminado correctamente'),
+            error: e => {
+              console.error('Error al eliminar la sesión del historial:', e);
+              this.snackbarService.showError('Error al eliminar el registro');
+            }
+          })
+        );
+      }
+    );
   }
 
   /**
@@ -418,7 +488,7 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
    * @returns Array de slots con hora, estado y sesión asociada si la hay
    */
   private generarSlots(): ISlotHorario[] {
-    if (!this.centro?.horario)           return [];
+    if (!this.centro?.horario)                 return [];
     if (this.esPasado(this.fechaSeleccionada)) return [];
 
     const nombreDia  = this.getNombreDia(this.fechaSeleccionada);
@@ -450,9 +520,9 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
       ) ?? null;
 
       let estado: EstadoSlot;
-      if (!sesion)                                      estado = EstadoSlot.LIBRE;
-      else if (sesion.profesionalId == this.profesionalUid) estado = EstadoSlot.PROPIO;
-      else                                              estado = EstadoSlot.OCUPADO;
+      if (!sesion)                                           estado = EstadoSlot.LIBRE;
+      else if (sesion.profesionalId == this.profesionalUid)  estado = EstadoSlot.PROPIO;
+      else                                                   estado = EstadoSlot.OCUPADO;
 
       slots.push({ horaInicio, horaFin, estado, sesion });
     }
@@ -576,32 +646,6 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   }
 
   /**
-   * Proceso de eliminación física de una sesión propia con confirmación previa.
-   * Elimina directamente el nodo en Firebase sin pasar por estado CANCELADA.
-   * @param sesion Sesión a eliminar, debe incluir el uid del nodo de Firebase
-   */
-  eliminarSesion(sesion: ISession & { uid?: string }): void {
-    if (!sesion?.uid) return;
-
-    this.snackbarService.showConfirm('¿Deseas eliminar esta sesión permanentemente?', 'Confirmar', () => {
-      this.subscription.add(
-        this.sessionService.deleteSession(sesion.uid!).pipe(
-          takeUntil(this.destroy$)
-        ).subscribe({
-          next: () => {
-            this.snackbarService.showSuccess('Sesión eliminada correctamente');
-            this.cargarSesionesDelDia();
-          },
-          error: e => {
-            console.error('Error al eliminar la sesión:', e);
-            this.snackbarService.showError('Error al eliminar la sesión');
-          }
-        })
-      );
-    });
-  }
-
-  /**
    * Comprueba si una fecha del calendario corresponde al día de hoy.
    * @param dia Objeto Date a comprobar
    */
@@ -658,11 +702,11 @@ export class ProfesionalSessions implements OnInit, OnDestroy {
   }
 
   /**
- * Redirección al panel principal de la aplicación.
- */
-navigateToHome(): void {
-  this.router.navigate(['/home']);
-}
+   * Redirección al panel principal de la aplicación.
+   */
+  navigateToHome(): void {
+    this.router.navigate(['/home']);
+  }
 
   /**
    * Limpieza centralizada: completa el Subject destroy$ para cancelar todos

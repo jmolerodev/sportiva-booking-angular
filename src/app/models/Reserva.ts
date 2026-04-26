@@ -1,16 +1,16 @@
 import { DomainEntity } from './DomainEntity';
 import { EstadoReserva } from '../enums/EstadoReserva';
-import { ISesionSnapshot } from '../interfaces/Reserva-Interface';
+
 
 export class Booking extends DomainEntity {
-  
+
   /*Atributos de la Clase*/
-    sesionId: string;
+  sesionId: string;
   clienteId: string;
   centroId: string;
   fecha: number;
   estado: EstadoReserva;
-  sesionSnapshot?: ISesionSnapshot;
+
 
   /*Constructor de la Close*/
   constructor(
@@ -20,7 +20,7 @@ export class Booking extends DomainEntity {
     centroId: string,
     fecha: number,
     estado: EstadoReserva,
-    sesionSnapshot?: ISesionSnapshot,
+
   ) {
     super(id);
     this.sesionId = sesionId;
@@ -28,6 +28,6 @@ export class Booking extends DomainEntity {
     this.centroId = centroId;
     this.fecha = fecha;
     this.estado = estado;
-    this.sesionSnapshot = sesionSnapshot;
+
   }
 }

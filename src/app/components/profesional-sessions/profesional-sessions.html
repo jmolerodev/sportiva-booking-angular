@@ -113,8 +113,8 @@
                       <div class="slot-info">
                         <span class="slot-title">{{ slot.sesion.titulo }}</span>
                         <div class="slot-meta">
-                          <span class="slot-badge badge-tipo">{{ slot.sesion.tipo }}</span>
-                          <span class="slot-badge badge-modalidad">{{ slot.sesion.modalidad }}</span>
+                          <span class="slot-badge badge-info">{{ slot.sesion.tipo }}</span>
+                          <span class="slot-badge badge-info">{{ slot.sesion.modalidad }}</span>
                           <span class="slot-badge badge-aforo">
                             <i class="bi bi-people me-1"></i>
                             {{ slot.sesion.aforoActual }}/{{ slot.sesion.aforoMax }}
@@ -134,10 +134,10 @@
 
                     @if (slot.estado === 'PROPIO' && slot.sesion) {
                       <div class="slot-actions">
-                        <button class="btn-action btn-delete"
-                          (click)="$event.stopPropagation(); eliminarSesion(slot.sesion)"
-                          title="Eliminar sesión">
-                          <i class="bi bi-trash"></i>
+                        <button class="btn-cancelar-sm"
+                          (click)="$event.stopPropagation(); cancelarSesion(slot.sesion)"
+                          title="Cancelar sesión">
+                          <i class="bi bi-x-lg"></i>
                         </button>
                       </div>
                     }
@@ -150,9 +150,10 @@
 
         </div>
 
+        <!-- RESERVAS PENDIENTES -->
         <div class="historial-card mt-5">
           <div class="section-title-wrapper mb-4">
-            <h2 class="section-title text-dark">RESERVAS <span class="highlight">PENDIENTES:</span></h2>
+            <h2 class="section-title text-dark">RESERVAS <span class="highlight">PENDIENTES</span></h2>
             <p class="section-subtitle">Clientes con plaza confirmada en tus sesiones futuras</p>
           </div>
 
@@ -170,29 +171,39 @@
                     <th>Horario</th>
                     <th>Sesión</th>
                     <th>Tipo</th>
-                    <th>Aforo</th>
+                    <th>Modalidad</th>
+                    <th>Centro</th>
+                    <th>Estado</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (reserva of reservasPendientes; track reserva.uid) {
                     <tr>
-                      <td>{{ parsearFecha(reserva.fecha) }}</td>
+                      <td><span class="cell-badge">{{ parsearFecha(reserva.fecha) }}</span></td>
+                      <td><span class="cell-badge">{{ reserva.sesion?.horaInicio ?? '—' }} – {{ reserva.sesion?.horaFin ?? '—' }}</span></td>
+                      <td><span class="cell-badge">{{ reserva.sesion?.titulo ?? '—' }}</span></td>
                       <td>
                         @if (reserva.sesion) {
-                          {{ reserva.sesion.horaInicio }} – {{ reserva.sesion.horaFin }}
-                        } @else { — }
-                      </td>
-                      <td>{{ reserva.sesion?.titulo ?? '—' }}</td>
-                      <td>
-                        @if (reserva.sesion) {
-                          <span class="role-badge">{{ reserva.sesion.tipo }}</span>
+                          <span class="cell-badge">{{ reserva.sesion.tipo }}</span>
                         }
                       </td>
                       <td>
                         @if (reserva.sesion) {
-                          <span class="badge-count">
-                            {{ reserva.sesion.aforoActual }}/{{ reserva.sesion.aforoMax }}
-                          </span>
+                          <span class="cell-badge">{{ reserva.sesion.modalidad }}</span>
+                        }
+                      </td>
+                      <td><span class="cell-badge">{{ centro.nombre }}</span></td>
+                      <td>
+                        <span class="estado-badge badge-confirmada">{{ reserva.estado }}</span>
+                      </td>
+                      <td class="text-center">
+                        @if (reserva.sesion) {
+                          <button class="btn-cancelar-sm"
+                            (click)="cancelarSesion(reserva.sesion)"
+                            title="Cancelar sesión">
+                            <i class="bi bi-x-lg"></i>
+                          </button>
                         }
                       </td>
                     </tr>
@@ -203,10 +214,11 @@
           }
         </div>
 
+        <!-- HISTORIAL -->
         <div class="historial-card mt-4">
           <div class="section-title-wrapper mb-4">
-            <h2 class="section-title text-dark">HISTORIAL DE <span class="highlight">SESIONES:</span></h2>
-            <p class="section-subtitle">Sesiones pasadas registradas en tu cuenta</p>
+            <h2 class="section-title text-dark">HISTORIAL DE <span class="highlight">SESIONES</span></h2>
+            <p class="section-subtitle">Sesiones pasadas y canceladas registradas en tu cuenta</p>
           </div>
 
           @if (sesionesHistorial.length === 0) {
@@ -221,21 +233,37 @@
                   <tr>
                     <th>Fecha</th>
                     <th>Horario</th>
-                    <th>Título</th>
+                    <th>Sesión</th>
                     <th>Tipo</th>
                     <th>Modalidad</th>
-                    <th>Aforo</th>
+                    <th>Centro</th>
+                    <th>Estado</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (sesion of sesionesHistorial; track sesion.profesionalId) {
+                  @for (sesion of sesionesHistorial; track sesion.uid) {
                     <tr>
-                      <td>{{ parsearFecha(sesion.fecha) }}</td>
-                      <td>{{ sesion.horaInicio }} – {{ sesion.horaFin }}</td>
-                      <td>{{ sesion.titulo }}</td>
-                      <td><span class="role-badge">{{ sesion.tipo }}</span></td>
-                      <td><span class="role-badge">{{ sesion.modalidad }}</span></td>
-                      <td><span class="badge-count">{{ sesion.aforoActual }}/{{ sesion.aforoMax }}</span></td>
+                      <td><span class="cell-badge">{{ parsearFecha(sesion.fecha) }}</span></td>
+                      <td><span class="cell-badge">{{ sesion.horaInicio }} – {{ sesion.horaFin }}</span></td>
+                      <td><span class="cell-badge">{{ sesion.titulo }}</span></td>
+                      <td><span class="cell-badge">{{ sesion.tipo }}</span></td>
+                      <td><span class="cell-badge">{{ sesion.modalidad }}</span></td>
+                      <td><span class="cell-badge">{{ centro.nombre }}</span></td>
+                      <td>
+                        <span class="estado-badge"
+                          [class.badge-finalizada]="sesion.estadoVista === EstadoSesion.FINALIZADA"
+                          [class.badge-cancelada]="sesion.estadoVista === EstadoSesion.CANCELADA">
+                          {{ sesion.estadoVista }}
+                        </span>
+                      </td>
+                      <td class="text-center">
+                        <button class="btn-cancelar-sm"
+                          (click)="eliminarSesionHistorial(sesion)"
+                          title="Eliminar registro">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </td>
                     </tr>
                   }
                 </tbody>

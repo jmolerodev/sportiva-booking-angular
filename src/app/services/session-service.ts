@@ -93,12 +93,20 @@ export class SessionService {
   }
 
   /**
-   * Cancelación lógica de una sesión: actualiza el estado a CANCELADA sin eliminar el nodo.
+   * Cancelación lógica de una sesión: actualiza el estado a CANCELADA y cancela
+   * en cascada todas las reservas CONFIRMADAS asociadas a ella de forma atómica.
+   * El listener reactivo del cliente propagará el cambio de estado de cada reserva
+   * a la vista sin necesidad de ninguna acción adicional en el componente cliente.
    * @param uid Clave del nodo de la sesión en Firebase
-   * @returns Promesa que se resuelve al completar la escritura
+   * @returns Promesa que se resuelve al completar todas las escrituras
    */
-  cancelSession(uid: string): Promise<void> {
+  async cancelSession(uid: string): Promise<void> {
     const sessionRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+
+    /* Cancelamos primero todas las reservas CONFIRMADAS de esta sesión en cascada */
+    await this.bookingService.cancelarReservasBySesion(uid);
+
+    /* A continuación marcamos la sesión como CANCELADA */
     return update(sessionRef, { estado: EstadoSesion.CANCELADA });
   }
 

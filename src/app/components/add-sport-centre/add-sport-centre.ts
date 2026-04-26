@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 import { AuthService } from '../../services/auth';
 import { SportCentreService } from '../../services/sport-centre-service';
@@ -48,15 +48,20 @@ export class AddSportCentre implements OnInit {
 
   /**
    * Constructor del componente: inicialización de dependencias
+   * @param fb                 Servicio para construir formularios reactivos
+   * @param authService        Servicio encargado de la identidad y permisos del usuario
+   * @param sportCentreService Servicio para la gestión de centros deportivos
+   * @param snackbarService    Servicio para el despliegue de alertas y confirmaciones
+   * @param storage            Instancia de Firebase Storage para subir y eliminar imágenes
+   * @param router             Servicio para gestionar la navegación entre vistas
    */
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private sportCentreService: SportCentreService,
-    private snackbarService: SnackbarService, 
+    private snackbarService: SnackbarService,
     private storage: Storage,
-    private router: Router,
-    private route: ActivatedRoute
+    private router: Router
   ) {
     this.centroForm = this.fb.group({
       nombre:    ['', Validators.required],
@@ -82,15 +87,16 @@ export class AddSportCentre implements OnInit {
   }
 
   /**
-   * Ciclo de vida inicial: capturamos parámetros y sincronizamos la imagen
+   * Ciclo de vida inicial: capturamos el navigation state, sincronizamos la imagen
+   * y cargamos los datos del centro si estamos en modo edición.
    */
   ngOnInit(): void {
 
-    /*Comprobamos si venimos en modo edición mediante el queryParam*/
-    this.modoEdicion = this.route.snapshot.queryParams['editar'] === 'true';
+    /*Comprobamos si venimos en modo edición mediante el navigation state*/
+    this.modoEdicion = history.state?.editar === true;
 
-    /*Recuperamos la fotoReciente de la URL para evitar el lag de Firebase en la previsualización*/
-    const fotoReciente = this.route.snapshot.queryParams['fotoReciente'];
+    /*Recuperamos la fotoReciente del navigation state para evitar el lag de Firebase en la previsualización*/
+    const fotoReciente = history.state?.fotoReciente ?? null;
 
     if (this.modoEdicion) this.isInitialLoading = true;
 
@@ -110,15 +116,13 @@ export class AddSportCentre implements OnInit {
                 horario:   centro.horario /* Mapeamos el horario recuperado */
               });
 
-              /*Usamos la foto del queryParam si existe; si no, la de Firebase*/
-              const fotoDefinitiva = (fotoReciente !== undefined && fotoReciente !== null)
-                ? fotoReciente
-                : centro.foto;
+              /*Usamos la foto del navigation state si existe; si no, la de Firebase*/
+              const fotoDefinitiva = fotoReciente ?? centro.foto;
 
               /*Si tiene foto la mostramos como preview y guardamos la URL original*/
               if (fotoDefinitiva) {
-                this.previewImagen      = fotoDefinitiva;
-                this.urlImagenOriginal  = fotoDefinitiva;
+                this.previewImagen     = fotoDefinitiva;
+                this.urlImagenOriginal = fotoDefinitiva;
               }
 
               /* Guardamos una "captura" del estado inicial para comparaciones futuras */
@@ -136,7 +140,6 @@ export class AddSportCentre implements OnInit {
         this.isInitialLoading = false;
       }
     });
-
   }
 
   onFotoCargada(): void { if (this.modoEdicion) this.isInitialLoading = false; }
@@ -164,7 +167,7 @@ export class AddSportCentre implements OnInit {
    */
   eliminarImagen(): void {
     this.imagenSeleccionada = null;
-    this.previewImagen = null;
+    this.previewImagen      = null;
   }
 
   /**
@@ -229,17 +232,17 @@ export class AddSportCentre implements OnInit {
       this.guardarDatosFinales(nombre, direccion, telefono, this.urlImagenOriginal || '', horario);
 
     }
-
   }
 
   /**
    * Método privado que construye el objeto ISportCentre, lo guarda en RTDB
-   * y redirige al Home pasando la URL actualizada para mantener la reactividad
-   * @param nombre Nombre del centro deportivo
+   * y redirige al Home pasando la URL actualizada mediante navigation state
+   * para mantener la reactividad sin exponer datos en la URL.
+   * @param nombre    Nombre del centro deportivo
    * @param direccion Dirección del centro deportivo
-   * @param telefono Teléfono del centro deportivo
-   * @param foto URL de la foto del centro deportivo
-   * @param horario Configuración de los horarios semanales
+   * @param telefono  Teléfono del centro deportivo
+   * @param foto      URL de la foto del centro deportivo
+   * @param horario   Configuración de los horarios semanales
    */
   private guardarDatosFinales(nombre: string, direccion: string, telefono: string, foto: string, horario: IHorarioSemana): void {
 
@@ -249,18 +252,18 @@ export class AddSportCentre implements OnInit {
       telefono,
       foto,
       adminUid: this.adminUid!,
-      horario 
+      horario
     };
 
     this.sportCentreService.saveSportCentre(this.adminUid!, centro).then(() => {
       this.snackbarService.showSuccess(this.modoEdicion ? 'Centro actualizado correctamente' : 'Centro creado correctamente');
+      /* Navegamos a home pasando la foto reciente via navigation state para no exponer la URL de Firebase */
       this.router.navigate(['/home'], {
-        queryParams: { fotoReciente: foto }
+        state: { fotoReciente: foto }
       }).then(() => {
         this.isLoading = false;
       });
     }).catch(() => this.isLoading = false);
-
   }
 
   /**
@@ -272,5 +275,4 @@ export class AddSportCentre implements OnInit {
    * Método mediante el cual navegaremos de vuelta al home
    */
   navigateToHome(): void { this.router.navigate(['/home']); }
-
 }

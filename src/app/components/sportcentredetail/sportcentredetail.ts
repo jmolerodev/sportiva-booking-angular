@@ -572,15 +572,7 @@ export class SportCentreDetail implements OnInit, OnDestroy {
       clienteId: this.clienteUid,
       centroId:  this.centroId,
       fecha:     this.sesionSeleccionada.fecha,
-      estado:    EstadoReserva.CONFIRMADA,
-      sesionSnapshot: {
-        titulo:     this.sesionSeleccionada.titulo,
-        horaInicio: this.sesionSeleccionada.horaInicio,
-        horaFin:    this.sesionSeleccionada.horaFin,
-        tipo:       this.sesionSeleccionada.tipo,
-        modalidad:  this.sesionSeleccionada.modalidad,
-        aforoMax:   this.sesionSeleccionada.aforoMax,
-      }
+      estado:    EstadoReserva.CONFIRMADA
     };
 
     this.bookingService

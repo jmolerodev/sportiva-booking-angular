@@ -103,6 +103,35 @@ export class BookingService {
   }
 
   /**
+   * Cancela en cascada todas las reservas CONFIRMADAS de una sesión concreta
+   * marcándolas como CANCELADA de forma atómica en una única escritura batch.
+   * Se invoca desde SessionService.cancelSession para que el listener reactivo
+   * del cliente propague el cambio de estado a la vista de forma inmediata.
+   * No toca aforoActual porque la sesión entera queda cancelada: ya no tiene sentido.
+   * @param sesionId UID de la sesión cuyas reservas confirmadas se van a cancelar
+   * @returns Promesa que se resuelve cuando todas las escrituras quedan persistidas
+   */
+  async cancelarReservasBySesion(sesionId: string): Promise<void> {
+    const reservas = await new Promise<IBooking[]>((resolve, reject) => {
+      this.getReservasBySesionId(sesionId).pipe(
+        map(r => r ?? [])
+      ).subscribe({ next: resolve, error: reject });
+    });
+
+    /* Filtramos solo las CONFIRMADAS: las ya canceladas no necesitan tocarse */
+    const confirmadas = reservas.filter(r => r.estado === EstadoReserva.CONFIRMADA);
+    if (confirmadas.length === 0) return;
+
+    /* Escritura atómica: todas las reservas confirmadas pasan a CANCELADA de golpe */
+    const updates: Record<string, any> = {};
+    confirmadas.forEach(r => {
+      updates[`/${this.COLLECTION_NAME}/${r.uid}/estado`] = EstadoReserva.CANCELADA;
+    });
+
+    return update(ref(this.database), updates);
+  }
+
+  /**
    * Elimina permanentemente el nodo de una reserva cancelada de Firebase.
    * Solo debe invocarse sobre reservas en estado CANCELADA para evitar
    * pérdidas accidentales de reservas activas o pendientes.
@@ -123,7 +152,6 @@ export class BookingService {
   async eliminarReservasByCliente(clienteId: string): Promise<void> {
     const reservas = await new Promise<IBooking[]>((resolve, reject) => {
       this.getReservasByCliente(clienteId).pipe(
-        /* Tomamos solo la primera emisión para no mantener el stream abierto */
         map(r => r ?? [])
       ).subscribe({ next: resolve, error: reject });
     });
@@ -144,7 +172,6 @@ export class BookingService {
   async eliminarReservasBySesion(sesionId: string): Promise<void> {
     const reservas = await new Promise<IBooking[]>((resolve, reject) => {
       this.getReservasBySesionId(sesionId).pipe(
-        /* Tomamos solo la primera emisión para no mantener el stream abierto */
         map(r => r ?? [])
       ).subscribe({ next: resolve, error: reject });
     });

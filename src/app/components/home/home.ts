@@ -1,13 +1,12 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription, switchMap, of, forkJoin } from 'rxjs';
+import { Router } from '@angular/router';
+import { Subscription, switchMap, of } from 'rxjs';
 import { SportCentreService } from '../../services/sport-centre-service';
 import { AuthService } from '../../services/auth';
 import { SnackbarService } from '../../services/snackbar';
 import { MembershipService } from '../../services/membershipservice';
 import { ISportCentre, IHorarioSemana } from '../../interfaces/Sport-Centre-Interface';
-import { IMembership } from '../../interfaces/Membresia-Interface';
 import { Rol } from '../../enums/Rol';
 
 @Component({
@@ -77,9 +76,9 @@ export class Home implements OnInit, OnDestroy {
 
   /* Lista de bloques de texto con icono que representan los diferentes tipos de usuario */
   public steps = [
-    { visible: false, icon: 'bi-gear-fill', text: 'Gestiona tu centro Deportivo: añade horarios, añade y elimina profesionales, ¡Y muchas más opciones!' },
-    { visible: false, icon: 'bi-person-video2', text: 'Crea y gestiona tus sesiones de Entrenamiento o Fisioterapia como Profesional adscrito a un centro.' },
-    { visible: false, icon: 'bi-calendar-check-fill', text: 'Reserva sesiones como Cliente en centros donde tengas membresía activa. Además, consulta la oferta de otros centros.' }
+    { visible: false, icon: 'bi-gear-fill',           text: 'Gestiona tu centro Deportivo: añade horarios, añade y elimina profesionales, ¡Y muchas más opciones!' },
+    { visible: false, icon: 'bi-person-video2',        text: 'Crea y gestiona tus sesiones de Entrenamiento o Fisioterapia como Profesional adscrito a un centro.' },
+    { visible: false, icon: 'bi-calendar-check-fill',  text: 'Reserva sesiones como Cliente en centros donde tengas membresía activa. Además, consulta la oferta de otros centros.' }
   ];
 
   /* Variable booleana con la que controlamos la visibilidad del encabezado de la sección About */
@@ -87,6 +86,9 @@ export class Home implements OnInit, OnDestroy {
 
   /* Variable booleana con la que controlamos la visibilidad del pie de página */
   public showFooter: boolean = false;
+
+  /* URL de la foto reciente recibida desde el formulario de edición/creación via navigation state */
+  private fotoReciente: string | null = null;
 
   private subscription: Subscription = new Subscription();
 
@@ -97,7 +99,6 @@ export class Home implements OnInit, OnDestroy {
    * @param snackbarService    Servicio para el despliegue de alertas y confirmaciones
    * @param membershipService  Servicio para la gestión de membresías de clientes
    * @param router             Servicio para gestionar la navegación entre vistas
-   * @param route              Servicio para capturar parámetros de la URL activa
    * @param cdr                Servicio para forzar la detección de cambios en el ciclo de Angular
    */
   constructor(
@@ -106,15 +107,17 @@ export class Home implements OnInit, OnDestroy {
     private snackbarService: SnackbarService,
     private membershipService: MembershipService,
     private router: Router,
-    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) { }
 
   /**
-   * Inicialización del componente: gestión de datos por parámetros, animaciones de presentación
+   * Inicialización del componente: gestión de datos por navigation state, animaciones de presentación
    * y suscripciones reactivas.
    */
   ngOnInit(): void {
+
+    /* Capturamos la URL de la foto enviada desde el formulario de edición/creación via history.state */
+    this.fotoReciente = history.state?.fotoReciente ?? null;
 
     /* ANIMACIONES DE PRESENTACIÓN */
     this.showHeader = false;
@@ -126,9 +129,6 @@ export class Home implements OnInit, OnDestroy {
       setTimeout(() => { step.visible = true; }, 800 + i * 400);
     });
     setTimeout(() => { this.showFooter = true; }, 800 + this.steps.length * 400 + 400);
-
-    /* Capturamos la URL de la foto enviada desde el formulario de edición/creación */
-    const fotoReciente = this.route.snapshot.queryParams['fotoReciente'];
 
     /* Recuperamos la lista global de centros deportivos con listener activo */
     this.subscription.add(
@@ -159,15 +159,15 @@ export class Home implements OnInit, OnDestroy {
       this.authService.getCurrentUser().pipe(
         switchMap(user => {
           if (!user) {
-            this.centroAdmin = null;
-            this.centroTrabajo = null;
-            this.adminUid = null;
+            this.centroAdmin     = null;
+            this.centroTrabajo   = null;
+            this.adminUid        = null;
             this.esAdministrador = false;
-            this.esProfesional = false;
-            this.esCliente = false;
-            this.esRoot = false;
-            this.sesionIniciada = false;
-            this.loadingUsuario = false;
+            this.esProfesional   = false;
+            this.esCliente       = false;
+            this.esRoot          = false;
+            this.sesionIniciada  = false;
+            this.loadingUsuario  = false;
             this.checkLoading();
             return of(null);
           }
@@ -180,27 +180,20 @@ export class Home implements OnInit, OnDestroy {
         if (!data) return;
 
         this.esAdministrador = data.rol === Rol.ADMINISTRADOR;
-        this.esProfesional = data.rol === Rol.PROFESIONAL;
-        this.esCliente = data.rol === Rol.CLIENTE;
-        this.esRoot = data.rol === Rol.ROOT;
-        this.sesionIniciada = true;
+        this.esProfesional   = data.rol === Rol.PROFESIONAL;
+        this.esCliente       = data.rol === Rol.CLIENTE;
+        this.esRoot          = data.rol === Rol.ROOT;
+        this.sesionIniciada  = true;
 
         if (this.esAdministrador && data.uid) {
           this.subscription.add(
             this.sportCentreService.getSportCentreByAdminUid(data.uid).subscribe({
               next: (centro) => {
                 if (centro) {
-                  const fotoNueva = (fotoReciente !== undefined && fotoReciente !== null) ? fotoReciente : centro.foto;
-                  this.centroAdmin = { ...centro, foto: fotoNueva };
+                  /* Aplicamos la foto reciente del state si existe; si no, usamos la de Firebase */
+                  const fotoNueva         = this.fotoReciente ?? centro.foto;
+                  this.centroAdmin        = { ...centro, foto: fotoNueva };
                   this.imagenAdminCargada = false;
-
-                  if (fotoReciente !== undefined) {
-                    this.router.navigate([], {
-                      queryParams: { fotoReciente: null },
-                      queryParamsHandling: 'merge',
-                      replaceUrl: true
-                    });
-                  }
                 } else {
                   this.centroAdmin = null;
                 }
@@ -220,9 +213,9 @@ export class Home implements OnInit, OnDestroy {
           this.subscription.add(
             this.sportCentreService.getSportCentreByProfessionalUid(data.uid).subscribe({
               next: (centro) => {
-                this.centroTrabajo = centro;
+                this.centroTrabajo    = centro;
                 this.imagenProCargada = false;
-                this.loadingUsuario = false;
+                this.loadingUsuario   = false;
                 this.checkLoading();
                 this.cdr.detectChanges();
               },
@@ -247,12 +240,12 @@ export class Home implements OnInit, OnDestroy {
   }
 
   /**
-  * Se suscribe en tiempo real a las membresías del cliente y separa los centros
-  * en dos listas reactivas: con membresía activa y sin ella.
-  * Conserva los flags de carga de imagen de los centros que ya estaban en la lista
-  * para evitar que el spinner reaparezca en imágenes que ya habían cargado.
-  * @param clienteUid UID del cliente autenticado
-  */
+   * Se suscribe en tiempo real a las membresías del cliente y separa los centros
+   * en dos listas reactivas: con membresía activa y sin ella.
+   * Conserva los flags de carga de imagen de los centros que ya estaban en la lista
+   * para evitar que el spinner reaparezca en imágenes que ya habían cargado.
+   * @param clienteUid UID del cliente autenticado
+   */
   private cargarCentrosCliente(clienteUid: string): void {
     this.subscription.add(
       this.membershipService.getMembresiasByCliente(clienteUid).subscribe({
@@ -268,7 +261,7 @@ export class Home implements OnInit, OnDestroy {
           const prevConMembresia = this.centrosConMembresia;
           const prevSinMembresia = this.centrosSinMembresia;
 
-          this.centrosConMembresia = this.centros.filter(c => centrosActivos.has(c.adminUid));
+          this.centrosConMembresia = this.centros.filter(c =>  centrosActivos.has(c.adminUid));
           this.centrosSinMembresia = this.centros.filter(c => !centrosActivos.has(c.adminUid));
 
           /* Conservamos el flag de imagen si el centro ya estaba en la lista anterior */
@@ -309,7 +302,7 @@ export class Home implements OnInit, OnDestroy {
    */
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
-    this.centroAdmin = null;
+    this.centroAdmin   = null;
     this.centroTrabajo = null;
   }
 
@@ -362,12 +355,13 @@ export class Home implements OnInit, OnDestroy {
   }
 
   /**
-   * Navegación hacia el formulario de edición enviando también la fotoReciente si existe.
+   * Navegación hacia el formulario de edición pasando la foto actual
+   * mediante navigation state para no exponer datos en la URL.
    */
   navigateToEditSportCentre(): void {
-    const fotoActual = this.centroAdmin ? this.centroAdmin.foto : '';
+    const fotoActual = this.centroAdmin?.foto ?? '';
     this.router.navigate(['/add-sport-centre'], {
-      queryParams: { editar: true, fotoReciente: fotoActual }
+      state: { editar: true, fotoReciente: fotoActual }
     });
   }
 
@@ -386,7 +380,7 @@ export class Home implements OnInit, OnDestroy {
           next: () => {
             this.snackbarService.showSuccess('Centro eliminado correctamente');
             this.centroAdmin = null;
-            this.loading = false;
+            this.loading     = false;
             this.cdr.detectChanges();
           },
           error: (e) => {
