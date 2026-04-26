@@ -55,20 +55,22 @@ export class AdminList implements OnInit {
   }
 
   /**
-   * Gestiona el proceso de eliminación de un administrador y su centro asociado.
-   * Lanza un diálogo de confirmación y, en caso positivo, procede al borrado atómico
-   * a través del servicio, actualizando la interfaz tras el éxito.
+   * Gestiona el proceso de eliminación recursiva de un administrador y todos sus datos asociados.
+   * Lanza un diálogo de confirmación advirtiendo al usuario del alcance completo del borrado:
+   * administrador, centro deportivo, profesionales vinculados, sesiones y reservas.
+   * En caso positivo, procede al borrado en cascada a través del servicio,
+   * actualizando la interfaz tras el éxito.
    * @param uid Identificador único del administrador a eliminar.
    */
   eliminarAdministrador(uid: string): void {
     this.snackbar.showConfirm(
-      '¿Deseas eliminar este administrador y su centro deportivo? Los cambios serán permanentes.',
+      '¿Deseas eliminar este administrador? Se eliminarán permanentemente su centro deportivo, todos los profesionales vinculados, sus sesiones y las reservas asociadas.',
       'ELIMINAR',
       () => {
         this.deletingUid = uid;
         this.adminService.deleteAdministrador(uid)
           .then(() => {
-            this.snackbar.showSuccess('Administrador y Centro deportivo eliminados');
+            this.snackbar.showSuccess('Administrador y todos sus datos eliminados correctamente');
             this.administradores = this.administradores.filter(a => a.uid !== uid);
           })
           .catch(() => {
@@ -87,5 +89,4 @@ export class AdminList implements OnInit {
   navigateToHome(): void {
     this.router.navigate(['/home']);
   }
-
 }

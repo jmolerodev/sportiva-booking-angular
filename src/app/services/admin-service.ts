@@ -1,12 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { child, Database, listVal, objectVal, ref, remove, set, update } from '@angular/fire/database';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Administrador } from '../models/Administrador';
 import { IAdministrador } from '../interfaces/Administrador-Interface';
 import { Rol } from '../enums/Rol';
 import { IProfesional } from '../interfaces/Profesional-Interface';
 import { FunctionsService } from './functions-service';
+import { ProfesionalService } from './profesional-service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,8 +20,9 @@ export class AdminService {
   /* Nombre de la Colección donde se almacenan los centros deportivos */
   private CENTRES_COLLECTION = 'Sports-Centre';
 
-  private database = inject(Database);
-  private functionsService = inject(FunctionsService);
+  private database           = inject(Database);
+  private functionsService   = inject(FunctionsService);
+  private profesionalService = inject(ProfesionalService);
 
   /**
    * Método mediante el cual obtenemos los datos de un administrador a través de su UID
@@ -78,25 +80,36 @@ export class AdminService {
   }
 
   /**
-   * Elimina de forma atómica tanto el perfil del administrador como su centro deportivo asociado.
-   * Adicionalmente invoca la Cloud Function para eliminarlo también de Firebase Authentication.
-   * Se utiliza update en la raíz para garantizar que ambas eliminaciones se procesen como una sola transacción.
+   * Elimina de forma completamente recursiva al administrador y todos sus datos asociados:
+   *   1. Recupera todos los profesionales vinculados al administrador.
+   *   2. Por cada profesional invoca {@link ProfesionalService.deleteProfesionalCompleto} que a su
+   *      vez elimina sus sesiones, las reservas de cada sesión y al propio profesional de Auth.
+   *   3. Elimina de forma atómica el nodo del administrador en Persons y su centro en Sports-Centre.
+   *   4. Elimina al administrador de Firebase Authentication.
    * @param uid UID del Administrador y clave del Centro Deportivo a eliminar
-   * @returns Promesa que se completa al finalizar la operación en ambos nodos y en Auth
+   * @returns Promesa que se completa al finalizar la eliminación recursiva en todos los nodos
    */
-  deleteAdministrador(uid: string): Promise<void> {
-    /*Definimos las rutas exactas de los nodos a eliminar*/
-    const adminPath = `/${this.COLLECTION_NAME}/${uid}`;
+  async deleteAdministrador(uid: string): Promise<void> {
+
+    /* Paso 1: obtenemos la lista de profesionales vinculados al admin (primera emisión) */
+    const profesionales = await firstValueFrom(this.getProfesionalesByAdmin(uid));
+
+    /* Paso 2: eliminamos cada profesional junto con sus sesiones y reservas en paralelo */
+    await Promise.all(
+      profesionales.map(p => this.profesionalService.deleteProfesionalCompleto(p.uid))
+    );
+
+    /* Paso 3: eliminamos de forma atómica el nodo del admin y su centro deportivo */
+    const adminPath  = `/${this.COLLECTION_NAME}/${uid}`;
     const centrePath = `/${this.CENTRES_COLLECTION}/${uid}`;
 
-    /*Ejecutamos el borrado atómico en Realtime Database y simultáneamente en Auth*/
-    return Promise.all([
-      update(ref(this.database), {
-        [adminPath]: null,
-        [centrePath]: null
-      }),
-      this.functionsService.deleteUserFromAuth(uid)
-    ]).then(() => void 0);
+    await update(ref(this.database), {
+      [adminPath]:  null,
+      [centrePath]: null
+    });
+
+    /* Paso 4: eliminamos al administrador de Firebase Authentication */
+    await this.functionsService.deleteUserFromAuth(uid);
   }
 
   /**
