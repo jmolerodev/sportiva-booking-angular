@@ -43,6 +43,7 @@
 }
 
 <div id="centros" class="centros-section d-flex flex-column justify-content-center align-items-center py-5">
+
   @if (loading) {
     <div class="card shadow" style="width: 100%; max-width: 520px; border-radius: 12px;">
       <div class="card-body p-4 p-md-5 text-center">
@@ -52,6 +53,7 @@
       </div>
     </div>
   } @else {
+
     <div class="section-title-wrapper text-center mb-5" style="user-select: none;">
       @if (!sesionIniciada) {
         <h3 class="section-title">Lista de <span class="highlight">Centros Deportivos</span> Disponibles:</h3>
@@ -62,85 +64,87 @@
       } @else if (esProfesional) {
         <h3 class="section-title">Tu <span class="highlight">Centro Deportivo:</span></h3>
       } @else if (esCliente) {
-        <h3 class="section-title">Tu Lista de <span class="highlight">Centros Deportivos Disponibles:</span></h3>
+        <h3 class="section-title">Tus <span class="highlight">Centros Deportivos:</span></h3>
       }
     </div>
 
-    @if (centros.length > 0 && (esCliente || !sesionIniciada)) {
-      <div class="carousel-wrapper">
-        <div id="carouselCentros" class="carousel slide carousel-web" data-bs-ride="carousel">
-          <div class="carousel-inner">
-            @for (centro of centros; track centro; let i = $index) {
-              <div class="carousel-item" [class.active]="i == 0">
-                <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 20px;">
-                  <div class="img-wrapper position-relative">
-                    @if (!imagenesCarouselCargadas[i]) {
-                      <div class="position-absolute top-50 start-50 translate-middle text-center">
-                        <div class="spinner-border text-success spinner-border-sm" role="status"></div>
-                        <p class="text-success small fw-bold mb-0">Cargando imagen...</p>
-                      </div>
-                    }
-                    <img [src]="getFoto(centro.foto)" class="img-fit" [alt]="centro.nombre"
-                         (load)="setImagenCarouselCargada(i)"
-                         (error)="centro.foto = imagenPorDefecto; setImagenCarouselCargada(i)"
-                         [style.opacity]="imagenesCarouselCargadas[i] ? 1 : 0">
-                  </div>
-                  <div class="card-body p-4 bg-white">
-                    <h4 class="fw-bold text-dark mb-3">{{ centro.nombre }}</h4>
-                    <div class="d-flex flex-column gap-2 mb-4">
-                      <p class="text-muted mb-0 d-flex align-items-center">
-                        <i class="bi bi-geo-alt-fill text-success me-2"></i>{{ centro.direccion }}
-                      </p>
-                      <p class="text-muted mb-0 d-flex align-items-center">
-                        <i class="bi bi-telephone-fill text-success me-2"></i>{{ centro.telefono || 'Teléfono no disponible' }}
-                      </p>
-                    </div>
-                    @if (centro.horario) {
-                      <div class="horario-section">
-                        <p class="fw-bold text-success mb-2 small text-uppercase">
-                          <i class="bi bi-clock-history me-1"></i> Horarios de apertura
-                        </p>
-                        <div class="horario-tabla border-top pt-2">
-                          @for (dia of getDias(centro.horario); track dia) {
-                            <div class="horario-fila d-flex justify-content-between">
-                              <span class="text-capitalize small fw-bold">{{ dia }}</span>
-                              <span class="text-muted small">
-                                {{ centro.horario[dia].abierto ? centro.horario[dia].apertura + ' - ' + centro.horario[dia].cierre : 'Cerrado' }}
-                              </span>
-                            </div>
-                          }
+    @if (!sesionIniciada) {
+      @if (centros.length > 0) {
+        <div class="carousel-wrapper">
+          <div id="carouselCentros" class="carousel slide carousel-web" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              @for (centro of centros; track centro; let i = $index) {
+                <div class="carousel-item" [class.active]="i == 0">
+                  <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 20px;">
+                    <div class="img-wrapper position-relative">
+                      @if (!imagenesCarouselCargadas[i]) {
+                        <div class="position-absolute top-50 start-50 translate-middle text-center">
+                          <div class="spinner-border text-success spinner-border-sm" role="status"></div>
+                          <p class="text-success small fw-bold mb-0">Cargando imagen...</p>
                         </div>
+                      }
+                      <img [src]="getFoto(centro.foto)" class="img-fit" [alt]="centro.nombre"
+                           (load)="setImagenCarouselCargada(i)"
+                           (error)="centro.foto = imagenPorDefecto; setImagenCarouselCargada(i)"
+                           [style.opacity]="imagenesCarouselCargadas[i] ? 1 : 0">
+                    </div>
+                    <div class="card-body p-4 bg-white">
+                      <h4 class="fw-bold text-dark mb-3">{{ centro.nombre }}</h4>
+                      <div class="d-flex flex-column gap-2 mb-4">
+                        <p class="text-muted mb-0 d-flex align-items-center">
+                          <i class="bi bi-geo-alt-fill text-success me-2"></i>{{ centro.direccion }}
+                        </p>
+                        <p class="text-muted mb-0 d-flex align-items-center">
+                          <i class="bi bi-telephone-fill text-success me-2"></i>{{ centro.telefono || 'Teléfono no disponible' }}
+                        </p>
                       </div>
-                    }
-                    <button class="btn btn-success fw-bold w-100 mt-4 py-2 text-uppercase"
-                            (click)="navigateToCentroDetail(centro.adminUid)">
-                      <i class="bi bi-eye me-2"></i>VER CENTRO
-                    </button>
+                      @if (centro.horario) {
+                        <div class="horario-section">
+                          <p class="fw-bold text-success mb-2 small text-uppercase">
+                            <i class="bi bi-clock-history me-1"></i> Horarios de apertura
+                          </p>
+                          <div class="horario-tabla border-top pt-2">
+                            @for (dia of getDias(centro.horario); track dia) {
+                              <div class="horario-fila d-flex justify-content-between">
+                                <span class="text-capitalize small fw-bold">{{ dia }}</span>
+                                <span class="text-muted small">
+                                  {{ centro.horario[dia].abierto ? centro.horario[dia].apertura + ' - ' + centro.horario[dia].cierre : 'Cerrado' }}
+                                </span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                      <button class="btn btn-success fw-bold w-100 mt-4 py-2 text-uppercase"
+                              (click)="navigateToCentroDetail(centro.adminUid)">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Inicia Sesión y Descubre Más
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            }
+              }
+            </div>
+            <div class="carousel-indicators carousel-indicators-web">
+              @for (centro of centros; track centro; let i = $index) {
+                <button type="button" data-bs-target="#carouselCentros" [attr.data-bs-slide-to]="i"
+                        [class.active]="i == 0" [attr.aria-current]="i == 0 ? 'true' : null"></button>
+              }
+            </div>
           </div>
-          <div class="carousel-indicators carousel-indicators-web">
-            @for (centro of centros; track centro; let i = $index) {
-              <button type="button" data-bs-target="#carouselCentros" [attr.data-bs-slide-to]="i"
-                      [class.active]="i == 0" [attr.aria-current]="i == 0 ? 'true' : null"></button>
-            }
-          </div>
+          <button class="carousel-btn carousel-btn-prev" type="button" data-bs-target="#carouselCentros" data-bs-slide="prev">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button class="carousel-btn carousel-btn-next" type="button" data-bs-target="#carouselCentros" data-bs-slide="next">
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
-        <button class="carousel-btn carousel-btn-prev" type="button" data-bs-target="#carouselCentros" data-bs-slide="prev">
-          <i class="bi bi-chevron-left"></i>
-        </button>
-        <button class="carousel-btn carousel-btn-next" type="button" data-bs-target="#carouselCentros" data-bs-slide="next">
-          <i class="bi bi-chevron-right"></i>
-        </button>
-      </div>
-    } @else if (centros.length === 0 && (esCliente || !sesionIniciada)) {
-      <div class="no-centre-card p-5 text-center shadow-lg">
-        <i class="bi bi-emoji-smile text-success display-4 mb-3"></i>
-        <h4 class="fw-bold text-dark mb-3">Próximamente nuevos centros</h4>
-        <p class="text-muted mb-0">Estamos trabajando para incorporar los mejores centros deportivos de tu zona. ¡Vuelve pronto!</p>
-      </div>
+      } @else {
+        <div class="no-centre-card p-5 text-center shadow-lg">
+          <i class="bi bi-emoji-smile text-success display-4 mb-3"></i>
+          <h4 class="fw-bold text-dark mb-3">Próximamente nuevos centros</h4>
+          <p class="text-muted mb-0">Estamos trabajando para incorporar los mejores centros deportivos de tu zona. ¡Vuelve pronto!</p>
+        </div>
+      }
     }
 
     @if (sesionIniciada && esRoot) {
@@ -174,95 +178,194 @@
     }
 
     @if (esAdministrador && centroAdmin) {
-       <div class="carousel-wrapper">
-          <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
-            <div class="img-wrapper position-relative">
-              <img [src]="getFoto(centroAdmin.foto)" class="img-fit" [alt]="centroAdmin.nombre">
-            </div>
-            <div class="card-body p-4 bg-white">
-              <h4 class="fw-bold text-dark mb-3">{{ centroAdmin.nombre }}</h4>
-
-              <div class="d-flex flex-column gap-2 mb-3">
-                <p class="text-muted mb-0 d-flex align-items-center">
-                  <i class="bi bi-geo-alt-fill text-success me-2"></i>{{ centroAdmin.direccion }}
-                </p>
-                <p class="text-muted mb-0 d-flex align-items-center">
-                  <i class="bi bi-telephone-fill text-success me-2"></i>{{ centroAdmin.telefono || 'Teléfono no disponible' }}
-                </p>
-              </div>
-
-              <div class="d-flex flex-wrap gap-2 py-3 border-top border-bottom mb-4">
-                <button (click)="navigateToEditSportCentre()" class="btn-google-pro btn-outline-google-success flex-grow-1">
-                  <i class="bi bi-pencil-square me-2"></i>Editar Datos
-                </button>
-                <button (click)="deleteSportCentre()" class="btn-google-pro btn-outline-google-danger flex-grow-1">
-                  <i class="bi bi-trash3 me-2"></i>Eliminar Centro
-                </button>
-              </div>
-
-              @if (centroAdmin.horario) {
-                <div class="horario-tabla">
-                  @for (dia of getDias(centroAdmin.horario); track dia) {
-                    <div class="horario-fila d-flex justify-content-between">
-                      <span class="text-capitalize small fw-bold text-dark">{{ dia }}</span>
-                      <span class="text-muted small">
-                        {{ centroAdmin.horario[dia].abierto ? centroAdmin.horario[dia].apertura + ' - ' + centroAdmin.horario[dia].cierre : 'Cerrado' }}
-                      </span>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
+      <div class="carousel-wrapper">
+        <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+          <div class="img-wrapper position-relative">
+            <img [src]="getFoto(centroAdmin.foto)" class="img-fit" [alt]="centroAdmin.nombre">
           </div>
-       </div>
+          <div class="card-body p-4 bg-white">
+            <h4 class="fw-bold text-dark mb-3">{{ centroAdmin.nombre }}</h4>
+            <div class="d-flex flex-column gap-2 mb-3">
+              <p class="text-muted mb-0 d-flex align-items-center">
+                <i class="bi bi-geo-alt-fill text-success me-2"></i>{{ centroAdmin.direccion }}
+              </p>
+              <p class="text-muted mb-0 d-flex align-items-center">
+                <i class="bi bi-telephone-fill text-success me-2"></i>{{ centroAdmin.telefono || 'Teléfono no disponible' }}
+              </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2 py-3 border-top border-bottom mb-4">
+              <button (click)="navigateToEditSportCentre()" class="btn-google-pro btn-outline-google-success flex-grow-1">
+                <i class="bi bi-pencil-square me-2"></i>Editar Datos
+              </button>
+              <button (click)="deleteSportCentre()" class="btn-google-pro btn-outline-google-danger flex-grow-1">
+                <i class="bi bi-trash3 me-2"></i>Eliminar Centro
+              </button>
+            </div>
+            @if (centroAdmin.horario) {
+              <div class="horario-tabla">
+                @for (dia of getDias(centroAdmin.horario); track dia) {
+                  <div class="horario-fila d-flex justify-content-between">
+                    <span class="text-capitalize small fw-bold text-dark">{{ dia }}</span>
+                    <span class="text-muted small">
+                      {{ centroAdmin.horario[dia].abierto ? centroAdmin.horario[dia].apertura + ' - ' + centroAdmin.horario[dia].cierre : 'Cerrado' }}
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
     }
 
     @if (esProfesional && centroTrabajo) {
       <div class="carousel-wrapper">
-         <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
-           <div class="img-wrapper position-relative">
-             @if (!imagenProCargada) {
-               <div class="position-absolute top-50 start-50 translate-middle text-center">
-                 <div class="spinner-border text-success spinner-border-sm" role="status"></div>
-               </div>
-             }
-             <img [src]="getFoto(centroTrabajo.foto)" class="img-fit" [alt]="centroTrabajo.nombre"
-                  (load)="imagenProCargada = true"
-                  [style.opacity]="imagenProCargada ? 1 : 0">
-           </div>
-           <div class="card-body p-4 bg-white">
-             <h4 class="fw-bold text-dark mb-3">{{ centroTrabajo.nombre }}</h4>
-
-             <div class="d-flex flex-column gap-2 mb-3">
-               <p class="text-muted mb-0 d-flex align-items-center">
-                 <i class="bi bi-geo-alt-fill text-success me-2"></i>{{ centroTrabajo.direccion }}
-               </p>
-               <p class="text-muted mb-0 d-flex align-items-center">
-                 <i class="bi bi-telephone-fill text-success me-2"></i>{{ centroTrabajo.telefono || 'Teléfono no disponible' }}
-               </p>
-             </div>
-
-             <div class="info-tag-google border-success mb-4 text-center">
+        <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+          <div class="img-wrapper position-relative">
+            @if (!imagenProCargada) {
+              <div class="position-absolute top-50 start-50 translate-middle text-center">
+                <div class="spinner-border text-success spinner-border-sm" role="status"></div>
+              </div>
+            }
+            <img [src]="getFoto(centroTrabajo.foto)" class="img-fit" [alt]="centroTrabajo.nombre"
+                 (load)="imagenProCargada = true"
+                 [style.opacity]="imagenProCargada ? 1 : 0">
+          </div>
+          <div class="card-body p-4 bg-white">
+            <h4 class="fw-bold text-dark mb-3">{{ centroTrabajo.nombre }}</h4>
+            <div class="d-flex flex-column gap-2 mb-3">
+              <p class="text-muted mb-0 d-flex align-items-center">
+                <i class="bi bi-geo-alt-fill text-success me-2"></i>{{ centroTrabajo.direccion }}
+              </p>
+              <p class="text-muted mb-0 d-flex align-items-center">
+                <i class="bi bi-telephone-fill text-success me-2"></i>{{ centroTrabajo.telefono || 'Teléfono no disponible' }}
+              </p>
+            </div>
+            <div class="info-tag-google border-success mb-4 text-center">
               <i class="bi bi-person-badge-fill me-2"></i>
               <span>Panel de Profesional Activo</span>
-             </div>
-
-             @if (centroTrabajo.horario) {
-               <div class="horario-tabla">
-                 @for (dia of getDias(centroTrabajo.horario); track dia) {
-                   <div class="horario-fila d-flex justify-content-between">
-                     <span class="text-capitalize small fw-bold text-dark">{{ dia }}</span>
-                     <span class="text-muted small">
-                       {{ centroTrabajo.horario[dia].abierto ? centroTrabajo.horario[dia].apertura + ' - ' + centroTrabajo.horario[dia].cierre : 'Cerrado' }}
-                     </span>
-                   </div>
-                 }
-               </div>
-             }
-           </div>
-         </div>
+            </div>
+            @if (centroTrabajo.horario) {
+              <div class="horario-tabla">
+                @for (dia of getDias(centroTrabajo.horario); track dia) {
+                  <div class="horario-fila d-flex justify-content-between">
+                    <span class="text-capitalize small fw-bold text-dark">{{ dia }}</span>
+                    <span class="text-muted small">
+                      {{ centroTrabajo.horario[dia].abierto ? centroTrabajo.horario[dia].apertura + ' - ' + centroTrabajo.horario[dia].cierre : 'Cerrado' }}
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
       </div>
-   }
+    }
+
+    @if (esCliente) {
+
+      @if (centrosConMembresia.length === 0 && centrosSinMembresia.length === 0) {
+        <div class="no-centre-card p-5 text-center shadow-lg">
+          <i class="bi bi-emoji-smile text-success display-4 mb-3"></i>
+          <h4 class="fw-bold text-dark mb-3">Próximamente nuevos centros</h4>
+          <p class="text-muted mb-0">Estamos trabajando para incorporar los mejores centros deportivos de tu zona. ¡Vuelve pronto!</p>
+        </div>
+      }
+
+      @if (centrosConMembresia.length === 0 && centrosSinMembresia.length > 0) {
+        <div class="no-membresia-banner mb-4">
+          <i class="bi bi-info-circle-fill me-2"></i>
+          Aún no tienes membresía en ningún centro. ¡Explora y únete al que más te guste!
+        </div>
+      }
+
+      @if (centrosConMembresia.length > 0) {
+        <div class="section-title-wrapper text-center mb-4" style="user-select: none;">
+          <h3 class="section-title sm">
+            <i class="bi bi-patch-check-fill text-success me-2"></i>Mis <span class="highlight">Centros</span>
+          </h3>
+          <p class="section-subtitle">Centros donde tienes membresía activa</p>
+        </div>
+
+        <div class="cliente-carousel-wrapper mb-5">
+          <div class="cliente-carousel-track">
+            @for (centro of centrosConMembresia; track centro; let i = $index) {
+              <div class="cliente-card">
+                <div class="img-wrapper-sm position-relative">
+                  @if (!imagenesConMembresiaCargadas[i]) {
+                    <div class="position-absolute top-50 start-50 translate-middle">
+                      <div class="spinner-border text-success spinner-border-sm" role="status"></div>
+                    </div>
+                  }
+                  <img [src]="getFoto(centro.foto)" class="img-fit" [alt]="centro.nombre"
+                       (load)="setImagenConMembresiaCargada(i)"
+                       (error)="centro.foto = imagenPorDefecto; setImagenConMembresiaCargada(i)"
+                       [style.opacity]="imagenesConMembresiaCargadas[i] ? 1 : 0">
+                  <span class="badge-membresia"><i class="bi bi-patch-check-fill me-1"></i>Activa</span>
+                </div>
+                <div class="card-body p-3 bg-white">
+                  <h5 class="fw-bold text-dark mb-2">{{ centro.nombre }}</h5>
+                  <p class="text-muted small mb-0 d-flex align-items-center">
+                    <i class="bi bi-geo-alt-fill text-success me-1"></i>{{ centro.direccion }}
+                  </p>
+                  <p class="text-muted small mb-3 d-flex align-items-center">
+                    <i class="bi bi-telephone-fill text-success me-1"></i>{{ centro.telefono || 'Sin teléfono' }}
+                  </p>
+                  <button class="btn btn-success fw-bold w-100 py-2 text-uppercase"
+                          (click)="navigateToCentroDetail(centro.adminUid)">
+                    <i class="bi bi-calendar-check me-2"></i>Reservar Sesión
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (centrosSinMembresia.length > 0) {
+        <div class="section-title-wrapper text-center mb-4" style="user-select: none;">
+          <h3 class="section-title sm">
+            <i class="bi bi-compass me-2"></i>Descubre más <span class="highlight">Centros</span>
+          </h3>
+          <p class="section-subtitle">Consigue una membresía para acceder a sus sesiones</p>
+        </div>
+
+        <div class="cliente-carousel-wrapper mb-5">
+          <div class="cliente-carousel-track">
+            @for (centro of centrosSinMembresia; track centro; let i = $index) {
+              <div class="cliente-card cliente-card-muted">
+                <div class="img-wrapper-sm position-relative">
+                  @if (!imagenesSinMembresiaCargadas[i]) {
+                    <div class="position-absolute top-50 start-50 translate-middle">
+                      <div class="spinner-border text-success spinner-border-sm" role="status"></div>
+                    </div>
+                  }
+                  <img [src]="getFoto(centro.foto)" class="img-fit" [alt]="centro.nombre"
+                       (load)="setImagenSinMembresiaCargada(i)"
+                       (error)="centro.foto = imagenPorDefecto; setImagenSinMembresiaCargada(i)"
+                       [style.opacity]="imagenesSinMembresiaCargadas[i] ? 1 : 0">
+                </div>
+                <div class="card-body p-3 bg-white">
+                  <h5 class="fw-bold text-dark mb-2">{{ centro.nombre }}</h5>
+                  <p class="text-muted small mb-0 d-flex align-items-center">
+                    <i class="bi bi-geo-alt-fill text-success me-1"></i>{{ centro.direccion }}
+                  </p>
+                  <p class="text-muted small mb-3 d-flex align-items-center">
+                    <i class="bi bi-telephone-fill text-success me-1"></i>{{ centro.telefono || 'Sin teléfono' }}
+                  </p>
+                  <button class="btn btn-outline-success fw-bold w-100 py-2 text-uppercase"
+                          (click)="navigateToCentroDetail(centro.adminUid)">
+                    <i class="bi bi-eye me-2"></i>Ver Centro
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+    }
+
   }
 
   <div class="footer-app text-center mt-5 text-white pb-3" [class.visible]="showFooter">
@@ -275,4 +378,5 @@
       </div>
     </div>
   </div>
+
 </div>
