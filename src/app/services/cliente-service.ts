@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { child, Database, equalTo, listVal, objectVal, orderByChild, query, ref, remove, set, update } from '@angular/fire/database';
 import { map, Observable, take } from 'rxjs';
 import { Cliente } from '../models/Cliente';
@@ -15,6 +15,7 @@ export class ClienteService {
 
   private database         = inject(Database);
   private functionsService = inject(FunctionsService);
+  private injector         = inject(Injector);
 
   /**
    * Método mediante el cual obtenemos los datos de un cliente a través de su UID
@@ -23,7 +24,7 @@ export class ClienteService {
    */
   getClienteByUid(uid: string): Observable<Cliente | null> {
     const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return objectVal(clienteRef);
+    return runInInjectionContext(this.injector, () => objectVal(clienteRef));
   }
 
   /**
@@ -32,7 +33,7 @@ export class ClienteService {
    */
   getAllClientes(): Observable<Cliente[] | null> {
     const clientesRef = query(ref(this.database, `/${this.COLLECTION_NAME}`), orderByChild('rol'), equalTo('CLIENTE'));
-    return listVal(clientesRef, { keyField: 'uid' }) as Observable<Cliente[] | null>;
+    return runInInjectionContext(this.injector, () => listVal(clientesRef, { keyField: 'uid' })) as Observable<Cliente[] | null>;
   }
 
   /**

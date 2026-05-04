@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { inject, Injector, runInInjectionContext } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { Auth, user } from '@angular/fire/auth';
 import { Database, ref, child, get } from '@angular/fire/database';
@@ -20,6 +20,7 @@ export function roleGuard(rolesPermitidos: Rol[]): CanActivateFn {
     const auth     = inject(Auth);
     const database = inject(Database);
     const router   = inject(Router);
+    const injector = inject(Injector);
 
     /* Observamos el estado de autenticación actual */
     return from(user(auth)).pipe(
@@ -34,7 +35,7 @@ export function roleGuard(rolesPermitidos: Rol[]): CanActivateFn {
         /* Consultamos el nodo del usuario en Realtime Database para obtener su rol */
         const userRef = child(ref(database), `/${COLLECTION_NAME}/${currentUser.uid}`);
 
-        return from(get(userRef)).pipe(
+        return runInInjectionContext(injector, () => from(get(userRef))).pipe(
           switchMap((snapshot) => {
 
             /* Si el nodo no existe en la base de datos, redirigimos al login por seguridad */

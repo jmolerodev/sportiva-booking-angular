@@ -11,7 +11,7 @@
                 <div class="mb-3">
                     <label class="form-label text-success" style="font-weight: bold;">Correo electrónico</label>
                     <input type="email" class="form-control" placeholder="Introduce tu correo electrónico"
-                        formControlName="email" [ngClass]="{'is-invalid': loginForm.get('email')?.invalid && loginForm.get('email')?.touched,
+                        formControlName="email" autocomplete="email" [ngClass]="{'is-invalid': loginForm.get('email')?.invalid && loginForm.get('email')?.touched,
                             'is-valid': loginForm.get('email')?.valid && loginForm.get('email')?.touched
                         }">
                     @if (loginForm.get('email')?.touched && loginForm.get('email')?.hasError('required')) {
@@ -26,7 +26,9 @@
                     <label class="form-label text-success" style="font-weight: bold;">Contraseña</label>
                     <div class="input-group">
                         <input [type]="showPassword ? 'text' : 'password'" class="form-control"
-                            placeholder="Introduce tu contraseña" formControlName="password" [ngClass]="{'is-invalid': loginForm.get('password')?.invalid && loginForm.get('password')?.touched,
+                            placeholder="Introduce tu contraseña" formControlName="password"
+                            autocomplete="current-password"
+                            [ngClass]="{'is-invalid': loginForm.get('password')?.invalid && loginForm.get('password')?.touched,
                             'is-valid': loginForm.get('password')?.valid && loginForm.get('password')?.touched}">
                         <span class="input-group-text" style="cursor: pointer;" (click)="togglePassword()">
                             <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"

@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { child, Database, listVal, objectVal, ref, remove, set, update } from '@angular/fire/database';
 import { firstValueFrom, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -23,6 +23,7 @@ export class AdminService {
   private database           = inject(Database);
   private functionsService   = inject(FunctionsService);
   private profesionalService = inject(ProfesionalService);
+  private injector           = inject(Injector);
 
   /**
    * Método mediante el cual obtenemos los datos de un administrador a través de su UID
@@ -31,7 +32,7 @@ export class AdminService {
    */
   getAdministradorByUid(uid: string): Observable<Administrador | null> {
     const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return objectVal(adminRef);
+    return runInInjectionContext(this.injector, () => objectVal(adminRef));
   }
 
   /**
@@ -42,7 +43,9 @@ export class AdminService {
   getAllAdministradores(): Observable<{ uid: string; data: Administrador }[]> {
     const personsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
 
-    return listVal<Administrador & { uid: string }>(personsRef, { keyField: 'uid' }).pipe(
+    return runInInjectionContext(this.injector, () =>
+      listVal<Administrador & { uid: string }>(personsRef, { keyField: 'uid' })
+    ).pipe(
       map(persons =>
         (persons ?? [])
           .filter(p => p.rol == Rol.ADMINISTRADOR)
@@ -70,7 +73,9 @@ export class AdminService {
   getProfesionalesByAdmin(adminUid: string): Observable<{ uid: string; data: IProfesional }[]> {
     const personsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
 
-    return listVal<IProfesional & { uid: string }>(personsRef, { keyField: 'uid' }).pipe(
+    return runInInjectionContext(this.injector, () =>
+      listVal<IProfesional & { uid: string }>(personsRef, { keyField: 'uid' })
+    ).pipe(
       map(persons =>
         (persons ?? [])
           .filter(p => p.rol === Rol.PROFESIONAL && p.adminId === adminUid)

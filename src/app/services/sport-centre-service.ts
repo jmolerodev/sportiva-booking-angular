@@ -14,13 +14,13 @@ export class SportCentreService {
   private storage  = inject(Storage);
   private injector = inject(Injector);
 
-  /*Obtiene un centro por su ID*/
+  /* Obtiene un centro por su ID */
   getSportCentreByUid(uid: string): Observable<ISportCentre | null> {
     const centreRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return objectVal(centreRef);
+    return runInInjectionContext(this.injector, () => objectVal<ISportCentre>(centreRef));
   }
 
-  /*Obtiene el centro de un administrador*/
+  /* Obtiene el centro de un administrador */
   getSportCentreByAdminUid(adminUid: string): Observable<ISportCentre | null> {
     return runInInjectionContext(this.injector, () =>
       listVal<ISportCentre>(ref(this.database, `/${this.COLLECTION_NAME}`))
@@ -37,7 +37,8 @@ export class SportCentreService {
   getSportCentreByProfessionalUid(proUid: string): Observable<ISportCentre | null> {
     const proRef = child(ref(this.database), `${this.PERSONS_COLLECTION}/${proUid}/centroId`);
     
-    return objectVal<string>(proRef).pipe(
+    // Corregido: Añadido runInInjectionContext para leer el centroId
+    return runInInjectionContext(this.injector, () => objectVal<string>(proRef)).pipe(
       switchMap(centroId => {
         /* Si el profesional no tiene centroId asignado, devolvemos null directamente */
         if (!centroId) return of(null);
@@ -71,18 +72,19 @@ export class SportCentreService {
   }
 
   /**
- * Vincula o desvincula un profesional a un centro deportivo
- * Si centroUid es null, se elimina la vinculación
- */
-vincularProfesionalACentro(proUid: string, centroUid: string | null): Promise<void> {
-  const proRef = child(ref(this.database), `${this.PERSONS_COLLECTION}/${proUid}`);
+   * Vincula o desvincula un profesional a un centro deportivo
+   * Si centroUid es null, se elimina la vinculación
+   */
+  vincularProfesionalACentro(proUid: string, centroUid: string | null): Promise<void> {
+    const proRef = child(ref(this.database), `${this.PERSONS_COLLECTION}/${proUid}`);
 
-  if (centroUid) {
-    return update(proRef, { centroId: centroUid });
-  } else {
-    return update(proRef, { centroId: null });
+    if (centroUid) {
+      return update(proRef, { centroId: centroUid });
+    } else {
+      return update(proRef, { centroId: null });
+    }
   }
-}
+
   /**
    * Desvincula a un profesional dejándolo libre (Nodo Persons)
    */
