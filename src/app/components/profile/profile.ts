@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subscription, switchMap, of, from } from 'rxjs';
+import { Subscription, switchMap, of, take, from } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { SnackbarService } from '../../services/snackbar';
 import { ClienteService } from '../../services/cliente-service';
@@ -56,58 +56,68 @@ export class Profile implements OnInit, OnDestroy {
   /* Flag que controla si la foto de perfil ha terminado de cargar */
   public fotoPerfilCargada: boolean = false;
 
+  /* Snapshot de los campos de texto al entrar en edición — permite restaurarlos si el usuario cancela */
+  private nombreSnapshot:    string = '';
+  private apellidosSnapshot: string = '';
+  private dniSnapshot:       string = '';
+  private direccionSnapshot: string = '';
+  private descripcionSnapshot:    string = '';
+  private annosExperienciaSnapshot: number = 0;
+
   private subscription: Subscription = new Subscription();
 
   /* Getters para simplificar la plantilla y asegurar el tipado sin usar $any */
-  get asCliente() { return this.perfil as ICliente; }
+  get asCliente()     { return this.perfil as ICliente; }
   get asProfesional() { return this.perfil as IProfesional; }
-  get asAdmin() { return this.perfil as IAdministrador; }
+  get asAdmin()       { return this.perfil as IAdministrador; }
 
   /* Constructor del componente */
   constructor(
-    private authService: AuthService,
-    private snackbarService: SnackbarService,
-    private clienteService: ClienteService,
+    private authService:       AuthService,
+    private snackbarService:   SnackbarService,
+    private clienteService:    ClienteService,
     private profesionalService: ProfesionalService,
-    private adminService: AdminService,
-    private storage: Storage,
-    private cdr: ChangeDetectorRef,
-    private router: Router
+    private adminService:      AdminService,
+    private storage:           Storage,
+    private cdr:               ChangeDetectorRef,
+    private router:            Router
   ) { }
 
   /**
-   * Inicialización: Recuperamos usuario de Auth y luego sus datos tipados de RTDB
-   * delegando en el servicio correspondiente según el rol detectado en el primer snapshot
+   * Inicialización: Recuperamos usuario de Auth y luego sus datos tipados de RTDB una sola vez.
+   * Usamos take(1) para que la suscripción se complete tras el primer valor y el componente
+   * no sea reactivo mientras el usuario edita — equivalente al ValueEventListener del fragment.
    */
   ngOnInit(): void {
     this.subscription.add(
       this.authService.getCurrentUser().pipe(
+        take(1),
         switchMap(user => {
           if (!user) return of(null);
           this.uid          = user.uid;
           this.emailUsuario = user.email;
 
-          /*Usamos ClienteService como punto de entrada genérico — todos los perfiles
-            comparten el mismo nodo /Persons/:uid independientemente del rol*/
-          return this.clienteService.getClienteByUid(user.uid);
+          /* Usamos ClienteService como punto de entrada genérico — todos los perfiles
+             comparten el mismo nodo /Persons/:uid independientemente del rol */
+          return this.clienteService.getClienteByUid(user.uid).pipe(take(1));
         })
       ).subscribe({
         next: (data) => {
           if (data) {
-            /*Casteamos al tipo correcto según el discriminante rol*/
+            /* Casteamos al tipo correcto según el discriminante rol */
             this.perfil = data as unknown as ICliente | IProfesional | IAdministrador;
 
-            /*Sincronizamos la preview y guardamos la URL original para gestionar borrados*/
+            /* Sincronizamos la preview y guardamos la URL original para gestionar borrados */
             if (data.foto) {
               this.previewImagen     = data.foto;
               this.urlImagenOriginal = data.foto;
-              /*Hay foto real que cargar — el spinner se activará hasta que el img dispare (load)*/
+              /* Hay foto real que cargar — el spinner se activará hasta que el img dispare (load) */
             } else {
-              /*Sin foto no hay nada que cargar — mostramos el icono por defecto directamente*/
+              /* Sin foto no hay nada que cargar — mostramos el icono por defecto directamente */
               this.fotoPerfilCargada = true;
             }
           } else {
-            /*Sin perfil tampoco hay foto — evitamos el salto igualmente*/
+            /* Sin perfil tampoco hay foto — evitamos el salto igualmente */
             this.fotoPerfilCargada = true;
           }
           this.loading = false;
@@ -133,12 +143,12 @@ export class Profile implements OnInit, OnDestroy {
 
     this.imagenSeleccionada = input.files[0];
 
-    /*Reseteamos el flag y forzamos la detección antes del FileReader para que el spinner
-      aparezca inmediatamente mientras se procesa la nueva imagen*/
+    /* Reseteamos el flag y forzamos la detección antes del FileReader para que el spinner
+       aparezca inmediatamente mientras se procesa la nueva imagen */
     this.fotoPerfilCargada = false;
     this.cdr.detectChanges();
 
-    /*Generamos la preview de la imagen seleccionada para mostrarla al instante*/
+    /* Generamos la preview de la imagen seleccionada para mostrarla al instante */
     const reader = new FileReader();
     reader.onload = () => {
       this.previewImagen = reader.result as string;
@@ -155,10 +165,10 @@ export class Profile implements OnInit, OnDestroy {
     this.imagenSeleccionada = null;
     this.previewImagen      = null;
 
-    /*Limpiamos también el campo foto del perfil en memoria*/
+    /* Limpiamos también el campo foto del perfil en memoria */
     if (this.perfil) this.perfil.foto = '';
 
-    /*Sin foto activa no hay nada que cargar — evitamos el salto al mostrar el icono por defecto*/
+    /* Sin foto activa no hay nada que cargar — evitamos el salto al mostrar el icono por defecto */
     this.fotoPerfilCargada = true;
   }
 
@@ -170,27 +180,27 @@ export class Profile implements OnInit, OnDestroy {
   private subirFotoYGuardar(): void {
     if (!this.uid || !this.imagenSeleccionada) return;
 
-    /*Si había una imagen anterior la eliminamos de Storage antes de subir la nueva*/
+    /* Si había una imagen anterior la eliminamos de Storage antes de subir la nueva */
     if (this.urlImagenOriginal) {
       deleteObject(storageRef(this.storage, this.urlImagenOriginal)).catch(() => { });
     }
 
-    /*Usamos Date.now() para asegurar unicidad y evitar problemas de caché en el navegador*/
+    /* Usamos Date.now() para asegurar unicidad y evitar problemas de caché en el navegador */
     const fileRef = storageRef(this.storage, `Users/${Date.now()}_${this.imagenSeleccionada.name}`);
 
     uploadBytes(fileRef, this.imagenSeleccionada)
       .then(snapshot => getDownloadURL(snapshot.ref))
       .then(url => {
-        /*Actualizamos la URL en el perfil en memoria y guardamos la referencia original*/
+        /* Actualizamos la URL en el perfil en memoria y guardamos la referencia original */
         if (this.perfil) this.perfil.foto = url;
         this.urlImagenOriginal  = url;
         this.imagenSeleccionada = null;
 
-        /*Reseteamos el flag de carga para que al cambiar la URL en el HTML aparezca el spinner
-          mientras el navegador descarga la nueva imagen de Storage*/
+        /* Reseteamos el flag de carga para que al cambiar la URL en el HTML aparezca el spinner
+           mientras el navegador descarga la nueva imagen de Storage */
         this.fotoPerfilCargada = false;
 
-        /*Con la URL ya disponible persistimos el resto de cambios en RTDB*/
+        /* Con la URL ya disponible persistimos el resto de cambios en RTDB */
         this.persistirCambios();
       })
       .catch(() => {
@@ -206,7 +216,7 @@ export class Profile implements OnInit, OnDestroy {
   private persistirCambios(): void {
     if (!this.uid || !this.perfil) return;
 
-    /*Campos comunes a todos los roles*/
+    /* Campos comunes a todos los roles */
     const baseData = {
       nombre:    this.perfil.nombre,
       apellidos: this.perfil.apellidos,
@@ -230,7 +240,7 @@ export class Profile implements OnInit, OnDestroy {
         annos_experiencia: p.annos_experiencia
       });
     } else {
-      /*ADMINISTRADOR — solo campos base*/
+      /* ADMINISTRADOR — solo campos base */
       promesa = this.adminService.updateAdministrador(this.uid, baseData);
     }
 
@@ -260,46 +270,72 @@ export class Profile implements OnInit, OnDestroy {
 
     this.loading = true;
 
-    /*Si hay imagen nueva pendiente primero la subimos y después persistimos*/
+    /* Si hay imagen nueva pendiente primero la subimos y después persistimos */
     if (this.imagenSeleccionada) {
       this.subirFotoYGuardar();
       return;
     }
 
-    /*Si el usuario eliminó la foto la borramos de Storage antes de persistir*/
+    /* Si el usuario eliminó la foto la borramos de Storage antes de persistir */
     if (!this.previewImagen && this.urlImagenOriginal) {
       deleteObject(storageRef(this.storage, this.urlImagenOriginal)).catch(() => { });
       this.urlImagenOriginal = null;
     }
 
-    /*Sin cambios de imagen persistimos directamente*/
+    /* Sin cambios de imagen persistimos directamente */
     this.persistirCambios();
   }
 
   /**
    * Activa o desactiva el modo edición.
-   * Al activarlo guarda un snapshot del estado de la imagen para poder restaurarlo si se cancela.
-   * Al cancelar descarta los cambios visuales de la foto sin tocar Storage ni RTDB.
+   * Al activarlo guarda un snapshot completo de todos los campos para poder restaurarlos
+   * si el usuario cancela — equivalente al comportamiento del fragment de Android.
+   * Al cancelar descarta todos los cambios visuales sin tocar Storage ni RTDB
+   * e informa al usuario con un snackbar de aviso.
    */
   toggleEdicion(): void {
     if (!this.modoEdicion) {
 
-      /*Entramos en modo edición — guardamos un snapshot de la preview actual para poder restaurarla*/
-      this.previewSnapshot = this.previewImagen;
-      this.modoEdicion     = true;
+      /* Entramos en modo edición — guardamos snapshot de todos los campos */
+      this.previewSnapshot          = this.previewImagen;
+      this.nombreSnapshot           = this.perfil?.nombre    ?? '';
+      this.apellidosSnapshot        = this.perfil?.apellidos ?? '';
+      this.dniSnapshot              = this.asCliente?.dni       ?? '';
+      this.direccionSnapshot        = this.asCliente?.direccion ?? '';
+      this.descripcionSnapshot      = this.asProfesional?.descripcion       ?? '';
+      this.annosExperienciaSnapshot = this.asProfesional?.annos_experiencia ?? 0;
+
+      this.modoEdicion = true;
 
     } else {
 
-      /*Cancelamos — descartamos la imagen seleccionada y restauramos la preview original*/
+      /* Cancelamos — restauramos todos los campos al estado del snapshot */
       this.imagenSeleccionada = null;
       this.previewImagen      = this.previewSnapshot;
-      if (this.perfil) this.perfil.foto = this.previewSnapshot || '';
 
-      /*Forzamos a true para que al cancelar se vea la imagen de inmediato, ya que
-        al ser la misma URL que ya teníamos, el evento (load) podría no saltar*/
+      if (this.perfil) {
+        this.perfil.nombre    = this.nombreSnapshot;
+        this.perfil.apellidos = this.apellidosSnapshot;
+        this.perfil.foto      = this.previewSnapshot || '';
+      }
+
+      /* Restauramos los campos específicos de rol */
+      if (this.perfil?.rol === Rol.CLIENTE) {
+        this.asCliente.dni       = this.dniSnapshot;
+        this.asCliente.direccion = this.direccionSnapshot;
+      } else if (this.perfil?.rol === Rol.PROFESIONAL) {
+        this.asProfesional.descripcion       = this.descripcionSnapshot;
+        this.asProfesional.annos_experiencia = this.annosExperienciaSnapshot;
+      }
+
+      /* Forzamos a true para que al cancelar se vea la imagen de inmediato, ya que
+         al ser la misma URL que ya teníamos, el evento (load) podría no saltar */
       this.fotoPerfilCargada = true;
 
       this.modoEdicion = false;
+
+      /* Avisamos al usuario de que los cambios han sido descartados */
+      this.snackbarService.showConfirm('Edición cancelada. No se han guardado cambios.', 'Cerrar', () => {});
       this.cdr.detectChanges();
     }
   }
