@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { SnackbarService } from '../../services/snackbar';
 import { customEmailValidator } from '../../validators/auth.validator';
-import { switchMap, of } from 'rxjs';
+import { switchMap, of, map } from 'rxjs';
 
 @Component({
   selector: 'app-reset-password',
@@ -44,8 +44,8 @@ export class ResetPassword {
 
     /* Si el formulario es invalido, mostramos el error correspondiente segun el fallo */
     if (this.resetForm.invalid) {
-      
-      this.resetForm.markAllAsTouched(); 
+
+      this.resetForm.markAllAsTouched();
       const emailControl = this.resetForm.get('email');
 
       if (emailControl?.hasError('required')) {
@@ -53,7 +53,7 @@ export class ResetPassword {
       } else {
         this.snackbar.showError("El formato del correo electrónico no es válido");
       }
-      
+
       return;
     }
 
@@ -62,20 +62,26 @@ export class ResetPassword {
     /* Verificamos primero si el correo existe en Auth antes de enviar el email */
     this.authService.checkEmailExistsInAuth(email).pipe(
       switchMap(exists => {
-        if (!exists) return of(null);
-        return this.authService.sendPasswordResetEmail(email);
+        console.log('¿Existe el correo en Auth?', exists);
+        console.log('Métodos de inicio de sesión:', exists);
+        if (!exists) return of('NOT_FOUND');
+        return this.authService.sendPasswordResetEmail(email).pipe(
+          map(() => 'SENT')
+        );
       })
     ).subscribe({
       next: (result) => {
-        /* Si result es null significa que el correo no existía en Auth */
-        if (result === null) {
+        console.log('Resultado final:', result);
+        if (result === 'NOT_FOUND') {
           this.snackbar.showError("No se encontró ninguna cuenta con ese correo electrónico");
           return;
-        }
+        } 
         this.emailSent = true;
         this.snackbar.showSuccess("Correo de restablecimiento enviado correctamente");
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error completo:', err);
+        console.error('Código de error:', err?.code);
         this.snackbar.showError("Ha ocurrido un error. Inténtalo de nuevo más tarde");
       }
     });

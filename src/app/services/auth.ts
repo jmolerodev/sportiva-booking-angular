@@ -1,11 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, authState, createUserWithEmailAndPassword, fetchSignInMethodsForEmail, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
+import { Auth, authState, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
 import { from, map, Observable, of, switchMap } from 'rxjs';
 import { Rol } from '../enums/Rol';
 import { child, Database, objectVal } from '@angular/fire/database';
 import { ref } from 'firebase/database';
 import { onAuthStateChanged, getAuth, signOut as secondarySignOut } from 'firebase/auth';
 import { initializeApp, getApp, deleteApp } from '@angular/fire/app';
+import { Functions, httpsCallable } from '@angular/fire/functions';
 
 @Injectable({
   providedIn: 'root',
@@ -14,6 +15,7 @@ export class AuthService {
 
   public auth = inject(Auth);
   private database = inject(Database);
+  private functions = inject(Functions);
 
   /* Observable que emite el estado de autenticación en tiempo real */
   public authState$ = authState(this.auth);
@@ -115,15 +117,15 @@ export class AuthService {
   }
 
   /**
-   * Método mediante el cual verificaremos si un correo electrónico existe en Firebase Auth
-   * antes de intentar enviarle un correo de restablecimiento de contraseña.
-   * Devuelve true si el correo está registrado, false en caso contrario.
+   * Método mediante el cual verificaremos si un correo electrónico está registrado en Firebase Auth
+   * llamando a la Cloud Function checkEmailExists, que usa el SDK Admin para la verificación.
    * @param email Correo electrónico a verificar
-   * @returns Observable<boolean>
+   * @returns Observable<boolean> true si el correo existe, false en caso contrario
    */
   checkEmailExistsInAuth(email: string): Observable<boolean> {
-    return from(fetchSignInMethodsForEmail(this.auth, email)).pipe(
-      map(methods => methods.length > 0)
+    const checkEmailExists = httpsCallable<{email: string}, {exists: boolean}>(this.functions, 'checkEmailExists');
+    return from(checkEmailExists({email})).pipe(
+      map(result => result.data.exists)
     );
   }
 
