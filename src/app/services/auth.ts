@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, authState, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
+import { Auth, authState, createUserWithEmailAndPassword, fetchSignInMethodsForEmail, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, User, UserCredential } from '@angular/fire/auth';
 import { from, map, Observable, of, switchMap } from 'rxjs';
 import { Rol } from '../enums/Rol';
 import { child, Database, objectVal } from '@angular/fire/database';
@@ -115,7 +115,22 @@ export class AuthService {
   }
 
   /**
+   * Método mediante el cual verificaremos si un correo electrónico existe en Firebase Auth
+   * antes de intentar enviarle un correo de restablecimiento de contraseña.
+   * Devuelve true si el correo está registrado, false en caso contrario.
+   * @param email Correo electrónico a verificar
+   * @returns Observable<boolean>
+   */
+  checkEmailExistsInAuth(email: string): Observable<boolean> {
+    return from(fetchSignInMethodsForEmail(this.auth, email)).pipe(
+      map(methods => methods.length > 0)
+    );
+  }
+
+  /**
    * Metodo mediante el cual enviaremos un correo de restablecimiento de contraseña via Firebase Auth
+   * @param email Correo electrónico del usuario
+   * @returns Observable<void>
    */
   sendPasswordResetEmail(email: string): Observable<void> {
     return from(sendPasswordResetEmail(this.auth, email));

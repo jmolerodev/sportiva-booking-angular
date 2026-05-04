@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { SnackbarService } from '../../services/snackbar';
 import { customEmailValidator } from '../../validators/auth.validator';
+import { switchMap, of } from 'rxjs';
 
 @Component({
   selector: 'app-reset-password',
@@ -35,7 +36,9 @@ export class ResetPassword {
   }
 
   /**
-   * Metodo mediante el cual enviaremos el correo de restablecimiento de contraseña via Firebase Auth
+   * Metodo mediante el cual enviaremos el correo de restablecimiento de contraseña via Firebase Auth.
+   * Antes de enviarlo, verificamos que el correo esté registrado en Auth para evitar
+   * envíos a cuentas inexistentes.
    */
   sendResetEmail(): void {
 
@@ -56,13 +59,24 @@ export class ResetPassword {
 
     const { email } = this.resetForm.value;
 
-    this.authService.sendPasswordResetEmail(email).subscribe({
-      next: () => {
+    /* Verificamos primero si el correo existe en Auth antes de enviar el email */
+    this.authService.checkEmailExistsInAuth(email).pipe(
+      switchMap(exists => {
+        if (!exists) return of(null);
+        return this.authService.sendPasswordResetEmail(email);
+      })
+    ).subscribe({
+      next: (result) => {
+        /* Si result es null significa que el correo no existía en Auth */
+        if (result === null) {
+          this.snackbar.showError("No se encontró ninguna cuenta con ese correo electrónico");
+          return;
+        }
         this.emailSent = true;
         this.snackbar.showSuccess("Correo de restablecimiento enviado correctamente");
       },
       error: () => {
-        this.snackbar.showError("No se encontró ninguna cuenta con ese correo electrónico");
+        this.snackbar.showError("Ha ocurrido un error. Inténtalo de nuevo más tarde");
       }
     });
 
