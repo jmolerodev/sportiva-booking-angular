@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { child, Database, equalTo, get, listVal, orderByChild, push, query, ref, remove, set, update } from '@angular/fire/database';
 import { Storage, ref as stRef, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 import { Observable } from 'rxjs';
@@ -17,6 +17,7 @@ export class MediaService {
 
   private database = inject(Database);
   private storage  = inject(Storage);
+  private injector = inject(Injector);
 
   /**
    * Método para obtener todos los vídeos subidos exclusivamente por un profesional
@@ -24,12 +25,14 @@ export class MediaService {
    * @returns Observable con la lista de vídeos del profesional
    */
   getMediaByProfesional(profesionalId: string): Observable<IMedia[] | null> {
-    const mediaQuery = query(
-      ref(this.database, `/${this.COLLECTION_NAME}`),
-      orderByChild('profesionalId'),
-      equalTo(profesionalId)
-    );
-    return listVal(mediaQuery, { keyField: 'uid' }) as Observable<IMedia[] | null>;
+    return runInInjectionContext(this.injector, () => {
+      const mediaQuery = query(
+        ref(this.database, `/${this.COLLECTION_NAME}`),
+        orderByChild('profesionalId'),
+        equalTo(profesionalId)
+      );
+      return listVal(mediaQuery, { keyField: 'uid' }) as Observable<IMedia[] | null>;
+    });
   }
 
   /**
@@ -40,12 +43,14 @@ export class MediaService {
    * @returns Observable con la lista de vídeos del centro
    */
   getMediaByCentro(centroId: string): Observable<IMedia[] | null> {
-    const mediaQuery = query(
-      ref(this.database, `/${this.COLLECTION_NAME}`),
-      orderByChild('centroId'),
-      equalTo(centroId)
-    );
-    return listVal(mediaQuery, { keyField: 'uid' }) as Observable<IMedia[] | null>;
+    return runInInjectionContext(this.injector, () => {
+      const mediaQuery = query(
+        ref(this.database, `/${this.COLLECTION_NAME}`),
+        orderByChild('centroId'),
+        equalTo(centroId)
+      );
+      return listVal(mediaQuery, { keyField: 'uid' }) as Observable<IMedia[] | null>;
+    });
   }
 
   /**

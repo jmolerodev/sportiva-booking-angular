@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { customEmailValidator, customPasswordValidator } from '../../validators/auth.validator';
 import { SnackbarService } from '../../services/snackbar';
-import { setPersistence, browserLocalPersistence, browserSessionPersistence } from '@angular/fire/auth';
 import { take } from 'rxjs';
 
 @Component({
@@ -27,7 +26,7 @@ export class Login {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private snackbar : SnackbarService
+    private snackbar: SnackbarService
   ) {
 
     this.loginForm = this.fb.group({
@@ -52,29 +51,23 @@ export class Login {
 
     const { email, password, remember } = this.loginForm.value;
 
-    /* Configuramos la persistencia según el checkbox */
-    const persistence = remember ? browserLocalPersistence : browserSessionPersistence;
+    /* Ejecutamos el login con la persistencia configurada, todo dentro del contexto de inyección del servicio */
+    this.authService.loginWithPersistence(email, password, remember).subscribe({
+      next: () => {
 
-    setPersistence(this.authService.auth, persistence).then(() => {
-      
-      /* Ejecutamos el login */
-      this.authService.login(email, password).subscribe({
-        next: () => {
-          
-          /*Nos suscribimos para confirmar que el usuario está autenticado realmente*/
-          this.authService.getUserAuthenticated().pipe(take(1)).subscribe((user) => {
-            if (user) {
-              this.snackbar.showSuccess("Bienvenido a Sportiva Booking");
-              this.router.navigate(['/home']);
-            }
-          });
+        /*Nos suscribimos para confirmar que el usuario está autenticado realmente*/
+        this.authService.getUserAuthenticated().pipe(take(1)).subscribe((user) => {
+          if (user) {
+            this.snackbar.showSuccess("Bienvenido a Sportiva Booking");
+            this.router.navigate(['/home']);
+          }
+        });
 
-        },
-        error: (e) => {
-          this.snackbar.showError("Lo sentimos, pero las credenciales son incorrectas");
-        }
-      });
-
+      },
+      error: (e) => {
+        console.log('ERROR COMPLETO:', e);
+        this.snackbar.showError("Lo sentimos, pero las credenciales son incorrectas");
+      }
     });
 
   }
@@ -103,7 +96,7 @@ export class Login {
   /**
    * Metodo mediante el que navegaremos a la pestaña de 'Home'
    */
-  navigateToHome() : void {
+  navigateToHome(): void {
     this.router.navigate(['/home']);
   }
 

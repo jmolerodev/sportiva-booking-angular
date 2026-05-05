@@ -13,9 +13,9 @@ export class ProfesionalService {
   /* Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol */
   private COLLECTION_NAME = 'Persons';
 
-  private database        = inject(Database);
-  private injector        = inject(Injector);
-  private sessionService  = inject(SessionService);
+  private database         = inject(Database);
+  private injector         = inject(Injector);
+  private sessionService   = inject(SessionService);
   private functionsService = inject(FunctionsService);
 
   /**
@@ -24,8 +24,10 @@ export class ProfesionalService {
    * @returns Observable con los datos del profesional (o bien null si no existe)
    */
   getProfesionalByUid(uid: string): Observable<Profesional | null> {
-    const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return objectVal(profesionalRef);
+    return runInInjectionContext(this.injector, () => {
+      const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      return objectVal(profesionalRef);
+    });
   }
 
   /**

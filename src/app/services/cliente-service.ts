@@ -48,9 +48,12 @@ export class ClienteService {
       equalTo(dni)
     );
 
-    return listVal(dniQuery).pipe(
-      take(1),
-      map((results) => results.length > 0)
+    /* Envolvemos listVal en runInInjectionContext para evitar warnings de Firebase fuera del contexto de Angular */
+    return runInInjectionContext(this.injector, () =>
+      listVal(dniQuery).pipe(
+        take(1),
+        map((results) => results.length > 0)
+      )
     );
   }
 

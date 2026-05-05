@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { Database, equalTo, listVal, onValue, orderByChild, push, query, ref, remove, set, update } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 import { ISoporteChat } from '../interfaces/SoporteChar-Interface';
@@ -13,6 +13,7 @@ export class SoporteService {
   /* Nombre del nodo principal de soporte en Firebase RTDB */
   private COLLECTION_NAME = 'Supports';
   private database = inject(Database);
+  private injector = inject(Injector);
 
   /**
    * Obtiene en tiempo real todos los chats de soporte asociados a un cliente.
@@ -20,12 +21,14 @@ export class SoporteService {
    * @returns Observable con la lista de chats del cliente
    */
   getChatsByCliente(clienteId: string): Observable<ISoporteChat[] | null> {
-    const chatQuery = query(
-      ref(this.database, `/${this.COLLECTION_NAME}`),
-      orderByChild('clienteId'),
-      equalTo(clienteId)
-    );
-    return listVal(chatQuery, { keyField: 'uid' }) as Observable<ISoporteChat[] | null>;
+    return runInInjectionContext(this.injector, () => {
+      const chatQuery = query(
+        ref(this.database, `/${this.COLLECTION_NAME}`),
+        orderByChild('clienteId'),
+        equalTo(clienteId)
+      );
+      return listVal(chatQuery, { keyField: 'uid' }) as Observable<ISoporteChat[] | null>;
+    });
   }
 
   /**
@@ -34,12 +37,14 @@ export class SoporteService {
    * @returns Observable con la lista de chats del centro
    */
   getChatsByCentro(centroId: string): Observable<ISoporteChat[] | null> {
-    const chatQuery = query(
-      ref(this.database, `/${this.COLLECTION_NAME}`),
-      orderByChild('centroId'),
-      equalTo(centroId)
-    );
-    return listVal(chatQuery, { keyField: 'uid' }) as Observable<ISoporteChat[] | null>;
+    return runInInjectionContext(this.injector, () => {
+      const chatQuery = query(
+        ref(this.database, `/${this.COLLECTION_NAME}`),
+        orderByChild('centroId'),
+        equalTo(centroId)
+      );
+      return listVal(chatQuery, { keyField: 'uid' }) as Observable<ISoporteChat[] | null>;
+    });
   }
 
   /**
@@ -120,15 +125,15 @@ export class SoporteService {
    */
   async enviarMensaje(chatId: string, emisorId: string, texto: string): Promise<void> {
     const mensajesRef = ref(this.database, `/${this.COLLECTION_NAME}/${chatId}/mensajes`);
-    const newMsgRef = push(mensajesRef);
-    const ahora = Date.now();
+    const newMsgRef   = push(mensajesRef);
+    const ahora       = Date.now();
 
     const mensajeData: IMensaje = { emisorId, texto, fecha: ahora };
 
     /* Escritura atómica: nuevo mensaje + timestamp del chat actualizado */
     const updates: Record<string, any> = {};
     updates[`/${this.COLLECTION_NAME}/${chatId}/mensajes/${newMsgRef.key}`] = mensajeData;
-    updates[`/${this.COLLECTION_NAME}/${chatId}/fechaUltimoMensaje`] = ahora;
+    updates[`/${this.COLLECTION_NAME}/${chatId}/fechaUltimoMensaje`]        = ahora;
 
     return update(ref(this.database), updates);
   }
