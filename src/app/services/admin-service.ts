@@ -59,8 +59,10 @@ getAllAdministradores(): Observable<{ uid: string; data: Administrador }[]> {
    * @returns Promesa que se resuelve tras la actualización
    */
   updateAdministrador(uid: string, data: Partial<IAdministrador>): Promise<void> {
-    const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return update(adminRef, data);
+    return runInInjectionContext(this.injector, () => {
+      const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      return update(adminRef, data);
+    });
   }
 
  /**
@@ -110,7 +112,6 @@ getProfesionalesByAdmin(adminUid: string): Observable<{ uid: string; data: IProf
       const adminPath  = `/${this.COLLECTION_NAME}/${uid}`;
       const centrePath = `/${this.CENTRES_COLLECTION}/${uid}`;
 
-      // Envolvemos la operación de Firebase para asegurar el contexto tras los awaits previos
       await runInInjectionContext(this.injector, () => 
         update(ref(this.database), {
           [adminPath]:  null,

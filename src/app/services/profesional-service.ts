@@ -51,11 +51,13 @@ export class ProfesionalService {
    * @param data Objeto parcial con los campos de IProfesional (aquí ya entrará centroId)
    */
   updateProfesional(uid: string, data: Partial<IProfesional>): Promise<void> {
-    const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return update(profesionalRef, data);
+    return runInInjectionContext(this.injector, () => {
+      const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      return update(profesionalRef, data);
+    });
   }
 
-  /**
+/**
    * Elimina completamente a un profesional del sistema en cascada:
    *   1. Recupera todas las sesiones creadas por el profesional.
    *   2. Por cada sesión invoca {@link SessionService.deleteSession} que a su vez
@@ -67,36 +69,45 @@ export class ProfesionalService {
    */
   async deleteProfesionalCompleto(uid: string): Promise<void> {
 
-    /* Paso 1: obtenemos la lista de sesiones del profesional (primera emisión) */
-    const sesiones = await firstValueFrom(
-      this.sessionService.getSessionsByProfesional(uid).pipe(catchError(() => of([])))
-    );
+    return runInInjectionContext(this.injector, async () => {
 
-    /* Paso 2: eliminamos cada sesión junto con sus reservas en paralelo */
-    await Promise.all(
-      sesiones.map(sesion =>
-        firstValueFrom(
-          this.sessionService.deleteSession((sesion as any).uid).pipe(catchError(() => of(void 0)))
+      /* Paso 1: obtenemos la lista de sesiones del profesional (primera emisión) */
+      const sesiones = await firstValueFrom(
+        this.sessionService.getSessionsByProfesional(uid).pipe(catchError(() => of([])))
+      );
+
+      /* Paso 2: eliminamos cada sesión junto con sus reservas en paralelo */
+      await Promise.all(
+        sesiones.map(sesion =>
+          firstValueFrom(
+            this.sessionService.deleteSession((sesion as any).uid).pipe(catchError(() => of(void 0)))
+          )
         )
-      )
-    );
+      );
 
-    /* Paso 3: eliminamos el nodo del profesional en Persons */
-    const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    await remove(profesionalRef);
+      /* Paso 3: eliminamos el nodo del profesional en Persons */
+      /* Re-envolvemos aquí porque los await anteriores rompen el contexto de inyección */
+      await runInInjectionContext(this.injector, () => {
+        const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+        return remove(profesionalRef);
+      });
 
-    /* Paso 4: eliminamos al profesional de Firebase Authentication */
-    await this.functionsService.deleteUserFromAuth(uid);
+      /* Paso 4: eliminamos al profesional de Firebase Authentication */
+      await this.functionsService.deleteUserFromAuth(uid);
+
+    });
   }
 
-  /**
+/**
    * Método para guardar los datos de un nuevo profesional dentro de la base de datos
    * @param uid UID asignado al profesional
    * @param profesional Objeto con los datos del profesional que deseamos guardar (puede estar tipado o no)
    * @returns Promesa que se resuelve una vez haya finalizado el guardado
    */
   saveProfesional(uid: string, profesional: any): Promise<void> {
-    const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return set(profesionalRef, profesional);
+    return runInInjectionContext(this.injector, () => {
+      const profesionalRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      return set(profesionalRef, profesional);
+    });
   }
 }

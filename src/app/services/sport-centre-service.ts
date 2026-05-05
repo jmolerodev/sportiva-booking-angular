@@ -14,10 +14,11 @@ export class SportCentreService {
   private storage  = inject(Storage);
   private injector = inject(Injector);
 
-  /* Obtiene un centro por su ID */
+/* Obtiene un centro por su ID */
   getSportCentreByUid(uid: string): Observable<ISportCentre | null> {
-    const centreRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return runInInjectionContext(this.injector, () => objectVal<ISportCentre>(centreRef));
+    return runInInjectionContext(this.injector, () =>
+      objectVal<ISportCentre>(child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`))
+    );
   }
 
   /* Obtiene el centro de un administrador */
@@ -29,23 +30,25 @@ export class SportCentreService {
     );
   }
 
-  /**
+/**
    * Obtiene el centro donde trabaja un profesional de forma directa usando su 'centroId'
    * @param proUid UID del profesional que busca su centro
    * @returns Observable con los datos del centro deportivo
    */
   getSportCentreByProfessionalUid(proUid: string): Observable<ISportCentre | null> {
-    const proRef = child(ref(this.database), `${this.PERSONS_COLLECTION}/${proUid}/centroId`);
-    
-    // Corregido: Añadido runInInjectionContext para leer el centroId
-    return runInInjectionContext(this.injector, () => objectVal<string>(proRef)).pipe(
-      switchMap(centroId => {
-        /* Si el profesional no tiene centroId asignado, devolvemos null directamente */
-        if (!centroId) return of(null);
-        /* Si lo tiene, usamos el método que ya tenemos para traer los datos del centro */
-        return this.getSportCentreByUid(centroId);
-      })
-    );
+    return runInInjectionContext(this.injector, () => {
+      const proRef = child(ref(this.database), `${this.PERSONS_COLLECTION}/${proUid}/centroId`);
+      
+      return objectVal<string>(proRef).pipe(
+        switchMap(centroId => {
+          /* Si el profesional no tiene centroId asignado, devolvemos null directamente */
+          if (!centroId) return of(null);
+          
+          /* Envolvemos la segunda llamada para asegurar que el contexto persiste en el switchMap */
+          return runInInjectionContext(this.injector, () => this.getSportCentreByUid(centroId));
+        })
+      );
+    });
   }
 
   /* Lista todos los centros */
@@ -100,23 +103,29 @@ export class SportCentreService {
   }
 
   /* Eliminación completa de DB y Storage */
-  deleteSportCentreComplete(uid: string, fotoUrl: string | null): Observable<void> {
-    const centreRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    const deleteDb$ = from(remove(centreRef));
+deleteSportCentreComplete(uid: string, fotoUrl: string | null): Observable<void> {
+    return runInInjectionContext(this.injector, () => {
+      const centreRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      const deleteDb$ = from(remove(centreRef));
 
-    if (fotoUrl && fotoUrl.startsWith('http')) {
-      const storageRef = refStorage(this.storage, fotoUrl);
-      return from(deleteObject(storageRef)).pipe(
-        catchError(() => of(null)),
-        switchMap(() => deleteDb$)
-      );
-    }
-    return deleteDb$;
+      if (fotoUrl && fotoUrl.startsWith('http')) {
+        const storageReference = refStorage(this.storage, fotoUrl);
+        return from(deleteObject(storageReference)).pipe(
+          catchError(() => of(null)),
+          switchMap(() => deleteDb$)
+        );
+      }
+      return deleteDb$;
+    });
   }
 
   /* Guardado total */
   saveSportCentre(uid: string, centre: ISportCentre): Promise<void> {
-    const centreRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return set(centreRef, centre);
+    /* Envolvemos en runInInjectionContext para que el servicio siempre tenga 
+       el contexto de Angular disponible, incluso en llamadas asíncronas */
+    return runInInjectionContext(this.injector, () => {
+      const centreRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      return set(centreRef, centre);
+    });
   }
 }

@@ -76,14 +76,16 @@ export class BookingService {
    * @returns Promesa que se resuelve cuando ambas escrituras quedan persistidas
    */
   async crearReserva(reserva: IBooking, aforoNuevo: number): Promise<void> {
-    const newRef = push(ref(this.database, `/${this.COLLECTION_NAME}`));
+    return runInInjectionContext(this.injector, () => {
+      const newRef = push(ref(this.database, `/${this.COLLECTION_NAME}`));
 
-    /* Escritura atómica: nueva reserva + aforoActual de la sesión incrementado */
-    const updates: Record<string, any> = {};
-    updates[`/${this.COLLECTION_NAME}/${newRef.key}`]    = reserva;
-    updates[`/Sessions/${reserva.sesionId}/aforoActual`] = aforoNuevo;
+      /* Escritura atómica: nueva reserva + aforoActual de la sesión incrementado */
+      const updates: Record<string, any> = {};
+      updates[`/${this.COLLECTION_NAME}/${newRef.key}`]    = reserva;
+      updates[`/Sessions/${reserva.sesionId}/aforoActual`] = aforoNuevo;
 
-    return update(ref(this.database), updates);
+      return update(ref(this.database), updates);
+    });
   }
 
   /**
@@ -95,11 +97,13 @@ export class BookingService {
    * @returns Promesa que se resuelve cuando ambas escrituras quedan persistidas
    */
   async cancelarReserva(bookingUid: string, sesionId: string, aforoNuevo: number): Promise<void> {
-    const updates: Record<string, any> = {};
-    updates[`/${this.COLLECTION_NAME}/${bookingUid}/estado`] = EstadoReserva.CANCELADA;
-    updates[`/Sessions/${sesionId}/aforoActual`]             = aforoNuevo;
+    return runInInjectionContext(this.injector, () => {
+      const updates: Record<string, any> = {};
+      updates[`/${this.COLLECTION_NAME}/${bookingUid}/estado`] = EstadoReserva.CANCELADA;
+      updates[`/Sessions/${sesionId}/aforoActual`]             = aforoNuevo;
 
-    return update(ref(this.database), updates);
+      return update(ref(this.database), updates);
+    });
   }
 
   /**
@@ -112,6 +116,8 @@ export class BookingService {
    * @returns Promesa que se resuelve cuando todas las escrituras quedan persistidas
    */
   async cancelarReservasBySesion(sesionId: string): Promise<void> {
+    const dbRef = runInInjectionContext(this.injector, () => ref(this.database));
+
     const reservas = await new Promise<IBooking[]>((resolve, reject) => {
       this.getReservasBySesionId(sesionId).pipe(
         map(r => r ?? [])
@@ -128,7 +134,7 @@ export class BookingService {
       updates[`/${this.COLLECTION_NAME}/${r.uid}/estado`] = EstadoReserva.CANCELADA;
     });
 
-    return update(ref(this.database), updates);
+    return update(dbRef, updates);
   }
 
   /**
@@ -139,7 +145,9 @@ export class BookingService {
    * @returns Promesa que se resuelve cuando el nodo queda borrado
    */
   async eliminarReserva(bookingUid: string): Promise<void> {
-    return remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${bookingUid}`));
+    return runInInjectionContext(this.injector, () =>
+      remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${bookingUid}`))
+    );
   }
 
   /**
@@ -158,7 +166,9 @@ export class BookingService {
 
     /* Eliminamos todos los nodos en paralelo */
     await Promise.all(
-      reservas.map(r => remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${r.uid}`)))
+      reservas.map(r => runInInjectionContext(this.injector, () =>
+        remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${r.uid}`))
+      ))
     );
   }
 
@@ -178,7 +188,9 @@ export class BookingService {
 
     /* Eliminamos todos los nodos en paralelo */
     await Promise.all(
-      reservas.map(r => remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${r.uid}`)))
+      reservas.map(r => runInInjectionContext(this.injector, () =>
+        remove(child(ref(this.database), `/${this.COLLECTION_NAME}/${r.uid}`))
+      ))
     );
   }
 }

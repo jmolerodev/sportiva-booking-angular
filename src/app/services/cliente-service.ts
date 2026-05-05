@@ -13,9 +13,9 @@ export class ClienteService {
   /* Nombre de la Colección Principal donde almacenamos a todos los usuarios, de forma independiente a su Rol */
   private COLLECTION_NAME = 'Persons';
 
-  private database         = inject(Database);
+  private database = inject(Database);
   private functionsService = inject(FunctionsService);
-  private injector         = inject(Injector);
+  private injector = inject(Injector);
 
   /**
    * Método mediante el cual obtenemos los datos de un cliente a través de su UID
@@ -34,8 +34,11 @@ export class ClienteService {
    * @returns Observable con la lista de clientes
    */
   getAllClientes(): Observable<Cliente[] | null> {
-    const clientesRef = query(ref(this.database, `/${this.COLLECTION_NAME}`), orderByChild('rol'), equalTo('CLIENTE'));
-    return runInInjectionContext(this.injector, () => listVal(clientesRef, { keyField: 'uid' })) as Observable<Cliente[] | null>;
+    /* Todo lo que toque Firebase (ref, query, listVal) debe estar dentro del contexto */
+    return runInInjectionContext(this.injector, () => {
+      const clientesRef = query(ref(this.database, `/${this.COLLECTION_NAME}`), orderByChild('rol'), equalTo('CLIENTE'));
+      return listVal(clientesRef, { keyField: 'uid' });
+    }) as Observable<Cliente[] | null>;
   }
 
   /**
@@ -44,19 +47,21 @@ export class ClienteService {
    * @returns Observable booleano: true si el DNI ya existe, false si está disponible
    */
   isDniAlreadyRegistered(dni: string): Observable<boolean> {
-    const dniQuery = query(
-      ref(this.database, `/${this.COLLECTION_NAME}`),
-      orderByChild('dni'),
-      equalTo(dni)
-    );
+    /* Envolvemos todo el proceso en runInInjectionContext para evitar warnings de desestabilización */
+    return runInInjectionContext(this.injector, () => {
 
-    /* Envolvemos listVal en runInInjectionContext para evitar warnings de Firebase fuera del contexto de Angular */
-    return runInInjectionContext(this.injector, () =>
-      listVal(dniQuery).pipe(
+      const dniQuery = query(
+        ref(this.database, `/${this.COLLECTION_NAME}`),
+        orderByChild('dni'),
+        equalTo(dni)
+      );
+
+      return listVal(dniQuery).pipe(
         take(1),
         map((results) => results.length > 0)
-      )
-    );
+      );
+
+    });
   }
 
   /**
@@ -92,14 +97,16 @@ export class ClienteService {
   }
 
   /**
-   * Actualizar la información de un cliente utilizando la interfaz ICliente
-   * @param uid UID del cliente
-   * @param data Objeto parcial con los campos de ICliente a modificar
-   * @returns Promesa que se resuelve una vez se actualicen los datos
-   */
+    * Actualizar la información de un cliente utilizando la interfaz ICliente
+    * @param uid UID del cliente
+    * @param data Objeto parcial con los campos de ICliente a modificar
+    * @returns Promesa que se resuelve una vez se actualicen los datos
+    */
   updateCliente(uid: string, data: Partial<ICliente>): Promise<void> {
-    const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return update(clienteRef, data);
+    return runInInjectionContext(this.injector, () => {
+      const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      return update(clienteRef, data);
+    });
   }
 
   /**
@@ -124,7 +131,10 @@ export class ClienteService {
    * @returns Promesa que se resuelve al finalizar el guardado
    */
   saveCliente(uid: string, cliente: any): Promise<void> {
-    const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return set(clienteRef, cliente);
+    return runInInjectionContext(this.injector, () => {
+      const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      return set(clienteRef, cliente);
+    });
   }
+
 }

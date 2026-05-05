@@ -105,9 +105,7 @@ export class SignUp implements OnInit {
             };
 
             this.clienteService.saveCliente(uid, nuevoCliente).then(() => {
-
               this.snackbar.showSuccess("Cuenta de Cliente creada con éxito");
-              console.log('Cliente registrado correctamente:', nuevoCliente);
               this.isLoading = false;
               this.router.navigate(['/home']);
 

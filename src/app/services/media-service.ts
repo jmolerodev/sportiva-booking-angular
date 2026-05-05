@@ -53,7 +53,7 @@ export class MediaService {
     });
   }
 
-  /**
+/**
    * Método integral para subir un vídeo al Storage y registrar su metadata en Database.
    * Firebase push() genera un UID alfanumérico real y ordenado cronológicamente.
    * @param file Archivo de vídeo (Blob/File)
@@ -61,24 +61,31 @@ export class MediaService {
    * @returns Promesa que se resuelve al finalizar todo el proceso de guardado
    */
   async uploadAndSaveMedia(file: File, data: IMedia): Promise<void> {
+    return runInInjectionContext(this.injector, async () => {
 
-    /* 1.- Generamos una referencia con push() para obtener un UID real de Firebase */
-    const collectionRef = ref(this.database, `/${this.COLLECTION_NAME}`);
-    const newNodeRef    = push(collectionRef);
-    const firebaseUid   = newNodeRef.key!;
+      /* 1.- Generamos una referencia con push() para obtener un UID real de Firebase */
+      const collectionRef = ref(this.database, `/${this.COLLECTION_NAME}`);
+      const newNodeRef    = push(collectionRef);
+      const firebaseUid   = newNodeRef.key!;
 
-    /* 2.- Subimos el archivo a Storage usando el UID de Firebase como prefijo del nombre */
-    const filePath         = `${this.STORAGE_PATH}/${firebaseUid}_${file.name}`;
-    const storageReference = stRef(this.storage, filePath);
-    const snapshot         = await uploadBytes(storageReference, file);
-    const downloadURL      = await getDownloadURL(snapshot.ref);
+      /* 2.- Subimos el archivo a Storage usando el UID de Firebase como prefijo del nombre */
+      const filePath         = `${this.STORAGE_PATH}/${firebaseUid}_${file.name}`;
+      const storageReference = stRef(this.storage, filePath);
+      
+      const snapshot    = await uploadBytes(storageReference, file);
+      
+      /* Obtenemos la URL asegurando el contexto tras el await de la subida */
+      const downloadURL = await runInInjectionContext(this.injector, () => getDownloadURL(snapshot.ref));
 
-    /* 3.- Guardamos el registro en el nodo exacto que push() ya reservó en la Database */
-    const finalData: IMedia = { ...data, url: downloadURL, fecha_subida: Date.now() };
-    return set(newNodeRef, finalData);
+      /* 3.- Guardamos el registro en el nodo exacto que push() ya reservó en la Database */
+      const finalData: IMedia = { ...data, url: downloadURL, fecha_subida: Date.now() };
+
+      /* IMPORTANTE: Envolvemos el set final porque el hilo de ejecución ha perdido el contexto tras los awaits previos */
+      return runInInjectionContext(this.injector, () => set(newNodeRef, finalData));
+    });
   }
 
-  /**
+/**
    * Eliminación en cascada: primero borra el archivo físico de Storage y después
    * elimina el nodo de metadatos en RTDB. Este orden garantiza que nunca quede
    * un registro huérfano apuntando a un archivo ya inexistente.
@@ -88,39 +95,47 @@ export class MediaService {
    * @returns Promesa de borrado completo
    */
   async deleteMediaByUrl(url: string): Promise<void> {
-    const mediaQuery = query(
-      ref(this.database, `/${this.COLLECTION_NAME}`),
-      orderByChild('url'),
-      equalTo(url)
-    );
+    return runInInjectionContext(this.injector, async () => {
 
-    const snapshot = await get(mediaQuery);
-
-    if (snapshot.exists()) {
-
-      /* 1.- Extraemos la ruta del archivo desde la URL de Firebase Storage.
-       * Las URLs de descarga tienen el formato: .../o/RUTA_ENCODED?...
-       * Decodificamos el segmento entre '/o/' y '?' para obtener el path real */
-      try {
-        const urlObj      = new URL(url);
-        const encodedPath = urlObj.pathname.split('/o/')[1];
-        if (encodedPath) {
-          const filePath         = decodeURIComponent(encodedPath);
-          const storageReference = stRef(this.storage, filePath);
-          await deleteObject(storageReference);
-        }
-      } catch (storageError) {
-        /* Registramos el error de Storage pero continuamos con el borrado de RTDB
-         * para no dejar el nodo de metadatos huérfano si el archivo ya no existe */
-        console.warn('MediaService: El archivo de Storage no pudo eliminarse o ya no existe.', storageError);
-      }
-
-      /* 2.- Construimos el mapa de updates con null para eliminar cada nodo encontrado */
-      const updates: Record<string, null> = {};
-      snapshot.forEach(child => {
-        updates[`/${this.COLLECTION_NAME}/${child.key}`] = null;
+      /* 1.- Localizamos el registro en la base de datos para obtener su clave */
+      const snapshot = await runInInjectionContext(this.injector, () => {
+        const mediaQuery = query(
+          ref(this.database, `/${this.COLLECTION_NAME}`),
+          orderByChild('url'),
+          equalTo(url)
+        );
+        return get(mediaQuery);
       });
-      return update(ref(this.database), updates) as Promise<void>;
-    }
+
+      if (snapshot.exists()) {
+
+        try {
+          const urlObj      = new URL(url);
+          const encodedPath = urlObj.pathname.split('/o/')[1];
+          if (encodedPath) {
+            const filePath = decodeURIComponent(encodedPath);
+            
+            /* 2.- Borramos el archivo físico de Storage protegiendo la llamada asíncrona */
+            await runInInjectionContext(this.injector, () => {
+              const storageReference = stRef(this.storage, filePath);
+              return deleteObject(storageReference);
+            });
+          }
+        } catch (storageError) {
+          console.warn('MediaService: El archivo de Storage no pudo eliminarse o ya no existe.', storageError);
+        }
+
+        /* 3.- Preparamos la eliminación en la base de datos */
+        const updates: Record<string, null> = {};
+        snapshot.forEach(child => {
+          updates[`/${this.COLLECTION_NAME}/${child.key}`] = null;
+        });
+
+        /* 4.- Ejecutamos la actualización final blindando el contexto de nuevo */
+        return runInInjectionContext(this.injector, () => {
+          return update(ref(this.database), updates) as Promise<void>;
+        });
+      }
+    });
   }
 }

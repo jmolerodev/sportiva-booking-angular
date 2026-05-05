@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Injector, OnInit, runInInjectionContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -61,7 +61,9 @@ export class AddSportCentre implements OnInit {
     private sportCentreService: SportCentreService,
     private snackbarService: SnackbarService,
     private storage: Storage,
-    private router: Router
+    private router: Router,
+    private injector: Injector
+    
   ) {
     this.centroForm = this.fb.group({
       nombre:    ['', Validators.required],
@@ -170,7 +172,7 @@ export class AddSportCentre implements OnInit {
     this.previewImagen      = null;
   }
 
-  /**
+/**
    * Método principal que gestiona la creación o edición del centro deportivo.
    * Si hay imagen la sube a Storage, obtiene la URL y guarda el centro en RTDB.
    * Si no hay imagen nueva mantiene la existente o guarda foto vacía.
@@ -203,35 +205,46 @@ export class AddSportCentre implements OnInit {
 
     const { nombre, direccion, telefono, horario } = this.centroForm.value;
 
-    if (this.imagenSeleccionada) {
+    runInInjectionContext(this.injector, async () => {
+      try {
+        if (this.imagenSeleccionada) {
 
-      /*Si había una imagen anterior la eliminamos de Storage antes de subir la nueva*/
-      if (this.urlImagenOriginal) {
-        deleteObject(ref(this.storage, this.urlImagenOriginal)).catch(() => { });
+          /* Si había una imagen anterior la eliminamos de Storage antes de subir la nueva */
+          if (this.urlImagenOriginal) {
+            const oldFileRef = ref(this.storage, this.urlImagenOriginal);
+            await deleteObject(oldFileRef).catch(() => { });
+          }
+
+          /* Subimos la imagen a Firebase Storage bajo la ruta Sport-Centre/nombre-archivo */
+          const fileStorageRef = ref(this.storage, `Sport-Centre/${Date.now()}_${this.imagenSeleccionada!.name}`);
+          
+          const snapshot = await uploadBytes(fileStorageRef, this.imagenSeleccionada!);
+          
+          /* Re-envolvemos el getDownloadURL para asegurar el contexto tras el await anterior */
+          const url = await runInInjectionContext(this.injector, () => getDownloadURL(snapshot.ref));
+          
+          this.guardarDatosFinales(nombre, direccion, telefono, url, horario);
+
+        } else if (!this.previewImagen) {
+
+          /* Sin preview significa que el usuario eliminó la imagen — la borramos de Storage */
+          if (this.urlImagenOriginal) {
+            const oldFileRef = ref(this.storage, this.urlImagenOriginal);
+            await deleteObject(oldFileRef).catch(() => { });
+          }
+          this.guardarDatosFinales(nombre, direccion, telefono, '', horario);
+
+        } else {
+
+          /* Sin imagen nueva — mantenemos la URL original existente */
+          this.guardarDatosFinales(nombre, direccion, telefono, this.urlImagenOriginal || '', horario);
+
+        }
+      } catch (error) {
+        this.isLoading = false;
+        this.snackbarService.showError('Error al procesar la operación');
       }
-
-      /*Subimos la imagen a Firebase Storage bajo la ruta Sport-Centre/nombre-archivo*/
-      /* Usamos Date.now() para asegurar unicidad y evitar problemas de caché en el navegador */
-      const storageRef = ref(this.storage, `Sport-Centre/${Date.now()}_${this.imagenSeleccionada.name}`);
-      uploadBytes(storageRef, this.imagenSeleccionada)
-        .then(snapshot => getDownloadURL(snapshot.ref))
-        .then(url => this.guardarDatosFinales(nombre, direccion, telefono, url, horario))
-        .catch(() => this.isLoading = false);
-
-    } else if (!this.previewImagen) {
-
-      /*Sin preview significa que el usuario eliminó la imagen — la borramos de Storage*/
-      if (this.urlImagenOriginal) {
-        deleteObject(ref(this.storage, this.urlImagenOriginal)).catch(() => { });
-      }
-      this.guardarDatosFinales(nombre, direccion, telefono, '', horario);
-
-    } else {
-
-      /*Sin imagen nueva — mantenemos la URL original existente*/
-      this.guardarDatosFinales(nombre, direccion, telefono, this.urlImagenOriginal || '', horario);
-
-    }
+    });
   }
 
   /**

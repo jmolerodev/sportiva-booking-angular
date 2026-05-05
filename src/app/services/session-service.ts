@@ -74,11 +74,13 @@ export class SessionService {
    * @returns Observable que se completa al finalizar la escritura
    */
   createSession(sesion: ISession): Observable<void> {
-    const sessionsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
-    return from(push(sessionsRef, sesion)).pipe(
-      map(()        => void 0),
-      catchError(() => of(void 0))
-    );
+    return runInInjectionContext(this.injector, () => {
+      const sessionsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
+      return from(push(sessionsRef, sesion)).pipe(
+        map(()        => void 0),
+        catchError(() => of(void 0))
+      );
+    });
   }
 
   /**
@@ -88,11 +90,12 @@ export class SessionService {
    * @returns Promesa que se resuelve al completar la escritura
    */
   updateSession(uid: string, data: Partial<ISession>): Promise<void> {
-    const sessionRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return update(sessionRef, data);
+    return runInInjectionContext(this.injector, () => {
+      const sessionRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      return update(sessionRef, data);
+    });
   }
-
-  /**
+/**
    * Cancelación lógica de una sesión: actualiza el estado a CANCELADA y cancela
    * en cascada todas las reservas CONFIRMADAS asociadas a ella de forma atómica.
    * El listener reactivo del cliente propagará el cambio de estado de cada reserva
@@ -100,17 +103,20 @@ export class SessionService {
    * @param uid Clave del nodo de la sesión en Firebase
    * @returns Promesa que se resuelve al completar todas las escrituras
    */
-  async cancelSession(uid: string): Promise<void> {
-    const sessionRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+async cancelSession(uid: string): Promise<void> {
+    const sessionRef = runInInjectionContext(this.injector, () =>
+      child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`)
+    );
 
     /* Cancelamos primero todas las reservas CONFIRMADAS de esta sesión en cascada */
     await this.bookingService.cancelarReservasBySesion(uid);
 
     /* A continuación marcamos la sesión como CANCELADA */
-    return update(sessionRef, { estado: EstadoSesion.CANCELADA });
+    return runInInjectionContext(this.injector, () =>
+      update(sessionRef, { estado: EstadoSesion.CANCELADA })
+    );
   }
-
-  /**
+/**
    * Eliminación física del nodo de sesión en Firebase junto con todas las
    * reservas asociadas a ella. Primero elimina las Bookings vinculadas al
    * sesionId para no dejar nodos huérfanos y a continuación borra la sesión.
@@ -118,9 +124,14 @@ export class SessionService {
    * @returns Observable que se completa al finalizar ambos borrados
    */
   deleteSession(uid: string): Observable<void> {
-    const sessionRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+    const sessionRef = runInInjectionContext(this.injector, () =>
+      child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`)
+    );
+
     return from(this.bookingService.eliminarReservasBySesion(uid)).pipe(
-      switchMap(() => from(remove(sessionRef))),
+      switchMap(() => from(
+        runInInjectionContext(this.injector, () => remove(sessionRef))
+      )),
       catchError(() => of(void 0))
     );
   }

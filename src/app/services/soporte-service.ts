@@ -56,14 +56,18 @@ export class SoporteService {
    */
   getMensajesByChat(chatId: string): Observable<IMensaje[]> {
     return new Observable(observer => {
-      const mensajesRef = ref(this.database, `/${this.COLLECTION_NAME}/${chatId}/mensajes`);
-      const unsubscribe = onValue(mensajesRef, snapshot => {
-        const mensajes: IMensaje[] = [];
-        snapshot.forEach(child => {
-          mensajes.push({ uid: child.key, ...child.val() } as any);
-        });
-        observer.next(mensajes);
-      }, error => observer.error(error));
+      const mensajesRef = runInInjectionContext(this.injector, () =>
+        ref(this.database, `/${this.COLLECTION_NAME}/${chatId}/mensajes`)
+      );
+      const unsubscribe = runInInjectionContext(this.injector, () =>
+        onValue(mensajesRef, snapshot => {
+          const mensajes: IMensaje[] = [];
+          snapshot.forEach(child => {
+            mensajes.push({ uid: child.key, ...child.val() } as any);
+          });
+          observer.next(mensajes);
+        }, error => observer.error(error))
+      );
 
       /* Cancelamos la suscripción de Firebase cuando el Observable se destruye */
       return () => unsubscribe();
@@ -84,10 +88,11 @@ export class SoporteService {
     adminId:       string;
     primerMensaje: string;
   }): Promise<void> {
-    const collectionRef = ref(this.database, `/${this.COLLECTION_NAME}`);
-    const newChatRef    = push(collectionRef);
-    const chatId        = newChatRef.key!;
-    const ahora         = Date.now();
+    const { collectionRef, newChatRef, chatId, ahora } = runInInjectionContext(this.injector, () => {
+      const collectionRef = ref(this.database, `/${this.COLLECTION_NAME}`);
+      const newChatRef    = push(collectionRef);
+      return { collectionRef, newChatRef, chatId: newChatRef.key!, ahora: Date.now() };
+    });
 
     const chatData: ISoporteChat = {
       centroId:           data.centroId,
@@ -99,11 +104,14 @@ export class SoporteService {
     };
 
     /* 1.- Escribimos la cabecera del chat */
-    await set(newChatRef, chatData);
+    await runInInjectionContext(this.injector, () => set(newChatRef, chatData));
 
     /* 2.- Escribimos el primer mensaje como subárbol ya existente */
-    const mensajesRef       = ref(this.database, `/${this.COLLECTION_NAME}/${chatId}/mensajes`);
-    const primerMensajeRef  = push(mensajesRef);
+    const { primerMensajeRef } = runInInjectionContext(this.injector, () => {
+      const mensajesRef      = ref(this.database, `/${this.COLLECTION_NAME}/${chatId}/mensajes`);
+      const primerMensajeRef = push(mensajesRef);
+      return { primerMensajeRef };
+    });
 
     const primerMensajeData: IMensaje = {
       emisorId: data.clienteId,
@@ -111,7 +119,7 @@ export class SoporteService {
       fecha:    ahora,
     };
 
-    return set(primerMensajeRef, primerMensajeData);
+    return runInInjectionContext(this.injector, () => set(primerMensajeRef, primerMensajeData));
   }
 
   /**
@@ -124,18 +132,20 @@ export class SoporteService {
    * @returns Promesa que se resuelve cuando el mensaje queda persistido
    */
   async enviarMensaje(chatId: string, emisorId: string, texto: string): Promise<void> {
-    const mensajesRef = ref(this.database, `/${this.COLLECTION_NAME}/${chatId}/mensajes`);
-    const newMsgRef   = push(mensajesRef);
-    const ahora       = Date.now();
+    return runInInjectionContext(this.injector, () => {
+      const mensajesRef = ref(this.database, `/${this.COLLECTION_NAME}/${chatId}/mensajes`);
+      const newMsgRef   = push(mensajesRef);
+      const ahora       = Date.now();
 
-    const mensajeData: IMensaje = { emisorId, texto, fecha: ahora };
+      const mensajeData: IMensaje = { emisorId, texto, fecha: ahora };
 
-    /* Escritura atómica: nuevo mensaje + timestamp del chat actualizado */
-    const updates: Record<string, any> = {};
-    updates[`/${this.COLLECTION_NAME}/${chatId}/mensajes/${newMsgRef.key}`] = mensajeData;
-    updates[`/${this.COLLECTION_NAME}/${chatId}/fechaUltimoMensaje`]        = ahora;
+      /* Escritura atómica: nuevo mensaje + timestamp del chat actualizado */
+      const updates: Record<string, any> = {};
+      updates[`/${this.COLLECTION_NAME}/${chatId}/mensajes/${newMsgRef.key}`] = mensajeData;
+      updates[`/${this.COLLECTION_NAME}/${chatId}/fechaUltimoMensaje`]        = ahora;
 
-    return update(ref(this.database), updates);
+      return update(ref(this.database), updates);
+    });
   }
 
   /**
@@ -145,9 +155,11 @@ export class SoporteService {
    * @returns Promesa que se resuelve cuando el estado queda actualizado
    */
   async aceptarChat(chatId: string): Promise<void> {
-    const updates: Record<string, any> = {};
-    updates[`/${this.COLLECTION_NAME}/${chatId}/estado`] = EstadoChat.ACTIVO;
-    return update(ref(this.database), updates);
+    return runInInjectionContext(this.injector, () => {
+      const updates: Record<string, any> = {};
+      updates[`/${this.COLLECTION_NAME}/${chatId}/estado`] = EstadoChat.ACTIVO;
+      return update(ref(this.database), updates);
+    });
   }
 
   /**
@@ -156,9 +168,11 @@ export class SoporteService {
    * @returns Promesa que se resuelve cuando el estado queda actualizado
    */
   async rechazarChat(chatId: string): Promise<void> {
-    const updates: Record<string, any> = {};
-    updates[`/${this.COLLECTION_NAME}/${chatId}/estado`] = EstadoChat.CERRADO;
-    return update(ref(this.database), updates);
+    return runInInjectionContext(this.injector, () => {
+      const updates: Record<string, any> = {};
+      updates[`/${this.COLLECTION_NAME}/${chatId}/estado`] = EstadoChat.CERRADO;
+      return update(ref(this.database), updates);
+    });
   }
 
   /**
@@ -167,9 +181,11 @@ export class SoporteService {
    * @returns Promesa que se resuelve cuando el estado queda actualizado
    */
   async cerrarChat(chatId: string): Promise<void> {
-    const updates: Record<string, any> = {};
-    updates[`/${this.COLLECTION_NAME}/${chatId}/estado`] = EstadoChat.CERRADO;
-    return update(ref(this.database), updates);
+    return runInInjectionContext(this.injector, () => {
+      const updates: Record<string, any> = {};
+      updates[`/${this.COLLECTION_NAME}/${chatId}/estado`] = EstadoChat.CERRADO;
+      return update(ref(this.database), updates);
+    });
   }
 
   /**
@@ -180,6 +196,8 @@ export class SoporteService {
    * @returns Promesa que se resuelve cuando el nodo queda borrado
    */
   async eliminarChat(chatId: string): Promise<void> {
-    return remove(ref(this.database, `/${this.COLLECTION_NAME}/${chatId}`));
+    return runInInjectionContext(this.injector, () =>
+      remove(ref(this.database, `/${this.COLLECTION_NAME}/${chatId}`))
+    );
   }
 }
