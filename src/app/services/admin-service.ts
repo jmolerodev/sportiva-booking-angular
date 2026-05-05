@@ -36,24 +36,22 @@ export class AdminService {
   }
 
   /**
-   * Método mediante el cual obtenemos la lista completa de Administradores registrados,
-   * filtrando del nodo 'Persons' únicamente aquellos con rol ADMINISTRADOR
-   * @returns Observable con un array de objetos (UID y datos) de cada Administrador
-   */
-  getAllAdministradores(): Observable<{ uid: string; data: Administrador }[]> {
+ * Método mediante el cual obtenemos la lista completa de Administradores registrados,
+ * filtrando del nodo 'Persons' únicamente aquellos con rol ADMINISTRADOR.
+ */
+getAllAdministradores(): Observable<{ uid: string; data: Administrador }[]> {
+  return runInInjectionContext(this.injector, () => {
     const personsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
-
-    return runInInjectionContext(this.injector, () =>
-      listVal<Administrador & { uid: string }>(personsRef, { keyField: 'uid' })
-    ).pipe(
-      map(persons =>
-        (persons ?? [])
-          .filter(p => p.rol == Rol.ADMINISTRADOR)
-          .map(({ uid, ...data }) => ({ uid, data: data as Administrador }))
-      )
-    );
-  }
-
+    
+    return listVal<Administrador & { uid: string }>(personsRef, { keyField: 'uid' });
+  }).pipe(
+    map(persons =>
+      (persons ?? [])
+        .filter(p => p.rol == Rol.ADMINISTRADOR)
+        .map(({ uid, ...data }) => ({ uid, data: data as Administrador }))
+    )
+  );
+}
   /**
    * Método para actualizar la información de un Administrador
    * @param uid UID del Administrador que deseamos modificar
@@ -65,26 +63,27 @@ export class AdminService {
     return update(adminRef, data);
   }
 
-  /**
-   * Obtiene los profesionales vinculados a un administrador específico
-   * @param adminUid UID del administrador propietario
-   * @returns Observable con el listado de profesionales (UID y datos)
-   */
-  getProfesionalesByAdmin(adminUid: string): Observable<{ uid: string; data: IProfesional }[]> {
+ /**
+ * Obtiene los profesionales vinculados a un administrador específico
+ * @param adminUid UID del administrador propietario
+ * @returns Observable con el listado de profesionales (UID y datos)
+ */
+getProfesionalesByAdmin(adminUid: string): Observable<{ uid: string; data: IProfesional }[]> {
+  /* Envolvemos TODO, incluida la creación de la referencia */
+  return runInInjectionContext(this.injector, () => {
     const personsRef = ref(this.database, `/${this.COLLECTION_NAME}`);
-
-    return runInInjectionContext(this.injector, () =>
-      listVal<IProfesional & { uid: string }>(personsRef, { keyField: 'uid' })
-    ).pipe(
+    
+    return listVal<IProfesional & { uid: string }>(personsRef, { keyField: 'uid' }).pipe(
       map(persons =>
         (persons ?? [])
           .filter(p => p.rol === Rol.PROFESIONAL && p.adminId === adminUid)
           .map(({ uid, ...data }) => ({ uid, data: data as IProfesional }))
       )
     );
-  }
+  });
+}
 
-  /**
+ /**
    * Elimina de forma completamente recursiva al administrador y todos sus datos asociados:
    *   1. Recupera todos los profesionales vinculados al administrador.
    *   2. Por cada profesional invoca {@link ProfesionalService.deleteProfesionalCompleto} que a su
@@ -95,36 +94,46 @@ export class AdminService {
    * @returns Promesa que se completa al finalizar la eliminación recursiva en todos los nodos
    */
   async deleteAdministrador(uid: string): Promise<void> {
+    return runInInjectionContext(this.injector, async () => {
+      
+      /* Paso 1: obtenemos la lista de profesionales vinculados al admin (primera emisión) */
+      const profesionales = await firstValueFrom(this.getProfesionalesByAdmin(uid));
 
-    /* Paso 1: obtenemos la lista de profesionales vinculados al admin (primera emisión) */
-    const profesionales = await firstValueFrom(this.getProfesionalesByAdmin(uid));
+      /* Paso 2: eliminamos cada profesional junto con sus sesiones y reservas en paralelo */
+      if (profesionales && profesionales.length > 0) {
+        await Promise.all(
+          profesionales.map(p => this.profesionalService.deleteProfesionalCompleto(p.uid))
+        );
+      }
 
-    /* Paso 2: eliminamos cada profesional junto con sus sesiones y reservas en paralelo */
-    await Promise.all(
-      profesionales.map(p => this.profesionalService.deleteProfesionalCompleto(p.uid))
-    );
+      /* Paso 3: eliminamos de forma atómica el nodo del admin y su centro deportivo */
+      const adminPath  = `/${this.COLLECTION_NAME}/${uid}`;
+      const centrePath = `/${this.CENTRES_COLLECTION}/${uid}`;
 
-    /* Paso 3: eliminamos de forma atómica el nodo del admin y su centro deportivo */
-    const adminPath  = `/${this.COLLECTION_NAME}/${uid}`;
-    const centrePath = `/${this.CENTRES_COLLECTION}/${uid}`;
+      // Envolvemos la operación de Firebase para asegurar el contexto tras los awaits previos
+      await runInInjectionContext(this.injector, () => 
+        update(ref(this.database), {
+          [adminPath]:  null,
+          [centrePath]: null
+        })
+      );
 
-    await update(ref(this.database), {
-      [adminPath]:  null,
-      [centrePath]: null
+      /* Paso 4: eliminamos al administrador de Firebase Authentication */
+      await runInInjectionContext(this.injector, () => 
+        this.functionsService.deleteUserFromAuth(uid)
+      );
+      
     });
-
-    /* Paso 4: eliminamos al administrador de Firebase Authentication */
-    await this.functionsService.deleteUserFromAuth(uid);
   }
 
   /**
-   * Método mediante el cual podremos guardar a un Administrador en la colección 'Persons'
-   * @param uid UID del Administrador
-   * @param administrador Objeto con los datos del administrador
-   * @returns Promesa que se resuelve tras el guardado
-   */
-  saveAdministrador(uid: string, administrador: any): Promise<void> {
+ * Método mediante el cual podremos guardar a un Administrador en la colección 'Persons'
+ * Envolvemos en runInInjectionContext para evitar avisos de desestabilización.
+ */
+saveAdministrador(uid: string, administrador: any): Promise<void> {
+  return runInInjectionContext(this.injector, () => {
     const adminRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
     return set(adminRef, administrador);
-  }
+  });
+}
 }

@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { Functions, httpsCallable } from '@angular/fire/functions';
 
 @Injectable({
@@ -7,6 +7,7 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
 export class FunctionsService {
 
   private functions = inject(Functions);
+  private injector = inject(Injector);
 
   /**
    * Invoca la Cloud Function que elimina un usuario de Firebase Authentication.
@@ -16,8 +17,11 @@ export class FunctionsService {
    * @returns Promesa que se resuelve al completarse la eliminación en Auth
    */
   deleteUserFromAuth(uid: string): Promise<void> {
-    const fn = httpsCallable(this.functions, 'deleteUserFromAuth');
-    return fn({ uid }).then(() => void 0);
+    /* Envolvemos la creación y llamada en el contexto de inyección para evitar los warnings */
+    return runInInjectionContext(this.injector, () => {
+      const fn = httpsCallable<{ uid: string }, void>(this.functions, 'deleteUserFromAuth');
+      return fn({ uid }).then(() => void 0);
+    });
   }
 
 }

@@ -23,8 +23,10 @@ export class ClienteService {
    * @returns Observable con los datos del cliente (o null si no existe)
    */
   getClienteByUid(uid: string): Observable<Cliente | null> {
-    const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
-    return runInInjectionContext(this.injector, () => objectVal(clienteRef));
+    return runInInjectionContext(this.injector, () => {
+      const clienteRef = child(ref(this.database), `/${this.COLLECTION_NAME}/${uid}`);
+      return objectVal<Cliente>(clienteRef);
+    });
   }
 
   /**

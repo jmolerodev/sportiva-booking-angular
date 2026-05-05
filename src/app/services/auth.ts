@@ -74,30 +74,37 @@ export class AuthService {
   }
 
   /**
-   * Método especializado para la creación de usuarios por parte de un administrador.
-   * Crea una instancia secundaria de Firebase para evitar el cierre de sesión del usuario actual,
-   * envía el correo de verificación y limpia la sesión secundaria.
-   * @param email Correo electrónico del nuevo usuario
-   * @param password Contraseña provisional del nuevo usuario
-   * @returns Observable con las credenciales del usuario creado
-   */
-  registerByAdmin(email: string, password: string): Observable<UserCredential> {
+ * Registro por administrador con logs detallados de contexto.
+ */
+registerByAdmin(email: string, password: string): Observable<UserCredential> {
+  
+  return runInInjectionContext(this.injector, () => {
+    
     const secondaryApp = initializeApp(getApp().options, 'SecondaryApp');
     const secondaryAuth = getAuth(secondaryApp);
 
+    /* Usamos 'from' para convertir la promesa en observable */
     return from(createUserWithEmailAndPassword(secondaryAuth, email, password)).pipe(
       switchMap(async (credential) => {
         try {
-          await sendEmailVerification(credential.user);
-          await secondarySignOut(secondaryAuth);
+          /* Envolvemos las llamadas internas por si acaso */
+          await runInInjectionContext(this.injector, async () => {
+            await sendEmailVerification(credential.user);
+            await secondarySignOut(secondaryAuth);
+          });
           return credential;
+        } catch (error) {
+          throw error;
         } finally {
-          await deleteApp(secondaryApp);
+          try {
+            await runInInjectionContext(this.injector, () => deleteApp(secondaryApp));
+          } catch (err) {
+          }
         }
       })
     );
-  }
-
+  });
+}
   /**
    * Método mediante el cual cerraremos la sesión del usuario autenticado.
    * @returns Observable que se completa al cerrar sesión correctamente

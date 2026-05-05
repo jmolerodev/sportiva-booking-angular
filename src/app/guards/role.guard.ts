@@ -23,7 +23,7 @@ export function roleGuard(rolesPermitidos: Rol[]): CanActivateFn {
     const injector = inject(Injector);
 
     /* Observamos el estado de autenticación actual */
-    return from(user(auth)).pipe(
+    return runInInjectionContext(injector, () => from(user(auth))).pipe(
       switchMap((currentUser) => {
 
         /* Si no hay usuario autenticado, redirigimos al login */
@@ -33,9 +33,11 @@ export function roleGuard(rolesPermitidos: Rol[]): CanActivateFn {
         }
 
         /* Consultamos el nodo del usuario en Realtime Database para obtener su rol */
-        const userRef = child(ref(database), `/${COLLECTION_NAME}/${currentUser.uid}`);
-
-        return runInInjectionContext(injector, () => from(get(userRef))).pipe(
+        // ✅ Corregido: 'ref', 'child' y 'get' también necesitan el contexto dentro del switchMap
+        return runInInjectionContext(injector, () => {
+          const userRef = child(ref(database), `/${COLLECTION_NAME}/${currentUser.uid}`);
+          return from(get(userRef));
+        }).pipe(
           switchMap((snapshot) => {
 
             /* Si el nodo no existe en la base de datos, redirigimos al login por seguridad */
